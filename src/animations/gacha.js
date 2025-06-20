@@ -5,7 +5,7 @@ const { rarities, getRarity, getRandomCharacter } = require('../data/examples');
 // Helper function for delays
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-// Advanced visual effects system
+// Advanced visual effects system with fixed alignment
 const VisualEffects = {
     // Enhanced particle systems
     particles: {
@@ -16,52 +16,54 @@ const VisualEffects = {
         divine: ['👑', '🌌', '⚡', '🔥', '💎', '✨']
     },
 
-    // Professional ASCII border patterns
-    borders: {
-        simple: '═',
-        wave: '≋',
-        electric: '⚡',
-        cosmic: '∘',
-        divine: '◊'
-    },
-
-    // Enhanced visual frames with better spacing and design
-    createFrame(content, borderType = 'simple', width = 40) {
-        const border = this.borders[borderType];
-        const topBorder = `╔${'═'.repeat(width - 2)}╗`;
-        const bottomBorder = `╚${'═'.repeat(width - 2)}╝`;
-        const sideBorder = '║';
+    // Fixed width frame creator
+    createFixedFrame(lines, width = 36) {
+        const topBorder = `╔${'═'.repeat(width)}╗`;
+        const bottomBorder = `╚${'═'.repeat(width)}╝`;
         
-        const lines = content.split('\n');
-        const framedLines = [topBorder];
+        const paddedLines = [topBorder];
         
         lines.forEach(line => {
-            const padding = Math.max(0, width - 4 - line.length);
+            // Remove any existing emojis from length calculation for proper alignment
+            const cleanLine = line.replace(/[\u{1F000}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, 'X');
+            const actualLength = cleanLine.length;
+            const padding = Math.max(0, width - actualLength);
             const leftPad = Math.floor(padding / 2);
             const rightPad = padding - leftPad;
-            framedLines.push(`${sideBorder} ${' '.repeat(leftPad)}${line}${' '.repeat(rightPad)} ${sideBorder}`);
+            
+            paddedLines.push(`║${' '.repeat(leftPad)}${line}${' '.repeat(rightPad)}║`);
         });
         
-        framedLines.push(bottomBorder);
-        return framedLines.join('\n');
+        paddedLines.push(bottomBorder);
+        return paddedLines.join('\n');
     },
 
-    // Screen shake simulation with better patterns
+    // Simple center text function
+    centerText(text, width = 34) {
+        // Calculate actual display width (emojis count as 2, regular chars as 1)
+        let displayWidth = 0;
+        for (let char of text) {
+            if (char.match(/[\u{1F000}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u)) {
+                displayWidth += 2;
+            } else {
+                displayWidth += 1;
+            }
+        }
+        
+        const padding = Math.max(0, width - displayWidth);
+        const leftPad = Math.floor(padding / 2);
+        const rightPad = padding - leftPad;
+        
+        return ' '.repeat(leftPad) + text + ' '.repeat(rightPad);
+    },
+
+    // Screen shake simulation
     createShake(intensity = 3) {
-        const patterns = [
-            '',
-            ' ',
-            '  ',
-            ' ',
-            '',
-            '   ',
-            ' ',
-            ''
-        ];
+        const patterns = ['', ' ', '  ', ' ', '', '   ', ' ', ''];
         return patterns[intensity % patterns.length];
     },
 
-    // Color transition effects (keeping existing)
+    // Color transition effects
     getTransitionColor(step, maxSteps, startColor, endColor) {
         const ratio = step / maxSteps;
         const start = parseInt(startColor.slice(1), 16);
@@ -82,29 +84,15 @@ const VisualEffects = {
         return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
     },
 
-    // Enhanced wave patterns
-    createWavePattern(frame, type = 'ocean') {
-        const patterns = {
-            ocean: ['≋≋≋', '~~~', '≈≈≈', '∿∿∿'],
-            energy: ['⟩⟩⟩', '>>>>', '⟨⟨⟨', '<<<<'],
-            cosmic: ['∘∘∘', '○○○', '●●●', '◦◦◦'],
-            divine: ['◊◊◊', '♦♦♦', '◈◈◈', '◇◇◇']
-        };
-        const pattern = patterns[type] || patterns.ocean;
-        return pattern[frame % pattern.length];
-    },
-
     // Professional spinning indicators
     createSpinner(frame) {
-        const spinners = [
-            '⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'
-        ];
+        const spinners = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
         return spinners[frame % spinners.length];
     }
 };
 
 /**
- * Creates advanced starting animation with professional layout
+ * Creates advanced starting animation with fixed layout
  */
 function createAdvancedStartEmbed(frame = 0) {
     const maxFrames = 6;
@@ -114,30 +102,27 @@ function createAdvancedStartEmbed(frame = 0) {
     // Color transition from deep blue to bright gold
     const color = VisualEffects.getTransitionColor(frame, maxFrames, '#1E3A8A', '#F59E0B');
     
-    // Enhanced wave animation
-    const wavePattern = VisualEffects.createWavePattern(frame, 'ocean');
-    const centerWave = frame % 2 === 0 ? '🌊' : '🌀';
+    const lines = [
+        '',
+        `${currentParticle} SEARCHING THE SEAS ${currentParticle}`,
+        '',
+        '≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋',
+        '',
+        'The Grand Line calls...',
+        ''
+    ];
     
-    const description = `
-╔════════════════════════════════════╗
-║                                    ║
-║  ${currentParticle} S E A R C H I N G   T H E   S E A S ${currentParticle}  ║
-║                                    ║
-║       ${wavePattern}  ${centerWave}  ${wavePattern}  ${centerWave}  ${wavePattern}       ║
-║                                    ║
-║      The Grand Line calls...       ║
-║                                    ║
-╚════════════════════════════════════╝`;
+    const frameContent = VisualEffects.createFixedFrame(lines);
 
     return new EmbedBuilder()
         .setTitle('🏴‍☠️ One Piece Gacha Pull')
-        .setDescription('```' + description + '```')
+        .setDescription('```\n' + frameContent + '\n```')
         .setColor(color)
         .setFooter({ text: 'Adventure awaits beyond the horizon... ⚓' });
 }
 
 /**
- * Creates advanced spinning animation with professional design
+ * Creates advanced spinning animation with fixed design
  */
 function createAdvancedSpinEmbed(frame, totalFrames) {
     // Professional spinner
@@ -156,17 +141,17 @@ function createAdvancedSpinEmbed(frame, totalFrames) {
     const colors = ['#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#10B981'];
     const color = colors[Math.min(intensity, colors.length - 1)];
     
-    // Professional layout with perfect spacing
-    const description = `${shake}
-╔════════════════════════════════════╗
-║                                    ║
-║    ${sideParticle} ${spinner}    P U L L I N G    ${spinner} ${sideParticle}    ║
-║                                    ║
-║ ≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋ ║
-║                                    ║
-║ ${intensity > 2 ? '  ⚡ POWER INTENSIFYING ⚡   ' : '    The seas churn with power   '}║
-║                                    ║
-╚════════════════════════════════════╝`;
+    const lines = [
+        '',
+        `${sideParticle} ${spinner} PULLING ${spinner} ${sideParticle}`,
+        '',
+        '≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋',
+        '',
+        intensity > 2 ? '⚡ POWER INTENSIFYING ⚡' : 'The seas churn with power',
+        ''
+    ];
+    
+    const frameContent = shake + VisualEffects.createFixedFrame(lines);
 
     const messages = [
         'The Grand Line stirs... 🌊',
@@ -178,13 +163,13 @@ function createAdvancedSpinEmbed(frame, totalFrames) {
 
     return new EmbedBuilder()
         .setTitle('🏴‍☠️ One Piece Gacha Pull')
-        .setDescription('```' + description + '```')
+        .setDescription('```\n' + frameContent + '\n```')
         .setColor(color)
         .setFooter({ text: messages[intensity] || messages[0] });
 }
 
 /**
- * Creates rarity reveal with professional explosion effects
+ * Creates rarity reveal with fixed explosion effects
  */
 async function createAdvancedRarityReveal(interaction, rarity) {
     const config = rarities[rarity];
@@ -205,26 +190,26 @@ async function createAdvancedRarityReveal(interaction, rarity) {
         const particle = particles[frame % particles.length];
         const explosionChar = effect.explosion;
         
-        // Create expanding rings with proper spacing
-        const ringSize = frame + 1;
-        const outerRing = explosionChar.repeat(Math.min(15, ringSize * 2));
-        const innerRing = explosionChar.repeat(Math.max(3, ringSize));
+        // Create expanding rings
+        const outerRing = explosionChar.repeat(Math.min(12, (frame + 1) * 2));
+        const innerRing = explosionChar.repeat(Math.max(2, frame + 1));
         
-        const description = `
-╔════════════════════════════════════╗
-║ ${outerRing.slice(0, 4)}                      ${outerRing.slice(0, 4)} ║
-║                                    ║
-║     ${config.emoji}${config.emoji}  ${config.name.toUpperCase()}  ${config.emoji}${config.emoji}     ║
-║                                    ║
-║   ${innerRing.slice(0, 6)}          ${innerRing.slice(0, 6)}   ║
-║                                    ║
-║ ${particle} ${config.stars} R A R I T Y   R E V E A L E D ${config.stars} ${particle} ║
-║                                    ║
-╚════════════════════════════════════╝`;
+        const lines = [
+            outerRing,
+            '',
+            `${config.emoji}${config.emoji} ${config.name.toUpperCase()} ${config.emoji}${config.emoji}`,
+            '',
+            innerRing,
+            '',
+            `${particle} ${config.stars} RARITY REVEALED ${config.stars} ${particle}`,
+            ''
+        ];
+        
+        const frameContent = VisualEffects.createFixedFrame(lines);
 
         const embed = new EmbedBuilder()
             .setTitle('🏴‍☠️ Rarity Revealed!')
-            .setDescription('```' + description + '```')
+            .setDescription('```\n' + frameContent + '\n```')
             .setColor(config.color)
             .setFooter({ text: `${config.stars} ${config.name} Rarity! ${particle}` });
 
@@ -236,7 +221,7 @@ async function createAdvancedRarityReveal(interaction, rarity) {
 }
 
 /**
- * Creates final reveal with cinematic professional layout
+ * Creates final reveal with fixed cinematic layout
  */
 function createAdvancedFinalEmbed(character, rarity, interaction, frame = 0) {
     const config = rarities[rarity];
@@ -267,37 +252,33 @@ function createAdvancedFinalEmbed(character, rarity, interaction, frame = 0) {
     const particles = VisualEffects.particles[particleMap[rarity]];
     const bgParticle = particles[frame % particles.length];
     
-    // Calculate proper spacing for character name and info
-    const namePadding = Math.max(0, Math.floor((20 - displayName.length) / 2));
-    const nameSpacing = ' '.repeat(namePadding);
+    // Professional character card layout with fixed alignment
+    const lines = entrance ? [
+        '',
+        `${config.emoji} ${config.stars} ${config.emoji}`,
+        '',
+        displayName,
+        '',
+        '▓▓▓ MATERIALIZING ▓▓▓',
+        '',
+        `${bgParticle} The seas part to reveal... ${bgParticle}`,
+        ''
+    ] : [
+        '',
+        `${config.emoji} ${config.stars} ${config.emoji}`,
+        '',
+        character.name,
+        '',
+        `Bounty: ${character.bounty} Berry`,
+        `Crew: ${character.crew}`,
+        `Rarity: ${config.name}`,
+        '',
+        `${bgParticle} "The seas have chosen you!" ${bgParticle}`,
+        ''
+    ];
     
-    // Professional character card layout with proper alignment
-    const cardContent = entrance ? `
-╔════════════════════════════════════╗
-║                                    ║
-║          ${config.emoji}  ${config.stars}  ${config.emoji}          ║
-║                                    ║
-║${nameSpacing}${displayName}${nameSpacing}║
-║                                    ║
-║       ▓▓▓ MATERIALIZING ▓▓▓        ║
-║                                    ║
-║   ${bgParticle} The seas part to reveal... ${bgParticle}   ║
-║                                    ║
-╚════════════════════════════════════╝` : `
-╔════════════════════════════════════╗
-║          ${config.emoji}  ${config.stars}  ${config.emoji}          ║
-║                                    ║
-║${nameSpacing}${character.name}${nameSpacing}║
-║                                    ║
-║ Bounty: ${character.bounty.padEnd(15)} ║
-║ Crew: ${character.crew.slice(0, 17).padEnd(17)} ║
-║ Rarity: ${config.name.padEnd(16)} ║
-║                                    ║
-║  ${bgParticle} "The seas have chosen you!" ${bgParticle}  ║
-║                                    ║
-╚════════════════════════════════════╝`;
-    
-    let description = '```' + cardContent + '```';
+    const frameContent = VisualEffects.createFixedFrame(lines);
+    let description = '```\n' + frameContent + '\n```';
     
     // Add rarity-specific effects only after full reveal
     if (!entrance) {
