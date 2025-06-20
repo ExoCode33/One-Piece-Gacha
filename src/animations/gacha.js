@@ -3,7 +3,7 @@ const { timings } = require('../../config/bot');
 const { rarities, getRarity, getRandomCharacter } = require('../data/examples');
 
 // Helper function for delays
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms);
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 // GLORY VISUAL EFFECTS SYSTEM
 const GloryEffects = {
