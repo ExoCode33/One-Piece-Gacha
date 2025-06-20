@@ -119,15 +119,15 @@ function createAdvancedStartEmbed(frame = 0) {
     const centerWave = frame % 2 === 0 ? '🌊' : '🌀';
     
     const description = `
-╔══════════════════════════════════════╗
-║                                      ║
-║    ${currentParticle}  S E A R C H I N G   T H E   S E A S  ${currentParticle}    ║
-║                                      ║
-║         ${wavePattern}  ${centerWave}  ${wavePattern}  ${centerWave}  ${wavePattern}         ║
-║                                      ║
-║        The Grand Line calls...       ║
-║                                      ║
-╚══════════════════════════════════════╝`;
+╔════════════════════════════════════╗
+║                                    ║
+║  ${currentParticle} S E A R C H I N G   T H E   S E A S ${currentParticle}  ║
+║                                    ║
+║       ${wavePattern}  ${centerWave}  ${wavePattern}  ${centerWave}  ${wavePattern}       ║
+║                                    ║
+║      The Grand Line calls...       ║
+║                                    ║
+╚════════════════════════════════════╝`;
 
     return new EmbedBuilder()
         .setTitle('🏴‍☠️ One Piece Gacha Pull')
@@ -156,17 +156,17 @@ function createAdvancedSpinEmbed(frame, totalFrames) {
     const colors = ['#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#10B981'];
     const color = colors[Math.min(intensity, colors.length - 1)];
     
-    // Professional layout with better spacing
+    // Professional layout with perfect spacing
     const description = `${shake}
-╔══════════════════════════════════════╗
-║                                      ║
-║  ${sideParticle}  ${spinner}    P U L L I N G    ${spinner}  ${sideParticle}  ║
-║                                      ║
-║  ≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋  ║
-║                                      ║
-║     ${intensity > 2 ? '⚡ POWER INTENSIFYING ⚡' : 'The seas churn with power...'}     ║
-║                                      ║
-╚══════════════════════════════════════╝`;
+╔════════════════════════════════════╗
+║                                    ║
+║    ${sideParticle} ${spinner}    P U L L I N G    ${spinner} ${sideParticle}    ║
+║                                    ║
+║ ≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋ ║
+║                                    ║
+║ ${intensity > 2 ? '  ⚡ POWER INTENSIFYING ⚡   ' : '    The seas churn with power   '}║
+║                                    ║
+╚════════════════════════════════════╝`;
 
     const messages = [
         'The Grand Line stirs... 🌊',
@@ -205,22 +205,22 @@ async function createAdvancedRarityReveal(interaction, rarity) {
         const particle = particles[frame % particles.length];
         const explosionChar = effect.explosion;
         
-        // Create expanding rings
+        // Create expanding rings with proper spacing
         const ringSize = frame + 1;
-        const outerRing = explosionChar.repeat(Math.min(20, ringSize * 3));
-        const innerRing = explosionChar.repeat(Math.max(5, ringSize));
+        const outerRing = explosionChar.repeat(Math.min(15, ringSize * 2));
+        const innerRing = explosionChar.repeat(Math.max(3, ringSize));
         
         const description = `
-╔══════════════════════════════════════╗
-║  ${outerRing.slice(0, 5)}                          ${outerRing.slice(0, 5)}  ║
-║                                      ║
-║      ${config.emoji}${config.emoji}  ${config.name.toUpperCase()}  ${config.emoji}${config.emoji}      ║
-║                                      ║
-║    ${innerRing.slice(0, 8)}      ${innerRing.slice(0, 8)}    ║
-║                                      ║
-║  ${particle} ${config.stars}  R A R I T Y  R E V E A L E D  ${config.stars} ${particle}  ║
-║                                      ║
-╚══════════════════════════════════════╝`;
+╔════════════════════════════════════╗
+║ ${outerRing.slice(0, 4)}                      ${outerRing.slice(0, 4)} ║
+║                                    ║
+║     ${config.emoji}${config.emoji}  ${config.name.toUpperCase()}  ${config.emoji}${config.emoji}     ║
+║                                    ║
+║   ${innerRing.slice(0, 6)}          ${innerRing.slice(0, 6)}   ║
+║                                    ║
+║ ${particle} ${config.stars} R A R I T Y   R E V E A L E D ${config.stars} ${particle} ║
+║                                    ║
+╚════════════════════════════════════╝`;
 
         const embed = new EmbedBuilder()
             .setTitle('🏴‍☠️ Rarity Revealed!')
@@ -267,31 +267,35 @@ function createAdvancedFinalEmbed(character, rarity, interaction, frame = 0) {
     const particles = VisualEffects.particles[particleMap[rarity]];
     const bgParticle = particles[frame % particles.length];
     
-    // Professional character card layout
+    // Calculate proper spacing for character name and info
+    const namePadding = Math.max(0, Math.floor((20 - displayName.length) / 2));
+    const nameSpacing = ' '.repeat(namePadding);
+    
+    // Professional character card layout with proper alignment
     const cardContent = entrance ? `
-╔══════════════════════════════════════╗
-║                                      ║
-║           ${config.emoji}  ${config.stars}  ${config.emoji}           ║
-║                                      ║
-║            ${displayName}            ║
-║                                      ║
-║         ▓▓▓ MATERIALIZING ▓▓▓        ║
-║                                      ║
-║     ${bgParticle} The seas part to reveal... ${bgParticle}     ║
-║                                      ║
-╚══════════════════════════════════════╝` : `
-╔══════════════════════════════════════╗
-║           ${config.emoji}  ${config.stars}  ${config.emoji}           ║
-║                                      ║
-║            ${character.name}            ║
-║                                      ║
-║  Bounty: ${character.bounty} Berry  ║
-║  Crew: ${character.crew}  ║
-║  Rarity: ${config.name}                ║
-║                                      ║
-║     ${bgParticle} "The seas have chosen you!" ${bgParticle}     ║
-║                                      ║
-╚══════════════════════════════════════╝`;
+╔════════════════════════════════════╗
+║                                    ║
+║          ${config.emoji}  ${config.stars}  ${config.emoji}          ║
+║                                    ║
+║${nameSpacing}${displayName}${nameSpacing}║
+║                                    ║
+║       ▓▓▓ MATERIALIZING ▓▓▓        ║
+║                                    ║
+║   ${bgParticle} The seas part to reveal... ${bgParticle}   ║
+║                                    ║
+╚════════════════════════════════════╝` : `
+╔════════════════════════════════════╗
+║          ${config.emoji}  ${config.stars}  ${config.emoji}          ║
+║                                    ║
+║${nameSpacing}${character.name}${nameSpacing}║
+║                                    ║
+║ Bounty: ${character.bounty.padEnd(15)} ║
+║ Crew: ${character.crew.slice(0, 17).padEnd(17)} ║
+║ Rarity: ${config.name.padEnd(16)} ║
+║                                    ║
+║  ${bgParticle} "The seas have chosen you!" ${bgParticle}  ║
+║                                    ║
+╚════════════════════════════════════╝`;
     
     let description = '```' + cardContent + '```';
     
