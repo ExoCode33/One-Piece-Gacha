@@ -1,7 +1,30 @@
 require('dotenv').config();
-const { Client, GatewayIntentBits, Collection } = require('discord.js');
+const { Client, GatewayIntentBits, Collection, REST, Routes, SlashCommandBuilder } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
+
+// Auto-register commands on startup
+async function registerCommands() {
+    const commands = [
+        new SlashCommandBuilder()
+            .setName('pull')
+            .setDescription('Pull a One Piece character from the gacha!')
+            .toJSON()
+    ];
+
+    const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
+
+    try {
+        console.log('🔄 Registering slash commands...');
+        await rest.put(
+            Routes.applicationCommands(process.env.CLIENT_ID),
+            { body: commands }
+        );
+        console.log('✅ Successfully registered slash commands!');
+    } catch (error) {
+        console.error('❌ Error registering commands:', error);
+    }
+}
 
 // Create Discord client
 const client = new Client({ 
@@ -42,8 +65,11 @@ for (const file of eventFiles) {
 }
 
 // Bot ready
-client.once('ready', () => {
+client.once('ready', async () => {
     console.log(`🏴‍☠️ ${client.user.tag} is ready to sail!`);
+    
+    // Auto-register commands when bot starts
+    await registerCommands();
 });
 
 // Login
