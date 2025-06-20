@@ -3,212 +3,343 @@ const { timings } = require('../../config/bot');
 const { rarities, getRarity, getRandomCharacter } = require('../data/examples');
 
 // Helper function for delays
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms);
 
-// Clean, simple visual effects
-const VisualEffects = {
-    particles: {
-        water: ['🌊', '💧', '🌀'],
-        energy: ['⚡', '🔥', '💥'],
-        cosmic: ['🌌', '🌟', '✨'],
-        divine: ['👑', '💎', '✨']
+// GLORY VISUAL EFFECTS SYSTEM
+const GloryEffects = {
+    // Light patterns for glorious reveals
+    lightPatterns: {
+        glow: ['◯', '◉', '⦿', '●', '⦿', '◉'],
+        sparkle: ['✦', '✧', '✩', '✪', '✫', '✬', '✭', '✮', '✯', '✰'],
+        divine: ['◊', '◈', '◇', '♦', '◊', '◈'],
+        energy: ['◐', '◓', '◑', '◒', '◐', '◓'],
+        cosmic: ['✦', '※', '⁂', '✱', '✲', '✳', '✴', '✵', '✶', '✷']
     },
 
-    spinners: ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧'],
+    // Color cascades for rainbow effects
+    rainbowColors: ['#FF0000', '#FF7F00', '#FFFF00', '#00FF00', '#0000FF', '#4B0082', '#9400D3'],
     
-    getSpinner(frame) {
-        return this.spinners[frame % this.spinners.length];
+    // Glory light box creator
+    createLightBox(content, intensity = 1, pattern = 'glow') {
+        const lights = this.lightPatterns[pattern];
+        const lightFrame = lights[intensity % lights.length];
+        
+        const topGlow = lightFrame.repeat(20);
+        const sideGlow = lightFrame.repeat(3);
+        
+        return `
+${topGlow}
+${sideGlow}                    ${sideGlow}
+${sideGlow}      ${content}      ${sideGlow}
+${sideGlow}                    ${sideGlow}
+${topGlow}
+        `.trim();
     },
 
-    getParticle(type, frame) {
-        const particles = this.particles[type] || this.particles.water;
-        return particles[frame % particles.length];
+    // Pulsing text effect
+    createPulsingText(text, intensity = 1) {
+        const effects = [
+            text,
+            `**${text}**`,
+            `***${text}***`,
+            `**✨ ${text} ✨**`,
+            `***⭐ ${text} ⭐***`,
+            `**🌟 ✨ ${text} ✨ 🌟**`,
+            `***💫 ⭐ ✨ ${text} ✨ ⭐ 💫***`
+        ];
+        return effects[Math.min(intensity, effects.length - 1)];
+    },
+
+    // Color transition for glory effects
+    getGloryColor(frame, type = 'normal') {
+        if (type === 'rainbow') {
+            return this.rainbowColors[frame % this.rainbowColors.length];
+        }
+        
+        const colorSets = {
+            normal: ['#1E40AF', '#3B82F6', '#60A5FA', '#93C5FD'],
+            fire: ['#DC2626', '#EF4444', '#F87171', '#FCA5A5'],
+            divine: ['#7C3AED', '#8B5CF6', '#A78BFA', '#C4B5FD'],
+            cosmic: ['#DB2777', '#EC4899', '#F472B6', '#F9A8D4'],
+            legendary: ['#D97706', '#F59E0B', '#FBBF24', '#FCD34D']
+        };
+        
+        const colors = colorSets[type] || colorSets.normal;
+        return colors[frame % colors.length];
+    },
+
+    // Flash effect simulation
+    createFlash(intensity = 5) {
+        const flashChars = ['▓', '▒', '░', ' '];
+        const char = flashChars[Math.min(intensity, flashChars.length - 1)];
+        return char.repeat(30);
+    },
+
+    // Cascading light effect
+    createCascade(frame, height = 5) {
+        const cascade = [];
+        for (let i = 0; i < height; i++) {
+            const position = (frame + i) % 15;
+            const line = ' '.repeat(position) + '✦' + ' '.repeat(15 - position);
+            cascade.push(line);
+        }
+        return cascade.join('\n');
     }
 };
 
 /**
- * Creates a clean starting embed - no complex frames
+ * Creates a GLORIOUS starting animation with light effects
  */
-function createStartEmbed(frame = 0) {
-    const particle = VisualEffects.getParticle('water', frame);
+function createGloriousStartEmbed(frame = 0) {
+    const lightIntensity = Math.floor(frame / 2);
+    const pulsingTitle = GloryEffects.createPulsingText('SUMMONING BEGINS', lightIntensity);
+    const color = GloryEffects.getGloryColor(frame, 'normal');
+    
+    const lightBox = GloryEffects.createLightBox('THE SEAS AWAKEN', frame, 'glow');
     
     return new EmbedBuilder()
         .setTitle('🏴‍☠️ One Piece Gacha Pull')
         .setDescription(`
-**${particle} SEARCHING THE SEAS ${particle}**
+${pulsingTitle}
 
 \`\`\`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+${lightBox}
 \`\`\`
 
-*The Grand Line calls to you...*
+*✨ The Grand Line responds to your call... ✨*
         `)
-        .setColor('#0099FF')
-        .setFooter({ text: 'Adventure awaits! ⚓' });
+        .setColor(color)
+        .setFooter({ text: `✦ Power gathering... ${lightIntensity + 1}/6 ✦` });
 }
 
 /**
- * Creates a clean spinning embed
+ * Creates SPECTACULAR spinning with cascading lights
  */
-function createSpinEmbed(frame) {
-    const spinner = VisualEffects.getSpinner(frame);
+function createSpectacularSpinEmbed(frame) {
     const intensity = Math.floor(frame / 3);
-    const particle = VisualEffects.getParticle('energy', frame);
+    const maxIntensity = 4;
     
-    const colors = ['#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6'];
-    const color = colors[Math.min(intensity, colors.length - 1)];
+    // Build up to maximum glory
+    const pulsingText = GloryEffects.createPulsingText('PULLING', intensity + 2);
+    const colorType = ['normal', 'fire', 'divine', 'cosmic'][Math.min(intensity, 3)];
+    const color = GloryEffects.getGloryColor(frame, colorType);
+    
+    // Create cascading light show
+    const cascade = GloryEffects.createCascade(frame, 5);
+    const lightPattern = intensity >= 3 ? 'cosmic' : intensity >= 2 ? 'divine' : 'sparkle';
+    const lightBox = GloryEffects.createLightBox(pulsingText, frame, lightPattern);
+    
+    // Flash effects for maximum intensity
+    const flash = intensity >= 3 ? GloryEffects.createFlash(frame % 4) : '';
     
     const messages = [
-        'The seas stir...',
-        'Power builds...',
-        'Energy rising...',
-        'MAXIMUM POWER!'
+        '✨ Energy gathering...',
+        '⚡ Power building...',
+        '🔥 Reality shifting...',
+        '🌌 COSMIC FORCES UNLEASHED!'
     ];
     
     return new EmbedBuilder()
         .setTitle('🏴‍☠️ One Piece Gacha Pull')
         .setDescription(`
-**${particle} ${spinner} PULLING ${spinner} ${particle}**
+${flash}
 
 \`\`\`
-≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋
-≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋
-≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋
+${lightBox}
 \`\`\`
 
-*${messages[Math.min(intensity, messages.length - 1)]}*
+\`\`\`
+${cascade}
+\`\`\`
+
+${flash}
         `)
         .setColor(color)
-        .setFooter({ text: `${particle} Power Level: ${intensity + 1}/4` });
+        .setFooter({ text: messages[Math.min(intensity, messages.length - 1)] });
 }
 
 /**
- * Creates a clean rarity reveal
+ * Creates EXPLOSIVE rarity reveal with light bursts
  */
-function createRarityEmbed(rarity) {
+async function createExplosiveRarityReveal(interaction, rarity) {
     const config = rarities[rarity];
+    const frames = {
+        common: 3, uncommon: 4, rare: 5, 
+        legendary: 7, mythical: 10, omnipotent: 15
+    }[rarity] || 3;
     
-    return new EmbedBuilder()
-        .setTitle('🏴‍☠️ Rarity Revealed!')
-        .setDescription(`
-${config.emoji.repeat(5)}
-
-**${config.name.toUpperCase()} RARITY**
-
-${config.stars}
+    // Build up explosion
+    for (let frame = 0; frame < frames; frame++) {
+        const explosionIntensity = Math.min(6, frame);
+        const isRainbow = rarity === 'omnipotent' || rarity === 'mythical';
+        const color = isRainbow ? 
+            GloryEffects.getGloryColor(frame, 'rainbow') : 
+            config.color;
+        
+        // Create expanding light burst
+        const burstSize = frame + 1;
+        const lightBurst = '✦'.repeat(Math.min(20, burstSize * 3));
+        const innerGlow = '◉'.repeat(Math.min(15, burstSize * 2));
+        
+        const rarityText = GloryEffects.createPulsingText(config.name.toUpperCase(), explosionIntensity);
+        const flash = frame > 2 ? GloryEffects.createFlash(frame % 3) : '';
+        
+        const description = `
+${flash}
 
 \`\`\`
-${config.emoji.repeat(15)}
-${config.emoji.repeat(15)}
-${config.emoji.repeat(15)}
+${lightBurst}
+${innerGlow}
+     ${config.emoji} ${rarityText} ${config.emoji}
+${innerGlow}
+${lightBurst}
 \`\`\`
 
-*A ${config.name.toLowerCase()} pull appears!*
-        `)
-        .setColor(config.color)
-        .setFooter({ text: `${config.stars} ${config.name} Rarity!` });
+${config.stars.repeat(3)}
+
+${flash}
+        `;
+
+        const embed = new EmbedBuilder()
+            .setTitle('🏴‍☠️ RARITY REVEALED!')
+            .setDescription(description)
+            .setColor(color)
+            .setFooter({ text: `${config.stars} BEHOLD THE ${config.name.toUpperCase()}! ${config.stars}` });
+
+        await interaction.editReply({ embeds: [embed] });
+        await sleep(100 + (frame * 20)); // Accelerating reveals
+    }
+    
+    await sleep(1000);
 }
 
 /**
- * Creates a clean final character reveal
+ * Creates DIVINE character materialization
  */
-function createFinalEmbed(character, rarity, interaction, isEntrance = false) {
+function createDivineMaterialization(character, rarity, interaction, frame = 0) {
     const config = rarities[rarity];
-    const particle = VisualEffects.getParticle(
-        rarity === 'omnipotent' ? 'divine' : 
-        rarity === 'mythical' ? 'cosmic' : 'energy', 
-        0
-    );
+    const isEntrance = frame < 5;
     
     if (isEntrance) {
+        const materializationStage = frame;
+        const glowIntensity = materializationStage + 1;
+        const pulsingName = GloryEffects.createPulsingText('MATERIALIZING', glowIntensity);
+        
+        // Character name reveal effect
+        const nameLength = character.name.length;
+        const revealedChars = Math.floor((nameLength * frame) / 4);
+        const hiddenName = '◆'.repeat(Math.max(0, nameLength - revealedChars));
+        const partialName = character.name.slice(0, revealedChars) + hiddenName;
+        
+        const lightBox = GloryEffects.createLightBox(pulsingName, frame, 'divine');
+        const cascade = GloryEffects.createCascade(frame * 2, 4);
+        
+        const isHighRarity = ['mythical', 'omnipotent'].includes(rarity);
+        const color = isHighRarity ? 
+            GloryEffects.getGloryColor(frame, 'rainbow') : 
+            config.color;
+        
         return new EmbedBuilder()
-            .setTitle(`${config.emoji} Summoning... ${config.emoji}`)
+            .setTitle(`${config.emoji} SUMMONING... ${config.emoji}`)
             .setDescription(`
 **${config.stars}**
 
 \`\`\`
-████████████████████████
-████ MATERIALIZING ████
-████████████████████████
+${lightBox}
 \`\`\`
 
-*${particle} The seas part to reveal a warrior... ${particle}*
+**${partialName}**
+
+\`\`\`
+${cascade}
+\`\`\`
+
+*✨ A legendary presence emerges from the void... ✨*
             `)
-            .setColor(config.color)
-            .setFooter({ text: 'A legend approaches...' });
+            .setColor(color)
+            .setFooter({ text: `Materialization: ${Math.floor((frame / 4) * 100)}%` });
     }
+    
+    // Final glorious reveal
+    const finalGlowText = GloryEffects.createPulsingText(character.name, 6);
+    const isUltimate = ['mythical', 'omnipotent'].includes(rarity);
+    const finalColor = isUltimate ? 
+        GloryEffects.getGloryColor(frame, 'rainbow') : 
+        config.color;
+    
+    const gloriousBox = GloryEffects.createLightBox(finalGlowText, 6, 'cosmic');
     
     let description = `
 **${config.stars}**
 
-**${character.name}**
+\`\`\`
+${gloriousBox}
+\`\`\`
 
 **Bounty:** ${character.bounty} Berry
 **Crew:** ${character.crew}
 **Rarity:** ${config.name}
 
-*"The seas have chosen you!"*
+*"The seas have chosen their champion!"*
     `;
     
-    // Add rarity-specific effects
-    const effects = {
-        omnipotent: `\n\n🌌 **OMNIPOTENT PULL!** 🌌\n✨ *Reality bends to your will!* ✨`,
-        mythical: `\n\n🔮 **MYTHICAL PULL!** 🔮\n🌟 *Legends become reality!* 🌟`,
-        legendary: `\n\n🟡 **LEGENDARY PULL!** 🟡\n⚡ *A legend walks among us!* ⚡`,
-        rare: `\n\n🔵 **RARE PULL!** 🔵\n💎 *A skilled warrior joins!* 💎`,
-        uncommon: `\n\n🟢 **UNCOMMON PULL!** 🟢\n🌟 *A promising pirate!* 🌟`,
-        common: `\n\n⚪ **COMMON PULL!** ⚪\n⭐ *A reliable crew member!* ⭐`
+    // Add rarity-specific glory effects
+    const gloryEffects = {
+        omnipotent: `\n\n🌌 ***OMNIPOTENT BEING SUMMONED!*** 🌌\n✨ *Reality itself kneels before your power!* ✨\n💫 *The multiverse trembles!* 💫`,
+        mythical: `\n\n🔮 ***MYTHICAL LEGEND AWAKENED!*** 🔮\n🌟 *Ancient powers flow through time!* 🌟\n⚡ *Destiny reshapes itself!* ⚡`,
+        legendary: `\n\n🟡 ***LEGENDARY HERO RISES!*** 🟡\n⭐ *History remembers this moment!* ⭐\n🔥 *Epic glory achieved!* 🔥`,
+        rare: `\n\n🔵 **RARE WARRIOR APPEARS!** 🔵\n💎 *Skilled power joins your cause!* 💎`,
+        uncommon: `\n\n🟢 **PROMISING SOUL EMERGES!** 🟢\n🌟 *Potential awaits unleashing!* 🌟`,
+        common: `\n\n⚪ **RELIABLE ALLY JOINS!** ⚪\n⭐ *Every legend needs a foundation!* ⭐`
     };
     
-    description += effects[rarity] || '';
+    description += gloryEffects[rarity] || '';
     
     return new EmbedBuilder()
-        .setTitle(`${config.emoji} ${character.name} ${config.emoji}`)
+        .setTitle(`${config.emoji} ${finalGlowText} ${config.emoji}`)
         .setDescription(description)
-        .setColor(config.color)
+        .setColor(finalColor)
         .setFooter({ 
-            text: `Congratulations ${interaction.user.username}! | One Piece Gacha`,
+            text: `🏆 GLORIOUS VICTORY ${interaction.user.username}! 🏆 | One Piece Gacha`,
             iconURL: interaction.user.displayAvatarURL()
         })
         .setTimestamp();
 }
 
 /**
- * Main gacha animation - clean and simple
+ * Main GLORIOUS animation function
  */
 async function createGachaAnimation(interaction) {
     try {
         const rarity = getRarity();
         const character = getRandomCharacter(rarity);
         
-        // Phase 1: Start animation (3 frames)
-        for (let frame = 0; frame < 3; frame++) {
-            const embed = createStartEmbed(frame);
+        // Phase 1: Glorious awakening (6 frames)
+        for (let frame = 0; frame < 6; frame++) {
+            const embed = createGloriousStartEmbed(frame);
             await interaction.editReply({ embeds: [embed] });
-            await sleep(500);
+            await sleep(400);
         }
         
-        // Phase 2: Spinning animation (12 frames)
-        for (let frame = 0; frame < 12; frame++) {
-            const embed = createSpinEmbed(frame);
+        // Phase 2: Spectacular spinning light show (16 frames)
+        for (let frame = 0; frame < 16; frame++) {
+            const embed = createSpectacularSpinEmbed(frame);
             await interaction.editReply({ embeds: [embed] });
-            await sleep(250);
+            await sleep(200 - (frame * 5)); // Accelerating intensity
         }
         
-        // Phase 3: Rarity reveal
-        const rarityEmbed = createRarityEmbed(rarity);
-        await interaction.editReply({ embeds: [rarityEmbed] });
-        await sleep(2000);
+        // Phase 3: Explosive rarity reveal
+        await createExplosiveRarityReveal(interaction, rarity);
         
-        // Phase 4: Character entrance
-        const entranceEmbed = createFinalEmbed(character, rarity, interaction, true);
-        await interaction.editReply({ embeds: [entranceEmbed] });
-        await sleep(1500);
+        // Phase 4: Divine materialization entrance (5 frames)
+        for (let frame = 0; frame < 5; frame++) {
+            const embed = createDivineMaterialization(character, rarity, interaction, frame);
+            await interaction.editReply({ embeds: [embed] });
+            await sleep(600);
+        }
         
-        // Phase 5: Final reveal
-        const finalEmbed = createFinalEmbed(character, rarity, interaction, false);
+        // Phase 5: Final glorious reveal
+        const finalEmbed = createDivineMaterialization(character, rarity, interaction, 10);
         await interaction.editReply({ embeds: [finalEmbed] });
         
     } catch (error) {
@@ -216,7 +347,7 @@ async function createGachaAnimation(interaction) {
         
         const errorEmbed = new EmbedBuilder()
             .setTitle('❌ Error')
-            .setDescription('Something went wrong! The Grand Line can be unpredictable...')
+            .setDescription('The glory was too intense! Please try again...')
             .setColor('#FF0000');
             
         await interaction.editReply({ embeds: [errorEmbed] });
