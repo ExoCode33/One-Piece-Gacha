@@ -7,7 +7,7 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 // Advanced visual effects system
 const VisualEffects = {
-    // Particle systems using Unicode
+    // Enhanced particle systems
     particles: {
         sparkles: ['✨', '⭐', '🌟', '💫', '✨', '⚡', '🔥'],
         water: ['🌊', '💧', '🌀', '💙', '🔵', '💎'],
@@ -16,20 +16,54 @@ const VisualEffects = {
         divine: ['👑', '🌌', '⚡', '🔥', '💎', '✨']
     },
 
-    // Screen shake simulation
-    createShake(intensity = 3) {
-        const shakes = [];
-        for (let i = 0; i < intensity; i++) {
-            const spaces = ' '.repeat(Math.floor(Math.random() * 3));
-            shakes.push(spaces);
-        }
-        return shakes;
+    // Professional ASCII border patterns
+    borders: {
+        simple: '═',
+        wave: '≋',
+        electric: '⚡',
+        cosmic: '∘',
+        divine: '◊'
     },
 
-    // Color transition effects
+    // Enhanced visual frames with better spacing and design
+    createFrame(content, borderType = 'simple', width = 40) {
+        const border = this.borders[borderType];
+        const topBorder = `╔${'═'.repeat(width - 2)}╗`;
+        const bottomBorder = `╚${'═'.repeat(width - 2)}╝`;
+        const sideBorder = '║';
+        
+        const lines = content.split('\n');
+        const framedLines = [topBorder];
+        
+        lines.forEach(line => {
+            const padding = Math.max(0, width - 4 - line.length);
+            const leftPad = Math.floor(padding / 2);
+            const rightPad = padding - leftPad;
+            framedLines.push(`${sideBorder} ${' '.repeat(leftPad)}${line}${' '.repeat(rightPad)} ${sideBorder}`);
+        });
+        
+        framedLines.push(bottomBorder);
+        return framedLines.join('\n');
+    },
+
+    // Screen shake simulation with better patterns
+    createShake(intensity = 3) {
+        const patterns = [
+            '',
+            ' ',
+            '  ',
+            ' ',
+            '',
+            '   ',
+            ' ',
+            ''
+        ];
+        return patterns[intensity % patterns.length];
+    },
+
+    // Color transition effects (keeping existing)
     getTransitionColor(step, maxSteps, startColor, endColor) {
         const ratio = step / maxSteps;
-        // Simple color interpolation for hex colors
         const start = parseInt(startColor.slice(1), 16);
         const end = parseInt(endColor.slice(1), 16);
         
@@ -48,158 +82,161 @@ const VisualEffects = {
         return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
     },
 
-    // Pulsing effect with intensity
-    createPulse(frame, maxFrames, baseIntensity = 1) {
-        const pulseRatio = Math.sin((frame / maxFrames) * Math.PI * 2);
-        return baseIntensity + (pulseRatio * 0.5);
+    // Enhanced wave patterns
+    createWavePattern(frame, type = 'ocean') {
+        const patterns = {
+            ocean: ['≋≋≋', '~~~', '≈≈≈', '∿∿∿'],
+            energy: ['⟩⟩⟩', '>>>>', '⟨⟨⟨', '<<<<'],
+            cosmic: ['∘∘∘', '○○○', '●●●', '◦◦◦'],
+            divine: ['◊◊◊', '♦♦♦', '◈◈◈', '◇◇◇']
+        };
+        const pattern = patterns[type] || patterns.ocean;
+        return pattern[frame % pattern.length];
     },
 
-    // Particle explosion effect
-    createExplosion(centerChar, particles, radius = 3) {
-        const explosion = [];
-        const particleSet = this.particles[particles] || this.particles.sparkles;
-        
-        for (let i = 0; i < radius; i++) {
-            const ring = [];
-            const circumference = Math.max(1, Math.floor(2 * Math.PI * i));
-            
-            for (let j = 0; j < circumference; j++) {
-                ring.push(particleSet[Math.floor(Math.random() * particleSet.length)]);
-            }
-            explosion.push(ring);
-        }
-        
-        return explosion;
+    // Professional spinning indicators
+    createSpinner(frame) {
+        const spinners = [
+            '⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'
+        ];
+        return spinners[frame % spinners.length];
     }
 };
 
 /**
- * Creates advanced starting animation with particle effects
+ * Creates advanced starting animation with professional layout
  */
 function createAdvancedStartEmbed(frame = 0) {
     const maxFrames = 6;
     const particles = VisualEffects.particles.water;
     const currentParticle = particles[frame % particles.length];
     
-    // Animated wave pattern
-    const wavePattern = frame % 4;
-    const waves = ['🌊', '🌀', '💧', '🌊'][wavePattern];
+    // Color transition from deep blue to bright gold
+    const color = VisualEffects.getTransitionColor(frame, maxFrames, '#1E3A8A', '#F59E0B');
     
-    // Color transition from blue to gold
-    const color = VisualEffects.getTransitionColor(frame, maxFrames, '#0099FF', '#FFD700');
+    // Enhanced wave animation
+    const wavePattern = VisualEffects.createWavePattern(frame, 'ocean');
+    const centerWave = frame % 2 === 0 ? '🌊' : '🌀';
     
-    const description = `\`\`\`
-${waves.repeat(12)}
-${waves}  ${currentParticle} Searching the seas... ${currentParticle}  ${waves}
-${waves}     The Grand Line calls...     ${waves}
-${waves.repeat(12)}
-\`\`\``;
+    const description = `
+╔══════════════════════════════════════╗
+║                                      ║
+║    ${currentParticle}  S E A R C H I N G   T H E   S E A S  ${currentParticle}    ║
+║                                      ║
+║         ${wavePattern}  ${centerWave}  ${wavePattern}  ${centerWave}  ${wavePattern}         ║
+║                                      ║
+║        The Grand Line calls...       ║
+║                                      ║
+╚══════════════════════════════════════╝`;
 
     return new EmbedBuilder()
         .setTitle('🏴‍☠️ One Piece Gacha Pull')
-        .setDescription(description)
+        .setDescription('```' + description + '```')
         .setColor(color)
-        .setFooter({ text: 'Adventure awaits beyond the horizon...' });
+        .setFooter({ text: 'Adventure awaits beyond the horizon... ⚓' });
 }
 
 /**
- * Creates advanced spinning animation with screen shake and particles
+ * Creates advanced spinning animation with professional design
  */
 function createAdvancedSpinEmbed(frame, totalFrames) {
-    const spinChars = ['◐', '◓', '◑', '◒', '◐', '◓', '◑', '◒'];
-    const currentSpin = spinChars[frame % spinChars.length];
+    // Professional spinner
+    const spinner = VisualEffects.createSpinner(frame);
     
-    // Intensifying effects as we approach the end
-    const intensity = Math.min(3, Math.floor((frame / totalFrames) * 4));
+    // Intensifying effects
+    const intensity = Math.min(4, Math.floor((frame / totalFrames) * 5));
     const shake = VisualEffects.createShake(intensity);
     
-    // Particle effects that intensify
-    const particleTypes = ['water', 'energy', 'sparkles'];
-    const currentParticles = VisualEffects.particles[particleTypes[Math.floor(frame / 3) % particleTypes.length]];
-    const leftParticle = currentParticles[frame % currentParticles.length];
-    const rightParticle = currentParticles[(frame + 1) % currentParticles.length];
+    // Dynamic particles
+    const particleTypes = ['water', 'energy', 'sparkles', 'cosmic'];
+    const currentParticles = VisualEffects.particles[particleTypes[Math.min(intensity, particleTypes.length - 1)]];
+    const sideParticle = currentParticles[frame % currentParticles.length];
     
-    // Color gets more intense
-    const baseColors = ['#FFD700', '#FF8C00', '#FF4500', '#FF0000'];
-    const color = baseColors[Math.min(intensity, baseColors.length - 1)];
+    // Enhanced color progression
+    const colors = ['#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#10B981'];
+    const color = colors[Math.min(intensity, colors.length - 1)];
     
-    // Dynamic spacing for shake effect
-    const spacing = shake[0] || '';
-    
-    const description = `\`\`\`
-${spacing}🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊
-${spacing}🌊  ${leftParticle} ${currentSpin} PULLING ${currentSpin} ${rightParticle}  🌊
-${spacing}🌊    ${intensity > 1 ? '⚡ INTENSIFYING ⚡' : 'The seas churn...'}    🌊
-${spacing}🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊
-\`\`\``;
+    // Professional layout with better spacing
+    const description = `${shake}
+╔══════════════════════════════════════╗
+║                                      ║
+║  ${sideParticle}  ${spinner}    P U L L I N G    ${spinner}  ${sideParticle}  ║
+║                                      ║
+║  ≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋≋  ║
+║                                      ║
+║     ${intensity > 2 ? '⚡ POWER INTENSIFYING ⚡' : 'The seas churn with power...'}     ║
+║                                      ║
+╚══════════════════════════════════════╝`;
 
     const messages = [
-        'The Grand Line stirs...',
-        'Power builds in the depths...',
-        'Reality begins to shift...',
-        'The cosmos takes notice...'
+        'The Grand Line stirs... 🌊',
+        'Power builds in the depths... ⚡',
+        'Reality begins to shift... 🌀',
+        'The cosmos takes notice... 🌌',
+        'MAXIMUM POWER! 💥'
     ];
 
     return new EmbedBuilder()
         .setTitle('🏴‍☠️ One Piece Gacha Pull')
-        .setDescription(description)
+        .setDescription('```' + description + '```')
         .setColor(color)
         .setFooter({ text: messages[intensity] || messages[0] });
 }
 
 /**
- * Creates rarity reveal with explosive particle effects
+ * Creates rarity reveal with professional explosion effects
  */
 async function createAdvancedRarityReveal(interaction, rarity) {
     const config = rarities[rarity];
     const rarityEffects = {
-        common: { particles: 'water', frames: 3, colors: ['#808080', '#A0A0A0'] },
-        uncommon: { particles: 'sparkles', frames: 4, colors: ['#00FF00', '#32CD32'] },
-        rare: { particles: 'energy', frames: 5, colors: ['#0099FF', '#00BFFF'] },
-        legendary: { particles: 'energy', frames: 6, colors: ['#FFD700', '#FFA500'] },
-        mythical: { particles: 'cosmic', frames: 8, colors: ['#FF1493', '#FF69B4', '#DA70D6'] },
-        omnipotent: { particles: 'divine', frames: 10, colors: ['#9400D3', '#8A2BE2', '#4B0082'] }
+        common: { particles: 'water', frames: 3, explosion: '∘' },
+        uncommon: { particles: 'sparkles', frames: 4, explosion: '◦' },
+        rare: { particles: 'energy', frames: 5, explosion: '●' },
+        legendary: { particles: 'energy', frames: 6, explosion: '◆' },
+        mythical: { particles: 'cosmic', frames: 8, explosion: '❋' },
+        omnipotent: { particles: 'divine', frames: 10, explosion: '✦' }
     };
 
     const effect = rarityEffects[rarity] || rarityEffects.common;
     
     // Multi-frame explosion animation
     for (let frame = 0; frame < effect.frames; frame++) {
-        const currentColor = effect.colors[frame % effect.colors.length];
         const particles = VisualEffects.particles[effect.particles];
-        const explosionRadius = Math.min(5, frame + 1);
+        const particle = particles[frame % particles.length];
+        const explosionChar = effect.explosion;
         
-        // Create expanding particle field
-        const particleField = [];
-        for (let i = 0; i < explosionRadius; i++) {
-            const particleCount = Math.max(5, 15 - (i * 2));
-            const ring = particles[Math.floor(Math.random() * particles.length)].repeat(particleCount);
-            particleField.push(ring);
-        }
+        // Create expanding rings
+        const ringSize = frame + 1;
+        const outerRing = explosionChar.repeat(Math.min(20, ringSize * 3));
+        const innerRing = explosionChar.repeat(Math.max(5, ringSize));
         
-        const description = `\`\`\`
-${particleField[0] || ''}
-${config.emoji.repeat(12)}
-${config.emoji}  ${config.name.toUpperCase()}  ${config.emoji}
-${config.emoji.repeat(12)}
-${particleField[1] || ''}
-\`\`\``;
+        const description = `
+╔══════════════════════════════════════╗
+║  ${outerRing.slice(0, 5)}                          ${outerRing.slice(0, 5)}  ║
+║                                      ║
+║      ${config.emoji}${config.emoji}  ${config.name.toUpperCase()}  ${config.emoji}${config.emoji}      ║
+║                                      ║
+║    ${innerRing.slice(0, 8)}      ${innerRing.slice(0, 8)}    ║
+║                                      ║
+║  ${particle} ${config.stars}  R A R I T Y  R E V E A L E D  ${config.stars} ${particle}  ║
+║                                      ║
+╚══════════════════════════════════════╝`;
 
         const embed = new EmbedBuilder()
             .setTitle('🏴‍☠️ Rarity Revealed!')
-            .setDescription(description)
-            .setColor(currentColor)
-            .setFooter({ text: `${config.stars} ${config.name} Rarity! ${particles[frame % particles.length]}` });
+            .setDescription('```' + description + '```')
+            .setColor(config.color)
+            .setFooter({ text: `${config.stars} ${config.name} Rarity! ${particle}` });
 
         await interaction.editReply({ embeds: [embed] });
-        await sleep(200); // Fast explosion frames
+        await sleep(150);
     }
     
-    await sleep(1000); // Pause to admire the explosion
+    await sleep(800);
 }
 
 /**
- * Creates final reveal with cinematic effects
+ * Creates final reveal with cinematic professional layout
  */
 function createAdvancedFinalEmbed(character, rarity, interaction, frame = 0) {
     const config = rarities[rarity];
@@ -207,9 +244,17 @@ function createAdvancedFinalEmbed(character, rarity, interaction, frame = 0) {
     
     // Cinematic entrance effect
     const entrance = frame < 4;
-    const pulseIntensity = VisualEffects.createPulse(frame, maxFrames, 1);
+    const revealProgress = Math.min(1, frame / 4);
     
-    // Dynamic particle background based on rarity
+    // Get character name with reveal effect
+    const nameLength = character.name.length;
+    const revealedChars = Math.floor(nameLength * revealProgress);
+    const hiddenChars = nameLength - revealedChars;
+    const displayName = entrance ? 
+        character.name.slice(0, revealedChars) + '█'.repeat(hiddenChars) : 
+        character.name;
+    
+    // Dynamic particles based on rarity
     const particleMap = {
         common: 'water',
         uncommon: 'sparkles', 
@@ -219,46 +264,60 @@ function createAdvancedFinalEmbed(character, rarity, interaction, frame = 0) {
         omnipotent: 'divine'
     };
     
-    const particles = VisualEffects.particles[particleMap[rarity]] || VisualEffects.particles.water;
+    const particles = VisualEffects.particles[particleMap[rarity]];
     const bgParticle = particles[frame % particles.length];
     
-    let description = `${bgParticle.repeat(3)} **${config.stars}** ${bgParticle.repeat(3)}
-        
-**${character.name}**
-${entrance ? '`Emerging from the mists...`' : `**Bounty:** ${character.bounty} Berry`}
-${entrance ? '' : `**Crew:** ${character.crew}`}
-${entrance ? '' : `**Rarity:** ${config.name}`}
-        
-${entrance ? '*The seas part to reveal...*' : '*"The seas have chosen you!"*'}`;
+    // Professional character card layout
+    const cardContent = entrance ? `
+╔══════════════════════════════════════╗
+║                                      ║
+║           ${config.emoji}  ${config.stars}  ${config.emoji}           ║
+║                                      ║
+║            ${displayName}            ║
+║                                      ║
+║         ▓▓▓ MATERIALIZING ▓▓▓        ║
+║                                      ║
+║     ${bgParticle} The seas part to reveal... ${bgParticle}     ║
+║                                      ║
+╚══════════════════════════════════════╝` : `
+╔══════════════════════════════════════╗
+║           ${config.emoji}  ${config.stars}  ${config.emoji}           ║
+║                                      ║
+║            ${character.name}            ║
+║                                      ║
+║  Bounty: ${character.bounty} Berry  ║
+║  Crew: ${character.crew}  ║
+║  Rarity: ${config.name}                ║
+║                                      ║
+║     ${bgParticle} "The seas have chosen you!" ${bgParticle}     ║
+║                                      ║
+╚══════════════════════════════════════╝`;
     
-    // Add rarity-specific effects
-    const rarityEffects = {
-        omnipotent: `\n\n🌌 **OMNIPOTENT PULL!** 🌌\n✨ *The cosmos itself bows before you!* ✨\n${bgParticle} *Reality reshapes at your will!* ${bgParticle}`,
-        mythical: `\n\n🔮 **MYTHICAL PULL!** 🔮\n🌟 *Legends become reality!* 🌟\n${bgParticle} *The impossible is now possible!* ${bgParticle}`,
-        legendary: `\n\n🟡 **LEGENDARY PULL!** 🟡\n⚡ *A legend walks among us!* ⚡\n${bgParticle} *History trembles before this power!* ${bgParticle}`,
-        rare: `\n\n🔵 **RARE PULL!** 🔵\n💎 *A skilled warrior joins!* 💎`,
-        uncommon: `\n\n🟢 **UNCOMMON PULL!** 🟢\n🌟 *A promising pirate appears!* 🌟`,
-        common: `\n\n⚪ **COMMON PULL!** ⚪\n⭐ *A reliable crew member joins!* ⭐`
-    };
+    let description = '```' + cardContent + '```';
     
+    // Add rarity-specific effects only after full reveal
     if (!entrance) {
+        const rarityEffects = {
+            omnipotent: `\n\n🌌 **OMNIPOTENT PULL!** 🌌\n✨ *The cosmos itself bows before you!* ✨\n${bgParticle} *Reality reshapes at your will!* ${bgParticle}`,
+            mythical: `\n\n🔮 **MYTHICAL PULL!** 🔮\n🌟 *Legends become reality!* 🌟\n${bgParticle} *The impossible is now possible!* ${bgParticle}`,
+            legendary: `\n\n🟡 **LEGENDARY PULL!** 🟡\n⚡ *A legend walks among us!* ⚡\n${bgParticle} *History trembles before this power!* ${bgParticle}`,
+            rare: `\n\n🔵 **RARE PULL!** 🔵\n💎 *A skilled warrior joins your crew!* 💎`,
+            uncommon: `\n\n🟢 **UNCOMMON PULL!** 🟢\n🌟 *A promising pirate appears!* 🌟`,
+            common: `\n\n⚪ **COMMON PULL!** ⚪\n⭐ *A reliable crew member joins!* ⭐`
+        };
+        
         description += rarityEffects[rarity] || '';
     }
     
-    // Dynamic color with pulse effect
-    const baseColor = parseInt(config.color.slice(1), 16);
-    const brightness = Math.floor(pulseIntensity * 0.3 * 255);
-    const enhancedColor = Math.min(0xFFFFFF, baseColor + brightness).toString(16).padStart(6, '0');
-    
     return new EmbedBuilder()
-        .setTitle(`${config.emoji} ${entrance ? '???' : character.name} ${config.emoji}`)
+        .setTitle(`${config.emoji} ${entrance ? 'Summoning...' : character.name} ${config.emoji}`)
         .setDescription(description)
-        .setColor(`#${enhancedColor}`)
+        .setColor(config.color)
         .setFooter({ 
-            text: `${entrance ? 'Materializing...' : `Congratulations ${interaction.user.username}!`} | One Piece Gacha ${bgParticle}`,
-            iconURL: interaction.user.displayAvatarURL()
+            text: `${entrance ? 'Materializing from the seas...' : `Congratulations ${interaction.user.username}!`} | One Piece Gacha ${bgParticle}`,
+            iconURL: entrance ? null : interaction.user.displayAvatarURL()
         })
-        .setTimestamp();
+        .setTimestamp(!entrance);
 }
 
 /**
