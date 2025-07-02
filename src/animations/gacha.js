@@ -2,11 +2,11 @@ const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('
 const { DevilFruitDatabase } = require('../data/devilfruit');
 
 // ═══════════════════════════════════════════════════════════════════
-//                    PERFECT SURPRISE ENGINE
+//                    EPIC IMPROVED ENGINE
 // ═══════════════════════════════════════════════════════════════════
 
-const SurpriseEngine = {
-    // Lightning-fast rainbow colors
+const EpicEngine = {
+    // Ultra-fast rainbow colors
     rainbowColors: [
         '#FF0000', '#FF3300', '#FF6600', '#FF9900', '#FFCC00', '#FFFF00',
         '#CCFF00', '#99FF00', '#66FF00', '#33FF00', '#00FF00', '#00FF33',
@@ -15,354 +15,300 @@ const SurpriseEngine = {
         '#CC00FF', '#FF00FF', '#FF00CC', '#FF0099', '#FF0066', '#FF0033'
     ],
 
-    // PERFECT width system
-    PERFECT_WIDTH: 50,
+    // Perfect width system
+    PERFECT_WIDTH: 45,
     
-    // Create perfectly sized frame with exact character counting
-    createPerfectFrame(content, frameStyle = '█') {
-        const totalWidth = this.PERFECT_WIDTH;
-        const borderWidth = 2; // 1 char each side
-        const innerWidth = totalWidth - borderWidth;
+    // Create simple clean text display - NO WHITE BARS
+    createCleanDisplay(content) {
+        const width = this.PERFECT_WIDTH;
+        let cleanContent = content.replace(/\*+/g, '').trim();
         
-        // Clean content - remove any existing formatting
-        let cleanContent = content.replace(/\*+/g, '').replace(/[⚡💥]/g, '').trim();
-        
-        // Truncate if too long
-        if (cleanContent.length > innerWidth) {
-            cleanContent = cleanContent.slice(0, innerWidth - 3) + '...';
+        if (cleanContent.length > width) {
+            cleanContent = cleanContent.slice(0, width - 3) + '...';
         }
         
-        // Calculate exact padding
-        const contentLength = cleanContent.length;
-        const totalPadding = innerWidth - contentLength;
-        const leftPad = Math.floor(totalPadding / 2);
-        const rightPad = totalPadding - leftPad;
+        const padding = width - cleanContent.length;
+        const leftPad = Math.floor(padding / 2);
+        const rightPad = padding - leftPad;
         
-        // Create lines with exact width
-        const topLine = frameStyle.repeat(totalWidth);
-        const contentLine = frameStyle + ' '.repeat(leftPad) + cleanContent + ' '.repeat(rightPad) + frameStyle;
-        const bottomLine = frameStyle.repeat(totalWidth);
-        
-        // Ensure each line is exactly the same length
-        const paddedContentLine = contentLine.padEnd(totalWidth, ' ').slice(0, totalWidth);
-        
-        return `\`\`\`\n${topLine}\n${paddedContentLine}\n${bottomLine}\n\`\`\``;
+        return ' '.repeat(leftPad) + cleanContent + ' '.repeat(rightPad);
     },
-    
-    // Perfect separator
-    createPerfectSeparator(char = '═') {
+
+    // Simple separator line
+    createSeparator(char = '═') {
         return char.repeat(this.PERFECT_WIDTH);
     },
-    
-    // Perfect effects bar with exact width control
-    createPerfectEffects(effects) {
-        let effectsLine = effects.toString();
-        const targetWidth = this.PERFECT_WIDTH;
-        
-        if (effectsLine.length > targetWidth) {
-            // Truncate if too long
-            effectsLine = effectsLine.slice(0, targetWidth);
-        } else if (effectsLine.length < targetWidth) {
-            // Pad to exact width
-            const padding = targetWidth - effectsLine.length;
-            const leftPad = Math.floor(padding / 2);
-            const rightPad = padding - leftPad;
-            effectsLine = ' '.repeat(leftPad) + effectsLine + ' '.repeat(rightPad);
-        }
-        
-        // Ensure exactly the target width
-        return effectsLine.slice(0, targetWidth).padEnd(targetWidth, ' ');
+
+    // Simple effects line
+    createEffectsLine(effects) {
+        return this.createCleanDisplay(effects);
     },
-    
-    // Perfect charging bar with exact width
-    createPerfectChargingBar(percentage) {
-        const barWidth = 30; // Fixed bar width
-        const filled = Math.floor((percentage / 100) * barWidth);
-        const empty = barWidth - filled;
-        const bar = '█'.repeat(filled) + '░'.repeat(empty);
-        const barText = `[${bar}] ${percentage}%`;
-        
-        // Ensure exact width
-        return this.createPerfectEffects(barText);
+
+    // Simple progress display - NO BARS
+    createProgressDisplay(percentage) {
+        return this.createCleanDisplay(`Power Level: ${percentage}%`);
     },
-    
-    // Ultra-fast color cycling
+
+    // Ultra-fast color
     getUltraColor(frame) {
         return this.rainbowColors[frame % this.rainbowColors.length];
     },
-    
-    // Power level effects with clean text for frames
-    createPowerText(text, level, useRed = false) {
-        // For frame display, keep text clean and measure correctly
-        let baseText = text;
-        
-        if (useRed) {
-            // Red text variations - but keep length predictable
-            if (level <= 2) return `🔴 ${baseText}`;
-            if (level <= 4) return `🔴 ${baseText}`;
-            if (level <= 6) return `🔴 ${baseText}`;
-            if (level <= 8) return `🔴 ${baseText}`;
-            if (level <= 10) return `🔴 ${baseText}`;
-            return `🔴 ${baseText}`;
-        } else {
-            // Regular text variations - clean for frame calculations
-            if (level <= 2) return baseText;
-            if (level <= 4) return baseText;
-            if (level <= 6) return baseText;
-            if (level <= 8) return baseText;
-            if (level <= 10) return baseText;
-            return baseText;
-        }
+
+    // Simple text styling
+    createStyledText(text, useRed = false) {
+        return useRed ? `🔴 ${text}` : text;
     },
-    
-    // Randomized message pools
-    getRandomMessage(messagePool) {
-        return messagePool[Math.floor(Math.random() * messagePool.length)];
-    },
-    
-    // Randomize fake rarity sequence
-    getRandomFakeSequence() {
-        const sequences = [
-            ['legendary', 'mythical', 'omnipotent'],
-            ['mythical', 'legendary', 'omnipotent'],
-            ['legendary', 'omnipotent', 'mythical'],
-            ['mythical', 'omnipotent', 'legendary'],
-            ['omnipotent', 'legendary', 'mythical'],
-            ['legendary', 'mythical'] // Sometimes skip omnipotent
-        ];
-        return sequences[Math.floor(Math.random() * sequences.length)];
+
+    // Get random message
+    getRandomMessage(pool) {
+        return pool[Math.floor(Math.random() * pool.length)];
     }
 };
 
 // ═══════════════════════════════════════════════════════════════════
-//                    SURPRISE ANIMATION PHASES
+//                    IMPROVED ANIMATION PHASES
 // ═══════════════════════════════════════════════════════════════════
 
-// PHASE 1: Initial Scan (6 frames)
-function createInitialScan(frame) {
-    const percentage = Math.floor((frame / 5) * 25);
+// PHASE 1: Scanning (6 frames)
+function createScanning(frame) {
+    const percentage = Math.floor((frame / 5) * 30);
     
-    const messagePool = [
-        "🔍 Scanning Devil Fruit energy...",
-        "🌊 Detecting mystical signatures...",
-        "⚡ Analyzing power patterns...",
-        "🔮 Reading energy frequencies...",
-        "🌟 Locating Devil Fruit source...",
-        "💫 Probing dimensional barriers..."
+    const messages = [
+        "🔍 Searching the Grand Line depths...",
+        "🌊 Sensing Devil Fruit energy...",
+        "⚡ Detecting mysterious power...",
+        "🔮 Something valuable approaching...",
+        "🌟 Incredible energy building...",
+        "💫 Massive power signature found..."
     ];
     
-    const message = SurpriseEngine.getRandomMessage(messagePool);
-    const useRed = Math.random() < 0.3; // 30% chance for red text
-    const styledMessage = SurpriseEngine.createPowerText(message, frame + 1, useRed);
+    const message = messages[frame] || EpicEngine.getRandomMessage(messages);
+    const useRed = Math.random() < 0.3;
+    const styledMessage = EpicEngine.createStyledText(message, useRed);
     
-    const effectsPool = ['🔍', '🌊', '⚡', '🔮', '🌟', '💫'];
-    const effect = effectsPool[frame % effectsPool.length];
-    const effects = effect.repeat(Math.min(frame * 2 + 6, 16));
-    
-    const separator = SurpriseEngine.createPerfectSeparator('─');
-    const chargingBar = SurpriseEngine.createPerfectChargingBar(percentage);
-    const effectsBar = SurpriseEngine.createPerfectEffects(effects);
+    const effects = '🔍🌊⚡🔮🌟💫'.repeat(3);
+    const separator = EpicEngine.createSeparator('─');
+    const progress = EpicEngine.createProgressDisplay(percentage);
+    const effectsLine = EpicEngine.createEffectsLine(effects);
     
     return new EmbedBuilder()
-        .setTitle('🔍 DEVIL FRUIT SCANNER ACTIVATED')
+        .setTitle('🔍 DEVIL FRUIT HUNT ACTIVE')
         .setDescription(`
-${effectsBar}
+${effectsLine}
+
 ${separator}
-${SurpriseEngine.createPerfectFrame(styledMessage, '═')}
+
+**${styledMessage}**
+
+${progress}
+
 ${separator}
-🔋 **SCANNING SYSTEM ONLINE** 🔋
-${chargingBar}
-${separator}
-*Probing the mysteries of the Grand Line...*
-${effectsBar}
+
+*The Grand Line holds many secrets...*
         `)
-        .setColor(SurpriseEngine.getUltraColor(frame * 6))
-        .setFooter({ text: `🔍 Scan Progress: ${percentage}% | Initializing Systems` });
+        .setColor(EpicEngine.getUltraColor(frame * 8))
+        .setFooter({ text: `🔍 Scanning: ${percentage}% | Searching the seas...` });
 }
 
-// PHASE 2: Energy Detection (8 frames)
-function createEnergyDetection(frame) {
-    const percentage = 25 + Math.floor((frame / 7) * 30);
+// PHASE 2: Power Buildup (8 frames)
+function createPowerBuildup(frame) {
+    const percentage = 30 + Math.floor((frame / 7) * 40);
     
-    const messagePool = [
-        "⚡ Weak energy signature found...",
-        "🔥 Energy levels increasing...",
-        "⚡ Power readings climbing...",
-        "💥 Significant energy detected...",
-        "⚡ STRONG power levels found...",
-        "🔥 IMPRESSIVE energy readings...",
-        "⚡ EXCEPTIONAL power detected...",
-        "💥 EXTRAORDINARY energy levels..."
+    const messages = [
+        "⚡ Weak power detected...",
+        "🔥 Energy levels rising...",
+        "⚡ Growing stronger...",
+        "💥 Significant power found...",
+        "⚡ STRONG energy detected...",
+        "🔥 IMPRESSIVE power levels...",
+        "⚡ AMAZING energy signature...",
+        "💥 INCREDIBLE power building..."
     ];
     
-    const message = messagePool[frame] || SurpriseEngine.getRandomMessage(messagePool);
-    const useRed = Math.random() < 0.4; // 40% chance for red text
-    const styledMessage = SurpriseEngine.createPowerText(message, frame + 2, useRed);
+    const message = messages[frame] || EpicEngine.getRandomMessage(messages);
+    const useRed = Math.random() < 0.4;
+    const styledMessage = EpicEngine.createStyledText(message, useRed);
     
-    const effectsPool = ['⚡', '🔥', '💥', '⭐', '🌟', '💫'];
-    const effect = effectsPool[Math.floor(Math.random() * effectsPool.length)];
-    const effects = effect.repeat(Math.min(frame * 2 + 4, 18));
-    
-    const separator = SurpriseEngine.createPerfectSeparator('═');
-    const chargingBar = SurpriseEngine.createPerfectChargingBar(percentage);
-    const effectsBar = SurpriseEngine.createPerfectEffects(effects);
+    const effects = '⚡🔥💥🌟💫✨'.repeat(3);
+    const separator = EpicEngine.createSeparator('═');
+    const progress = EpicEngine.createProgressDisplay(percentage);
+    const effectsLine = EpicEngine.createEffectsLine(effects);
     
     return new EmbedBuilder()
-        .setTitle('⚡ ENERGY SIGNATURE DETECTED')
+        .setTitle('⚡ POWERFUL ENERGY RISING')
         .setDescription(`
-${effectsBar}
+${effectsLine}
+
 ${separator}
-${SurpriseEngine.createPerfectFrame(styledMessage, '▬')}
+
+**${styledMessage}**
+
+${progress}
+
 ${separator}
-⚡ **POWER LEVELS RISING** ⚡
-${chargingBar}
-${separator}
-*Energy signature strengthening...*
-${effectsBar}
+
+*Something special is emerging...*
         `)
-        .setColor(SurpriseEngine.getUltraColor(frame * 8 + 15))
-        .setFooter({ text: `⚡ Energy Level: ${percentage}% | Power Detection Active` });
+        .setColor(EpicEngine.getUltraColor(frame * 10 + 20))
+        .setFooter({ text: `⚡ Power: ${percentage}% | Energy building...` });
 }
 
-// PHASE 3: Fake High Rarity Detection (randomized)
-function createFakeHighRarityDetection(frame, fakeRarity) {
-    const percentage = 50 + Math.floor((frame / 9) * 30);
+// PHASE 3: CONVINCING Fake Legendary (12 frames) - MUCH BETTER TROLLING
+function createConvincingFakeLegendary(frame) {
+    const percentage = 70 + Math.floor((frame / 11) * 25);
     
-    const rarityConfigs = {
-        legendary: {
-            emoji: '🟡',
-            color: '#F39C12',
-            name: 'LEGENDARY',
-            effects: '👑🟡⚡🌟⚡🟡👑',
-            messages: [
-                "🟡 High-tier signature detected...",
-                "👑 Exceptional power confirmed...",
-                "🟡 Elite-class energy found...",
-                "👑 Superior rarity detected...",
-                "🟡 HIGH-GRADE Devil Fruit located...",
-                "👑 PREMIUM power signature...",
-                "🟡 ELITE-TIER energy confirmed...",
-                "👑 Wait... the winds are shifting...",
-                "⚠️ The Grand Line is changing course...",
-                "🔄 Mysterious currents detected..."
-            ]
-        },
-        mythical: {
-            emoji: '🔴',
-            color: '#E74C3C',
-            name: 'MYTHICAL',
-            effects: '🔮🔴✨💎✨🔴🔮',
-            messages: [
-                "🔴 Ancient power signature...",
-                "🔮 Legendary-tier energy found...",
-                "🔴 Mythic-class power detected...",
-                "🔮 World-class energy confirmed...",
-                "🔴 ANCIENT Devil Fruit located...",
-                "🔮 MYTHIC power overwhelming...",
-                "🔴 WORLD-TIER energy detected...",
-                "🔮 Actually... the sea is shifting...",
-                "⚠️ Ocean currents are changing...",
-                "🔄 The Grand Line stirs again..."
-            ]
-        },
-        omnipotent: {
-            emoji: '🌌',
-            color: '#9B59B6',
-            name: 'OMNIPOTENT',
-            effects: '🌌💫⭐🌟💫🌌💫',
-            messages: [
-                "🌌 Cosmic signature detected...",
-                "💫 Reality-tier power found...",
-                "🌌 Universal-class energy...",
-                "💫 Omnipotent force detected...",
-                "🌌 COSMIC Devil Fruit found...",
-                "💫 REALITY-BENDING power...",
-                "🌌 UNIVERSAL energy confirmed...",
-                "💫 Hold on... the seas are restless...",
-                "⚠️ Ocean mysteries deepening...",
-                "🔄 The Grand Line reveals more..."
-            ]
-        }
-    };
+    const messages = [
+        "🟡 LEGENDARY signature emerging...",
+        "👑 LEGENDARY-class power confirmed...",
+        "🟡 This is definitely LEGENDARY...",
+        "👑 LEGENDARY Devil Fruit located...",
+        "🟡 100% LEGENDARY confirmation...",
+        "👑 LEGENDARY power overwhelming...",
+        "🟡 LEGENDARY rarity locked in...",
+        "👑 LEGENDARY energy at maximum...",
+        "🟡 Wait... the seas are changing...",
+        "🌊 Ocean currents shifting...",
+        "🌊 The Grand Line speaks differently...",
+        "🌊 New revelations emerging..."
+    ];
     
-    const config = rarityConfigs[fakeRarity];
-    const message = config.messages[frame] || SurpriseEngine.getRandomMessage(config.messages);
-    const useRed = Math.random() < 0.5; // 50% chance for red text
-    const styledMessage = SurpriseEngine.createPowerText(message, frame + 4, useRed);
+    const message = messages[frame] || EpicEngine.getRandomMessage(messages);
+    const useRed = frame >= 8 ? true : Math.random() < 0.2;
+    const styledMessage = EpicEngine.createStyledText(message, useRed);
     
-    // Change color and effects in final frames to show "error"
-    let color = config.color;
-    let effects = config.effects.repeat(2);
-    let title = `${config.emoji} ${config.name} DETECTED! ${config.emoji}`;
+    // Use real legendary colors for most frames to be convincing
+    let color = '#F39C12'; // Legendary gold
+    let effects = '👑🟡⚡🌟⚡🟡👑'.repeat(2);
+    let title = '👑 LEGENDARY DEVIL FRUIT! 👑';
     
-    if (frame >= 7) {
-        color = SurpriseEngine.getUltraColor(frame * 15 + 40);
-        effects = '🌊🔄🌊🔄🌊🔄🌊🔄🌊🔄🌊🔄🌊';
-        title = '🌊 THE SEAS ARE SHIFTING 🌊';
+    // Only in final frames show the "shift"
+    if (frame >= 8) {
+        color = EpicEngine.getUltraColor(frame * 15 + 60);
+        effects = '🌊💫🌊💫🌊💫🌊💫🌊💫🌊💫🌊';
+        title = '🌊 THE GRAND LINE SHIFTS 🌊';
     }
     
-    const separator = SurpriseEngine.createPerfectSeparator('█');
-    const chargingBar = SurpriseEngine.createPerfectChargingBar(percentage);
-    const effectsBar = SurpriseEngine.createPerfectEffects(effects);
+    const separator = EpicEngine.createSeparator('█');
+    const progress = EpicEngine.createProgressDisplay(percentage);
+    const effectsLine = EpicEngine.createEffectsLine(effects);
     
     return new EmbedBuilder()
         .setTitle(title)
         .setDescription(`
-${effectsBar}
+${effectsLine}
+
 ${separator}
-${SurpriseEngine.createPerfectFrame(styledMessage, '█')}
+
+**${styledMessage}**
+
+${progress}
+
 ${separator}
-${config.emoji} **${frame < 7 ? config.name + ' CONFIRMED' : 'RECALIBRATING SYSTEMS'}** ${config.emoji}
-${chargingBar}
-${separator}
-*${frame < 7 ? 'Incredible power detected!' : 'Sensors require adjustment...'}*
-${effectsBar}
+
+*${frame < 8 ? 'LEGENDARY power confirmed!' : 'The ocean reveals new truths...'}*
         `)
         .setColor(color)
-        .setFooter({ text: `${frame < 7 ? config.emoji : '🌊'} Status: ${frame < 7 ? config.name + ' CLASS' : 'SEAS SHIFTING'} | ${percentage}%` });
+        .setFooter({ text: `${frame < 8 ? '👑' : '🌊'} Status: ${frame < 8 ? 'LEGENDARY CONFIRMED' : 'SEAS SHIFTING'} | ${percentage}%` });
 }
 
-// PHASE 4: Final Calibration (6 frames)
-function createFinalCalibration(frame) {
-    const percentage = 80 + Math.floor((frame / 5) * 20);
+// PHASE 4: CONVINCING Fake Mythical (10 frames) - EVEN BETTER TROLLING
+function createConvincingFakeMythical(frame) {
+    const percentage = 85 + Math.floor((frame / 9) * 15);
     
-    const messagePool = [
-        "🌊 The sea reveals its true nature...",
-        "📊 Reading the ocean's final secrets...",
-        "🎯 The Grand Line shows its hand...",
-        "✅ The seas have spoken...",
-        "📍 Ocean mysteries unveiled...",
-        "🎯 The true treasure emerges..."
+    const messages = [
+        "🔴 Actually... MYTHICAL detected!",
+        "🔮 MYTHICAL-tier power confirmed!",
+        "🔴 This is genuinely MYTHICAL!",
+        "🔮 MYTHICAL Devil Fruit verified!",
+        "🔴 MYTHICAL class absolutely certain!",
+        "🔮 MYTHICAL energy beyond doubt!",
+        "🔴 MYTHICAL power at peak levels!",
+        "🔮 But wait... something deeper stirs...",
+        "🌊 The ocean depths call out...",
+        "🌊 Ancient secrets awakening..."
     ];
     
-    const message = messagePool[frame] || SurpriseEngine.getRandomMessage(messagePool);
-    const useRed = Math.random() < 0.3;
-    const styledMessage = SurpriseEngine.createPowerText(message, frame + 3, useRed);
+    const message = messages[frame] || EpicEngine.getRandomMessage(messages);
+    const useRed = frame >= 7 ? true : Math.random() < 0.3;
+    const styledMessage = EpicEngine.createStyledText(message, useRed);
     
-    const effects = '🌊📊🎯✅📍🎯'.repeat(Math.floor(frame / 2) + 2);
-    const separator = SurpriseEngine.createPerfectSeparator('═');
-    const chargingBar = SurpriseEngine.createPerfectChargingBar(percentage);
-    const effectsBar = SurpriseEngine.createPerfectEffects(effects);
+    // Use real mythical colors to be super convincing
+    let color = '#E74C3C'; // Mythical red
+    let effects = '🔮🔴✨💎✨🔴🔮'.repeat(2);
+    let title = '🔮 MYTHICAL DEVIL FRUIT! 🔮';
+    
+    if (frame >= 7) {
+        color = EpicEngine.getUltraColor(frame * 18 + 80);
+        effects = '🌊🔥🌊🔥🌊🔥🌊🔥🌊🔥🌊🔥🌊';
+        title = '🌊 DEEPER MYSTERIES EMERGE 🌊';
+    }
+    
+    const separator = EpicEngine.createSeparator('█');
+    const progress = EpicEngine.createProgressDisplay(percentage);
+    const effectsLine = EpicEngine.createEffectsLine(effects);
     
     return new EmbedBuilder()
-        .setTitle('📍 THE SEAS REVEAL TRUTH')
+        .setTitle(title)
         .setDescription(`
-${effectsBar}
+${effectsLine}
+
 ${separator}
-${SurpriseEngine.createPerfectFrame(styledMessage, '═')}
+
+**${styledMessage}**
+
+${progress}
+
 ${separator}
-✅ **THE OCEAN HAS SPOKEN** ✅
-${chargingBar}
-${separator}
-*The Grand Line reveals its secrets...*
-${effectsBar}
+
+*${frame < 7 ? 'MYTHICAL power overwhelming!' : 'Ancient ocean secrets stirring...'}*
         `)
-        .setColor(SurpriseEngine.getUltraColor(frame * 20 + 60))
-        .setFooter({ text: `📍 Ocean Truth: ${percentage}% | The Seas Speak` });
+        .setColor(color)
+        .setFooter({ text: `${frame < 7 ? '🔮' : '🌊'} Status: ${frame < 7 ? 'MYTHICAL CONFIRMED' : 'ANCIENT STIRRING'} | ${percentage}%` });
 }
 
-// PHASE 5: True Devil Fruit Reveal
-async function createTrueDevilFruitReveal(interaction, devilFruit, rarity) {
+// PHASE 5: Final Truth (6 frames)
+function createFinalTruth(frame) {
+    const percentage = 95 + Math.floor((frame / 5) * 5);
+    
+    const messages = [
+        "🎯 The ocean reveals its true gift...",
+        "🌊 The Grand Line shows its hand...",
+        "✅ True power level emerging...",
+        "📍 Genuine Devil Fruit materializing...",
+        "🎯 The seas have spoken clearly...",
+        "✅ Your real treasure appears..."
+    ];
+    
+    const message = messages[frame] || EpicEngine.getRandomMessage(messages);
+    const useRed = Math.random() < 0.3;
+    const styledMessage = EpicEngine.createStyledText(message, useRed);
+    
+    const effects = '🎯🌊✅📍🎯🌊'.repeat(3);
+    const separator = EpicEngine.createSeparator('═');
+    const progress = EpicEngine.createProgressDisplay(percentage);
+    const effectsLine = EpicEngine.createEffectsLine(effects);
+    
+    return new EmbedBuilder()
+        .setTitle('🎯 THE OCEAN SPEAKS TRUTH')
+        .setDescription(`
+${effectsLine}
+
+${separator}
+
+**${styledMessage}**
+
+${progress}
+
+${separator}
+
+*The Grand Line reveals your destiny...*
+        `)
+        .setColor(EpicEngine.getUltraColor(frame * 25 + 100))
+        .setFooter({ text: `🎯 Truth: ${percentage}% | The seas reveal all` });
+}
+
+// PHASE 6: Devil Fruit Materialization
+async function createDevilFruitMaterialization(interaction, devilFruit, rarity) {
     const config = DevilFruitDatabase.getRarityConfig(rarity);
     const frames = 6;
     
@@ -376,8 +322,7 @@ async function createTrueDevilFruitReveal(interaction, devilFruit, rarity) {
         const hiddenName = '◆'.repeat(nameLength - revealedChars);
         const displayName = frame === frames - 1 ? devilFruit.name : visibleName + hiddenName;
         
-        const useRed = Math.random() < 0.4;
-        const styledName = SurpriseEngine.createPowerText(displayName, 10, useRed);
+        const styledName = EpicEngine.createStyledText(displayName, Math.random() < 0.4);
         
         // Info reveal
         const infoLines = [
@@ -388,41 +333,44 @@ async function createTrueDevilFruitReveal(interaction, devilFruit, rarity) {
             `🔥 **Power Level:** ${frame >= 5 ? devilFruit.powerLevel.toLocaleString() : '???'}`
         ];
         
-        const effects = config.emoji.repeat(Math.min(frame * 3 + 8, 20));
-        const separator = SurpriseEngine.createPerfectSeparator('█');
-        const effectsBar = SurpriseEngine.createPerfectEffects(effects);
+        const effects = config.emoji.repeat(15);
+        const separator = EpicEngine.createSeparator('█');
+        const effectsLine = EpicEngine.createEffectsLine(effects);
         
         const embed = new EmbedBuilder()
-            .setTitle(`${config.emoji} DEVIL FRUIT MATERIALIZED ${config.emoji}`)
+            .setTitle(`${config.emoji} DEVIL FRUIT MANIFESTS ${config.emoji}`)
             .setDescription(`
-${effectsBar}
+${effectsLine}
+
 ${separator}
-${SurpriseEngine.createPerfectFrame(styledName, '█')}
-${separator}
+
+**${styledName}**
+
 ${infoLines.join('\n')}
-${separator}
+
 ${config.stars.repeat(Math.min(frame + 3, 8))}
-${effectsBar}
+
+${separator}
             `)
             .setColor(config.color)
-            .setFooter({ text: `🍈 Materialization: ${Math.floor(progress * 100)}% | ${config.name}` });
+            .setFooter({ text: `🍈 Manifestation: ${Math.floor(progress * 100)}% | ${config.name}` });
 
         await interaction.editReply({ embeds: [embed] });
         await new Promise(resolve => setTimeout(resolve, 800));
     }
 }
 
-// PHASE 6: Epic Finale
+// PHASE 7: Epic Finale
 function createEpicFinale(devilFruit, rarity, interaction) {
     const config = DevilFruitDatabase.getRarityConfig(rarity);
     
     const finaleMessages = {
-        omnipotent: '🌌 OMNIPOTENT DEVIL FRUIT! 🌌',
-        mythical: '🔮 MYTHICAL DEVIL FRUIT! 🔮',
-        legendary: '👑 LEGENDARY DEVIL FRUIT! 👑',
-        rare: '💎 RARE DEVIL FRUIT! 💎',
-        uncommon: '🌟 UNCOMMON DEVIL FRUIT! 🌟',
-        common: '⚓ DEVIL FRUIT DISCOVERED! ⚓'
+        omnipotent: '🌌 ACTUALLY OMNIPOTENT! INCREDIBLE! 🌌',
+        mythical: '🔮 WAIT... THIS IS ACTUALLY MYTHICAL! 🔮',
+        legendary: '👑 SURPRISE! ACTUALLY LEGENDARY! 👑',
+        rare: '💎 RARE DEVIL FRUIT DISCOVERED! 💎',
+        uncommon: '🌟 UNCOMMON DEVIL FRUIT FOUND! 🌟',
+        common: '⚓ DEVIL FRUIT COLLECTED! ⚓'
     };
     
     const effects = {
@@ -434,27 +382,27 @@ function createEpicFinale(devilFruit, rarity, interaction) {
         common: '⚓⭐🌊⭐🌊⭐⚓⭐🌊⭐🌊⭐⚓⭐🌊⭐'
     };
     
-    const epicName = SurpriseEngine.createPowerText(devilFruit.name, 10);
+    const epicName = EpicEngine.createStyledText(devilFruit.name);
     const finalEffect = effects[rarity] || effects.common;
     const finalTitle = finaleMessages[rarity] || finaleMessages.common;
     
-    // Special message for high rarities without revealing the surprise
-    const specialMessage = rarity === 'omnipotent' ? 
-        "Incredible! This is genuinely omnipotent-tier! 😲" :
+    // Surprise messages for high rarities
+    const surpriseMessage = rarity === 'omnipotent' ? 
+        "WHOA! The fake readings were wrong - this is ACTUALLY omnipotent! 😱" :
         rarity === 'mythical' ? 
-        "Amazing! This is actually mythical-class! 🤯" :
+        "AMAZING! Plot twist - this really IS mythical after all! 🤯" :
         rarity === 'legendary' ?
-        "Fantastic! This is truly legendary-grade! 😍" :
-        "Great discovery! Here's your Devil Fruit! 😊";
+        "INCREDIBLE! The legendary reading was actually correct! 😍" :
+        "The Grand Line has blessed you with this Devil Fruit! 😊";
     
-    const perfectEffects = SurpriseEngine.createPerfectEffects(finalEffect);
-    const separator = SurpriseEngine.createPerfectSeparator('█');
+    const perfectEffects = EpicEngine.createEffectsLine(finalEffect);
+    const separator = EpicEngine.createSeparator('█');
     
     const description = `
 ${perfectEffects}
+
 ${separator}
-${SurpriseEngine.createPerfectFrame(epicName, '█')}
-${separator}
+
 **${finalTitle}**
 
 🍈 **${devilFruit.name}**
@@ -468,11 +416,12 @@ ${config.stars.repeat(8)}
 
 🏆 **CONGRATULATIONS ${interaction.user.username.toUpperCase()}!** 🏆
 
-😊 *${specialMessage}*
+😄 *${surpriseMessage}*
 
 > *"${devilFruit.description}"*
 
 ${separator}
+
 ${perfectEffects}
     `;
 
@@ -498,7 +447,7 @@ ${perfectEffects}
             .setDescription(description)
             .setColor(config.color)
             .setFooter({ 
-                text: `🍈 Devil Fruit Hunt Complete | Discovered by ${interaction.user.username}`,
+                text: `🍈 Devil Fruit Hunt Complete | Found by ${interaction.user.username}`,
                 iconURL: interaction.user.displayAvatarURL()
             })
             .setTimestamp(),
@@ -507,7 +456,7 @@ ${perfectEffects}
 }
 
 // ═══════════════════════════════════════════════════════════════════
-//                    MASTER SURPRISE SEQUENCE
+//                    MASTER IMPROVED SEQUENCE
 // ═══════════════════════════════════════════════════════════════════
 
 async function createUltimateCinematicExperience(interaction) {
@@ -515,60 +464,62 @@ async function createUltimateCinematicExperience(interaction) {
         const rarity = DevilFruitDatabase.calculateDropRarity();
         const devilFruit = DevilFruitDatabase.getRandomDevilFruit(rarity);
         
-        // Randomize fake sequence
-        const fakeSequence = SurpriseEngine.getRandomFakeSequence();
+        console.log(`🎮 IMPROVED HUNT: ${devilFruit.name} (${rarity}) for ${interaction.user.username}`);
         
-        console.log(`🎮 SURPRISE SEQUENCE: ${devilFruit.name} (${rarity}) for ${interaction.user.username}`);
-        
-        // PHASE 1: Initial Scan (6 frames, 3 seconds)
+        // PHASE 1: Scanning (6 frames, 3 seconds)
         for (let frame = 0; frame < 6; frame++) {
-            const embed = createInitialScan(frame);
+            const embed = createScanning(frame);
             await interaction.editReply({ embeds: [embed] });
             await new Promise(resolve => setTimeout(resolve, 500));
         }
         
-        // PHASE 2: Energy Detection (8 frames, 3 seconds)
+        // PHASE 2: Power Buildup (8 frames, 3 seconds)
         for (let frame = 0; frame < 8; frame++) {
-            const embed = createEnergyDetection(frame);
+            const embed = createPowerBuildup(frame);
             await interaction.editReply({ embeds: [embed] });
             await new Promise(resolve => setTimeout(resolve, 375));
         }
         
-        // PHASE 3: Randomized Fake High Rarity Detection (10 frames each)
-        for (const fakeRarity of fakeSequence) {
-            for (let frame = 0; frame < 10; frame++) {
-                const embed = createFakeHighRarityDetection(frame, fakeRarity);
-                await interaction.editReply({ embeds: [embed] });
-                await new Promise(resolve => setTimeout(resolve, 350));
-            }
+        // PHASE 3: Convincing Fake Legendary (12 frames, 4 seconds)
+        for (let frame = 0; frame < 12; frame++) {
+            const embed = createConvincingFakeLegendary(frame);
+            await interaction.editReply({ embeds: [embed] });
+            await new Promise(resolve => setTimeout(resolve, 330));
         }
         
-        // PHASE 4: Final Calibration (6 frames, 3 seconds)
+        // PHASE 4: Convincing Fake Mythical (10 frames, 3.5 seconds)
+        for (let frame = 0; frame < 10; frame++) {
+            const embed = createConvincingFakeMythical(frame);
+            await interaction.editReply({ embeds: [embed] });
+            await new Promise(resolve => setTimeout(resolve, 350));
+        }
+        
+        // PHASE 5: Final Truth (6 frames, 3 seconds)
         for (let frame = 0; frame < 6; frame++) {
-            const embed = createFinalCalibration(frame);
+            const embed = createFinalTruth(frame);
             await interaction.editReply({ embeds: [embed] });
             await new Promise(resolve => setTimeout(resolve, 500));
         }
         
-        // PHASE 5: True Devil Fruit Reveal (6 frames, 5 seconds)
-        await createTrueDevilFruitReveal(interaction, devilFruit, rarity);
+        // PHASE 6: Devil Fruit Materialization (6 frames, 5 seconds)
+        await createDevilFruitMaterialization(interaction, devilFruit, rarity);
         
-        // PHASE 6: Epic Finale
+        // PHASE 7: Epic Finale
         const finale = createEpicFinale(devilFruit, rarity, interaction);
         await interaction.editReply({ 
             embeds: [finale.embed], 
             components: finale.components 
         });
         
-        console.log(`🎊 SURPRISE COMPLETE: ${devilFruit.name} (${rarity}) for ${interaction.user.username}!`);
+        console.log(`🎊 IMPROVED COMPLETE: ${devilFruit.name} (${rarity}) for ${interaction.user.username}!`);
         
     } catch (error) {
-        console.error('🚨 Surprise Error:', error);
+        console.error('🚨 Improved Animation Error:', error);
         
         const errorEmbed = new EmbedBuilder()
             .setTitle('⚠️ Hunt System Error!')
             .setDescription(`
-The Devil Fruit hunt encountered an error!
+The Devil Fruit hunt encountered an issue!
 
 *Please try hunting again!*
             `)
