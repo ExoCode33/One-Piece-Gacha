@@ -1,54 +1,4 @@
-**🍈 Type Collection:**
-${userStat ? Object.entries(userStat.typeCount || {})
-    .map(([type, count]) => `📋 **${type}:** ${count}`)
-    .join('\n') : 'No Devil Fruits yet!'}
-
-**⚡ Total Power Level:** ${userStat ? 
-    Object.entries(userStat.rarityCount)
-        .reduce((total, [rarity, count]) => {
-            const config = DevilFruitDatabase.getRarityConfig(rarity);
-            return total + (config.baseValue * count);
-        }, 0).toLocaleString() : 0}
-
-🚀 *Your Devil Fruit collection system is evolving! Soon you'll see detailed fruit cards and awakening management!*
-                    `)
-                    .setColor('#3498DB')
-                    .setFooter({ text: 'Every great pirate needs legendary Devil Fruits!' });
-                
-                await interaction.reply({ embeds: [collectionEmbed], ephemeral: true });
-                break;
-                
-            case 'fruit_details':
-            case 'character_details':
-                await interaction.reply({ 
-                    content: '📊 Detailed Devil Fruit analysis system coming soon! This will show complete awakening info, power breakdowns, and type advantages!', 
-                    ephemeral: true 
-                });
-                break;
-                
-            case 'view_all_hunts':
-            case 'view_all_pulls':
-                await interaction.reply({ 
-                    content: '📋 Detailed hunt history and Devil Fruit analytics dashboard coming soon!', 
-                    ephemeral: true 
-                });
-                break;
-        }
-    } catch (error) {
-        console.error('Button interaction error:', error);
-        try {
-            await interaction.reply({ 
-                content: '❌ Something went wrong with that action! The Devil Fruit tree is unstable!', 
-                ephemeral: true 
-            });
-        } catch (replyError) {
-            console.error('Failed to send button error message:', replyError);
-        }
-    }
-}
-
-// Export button handler
-module.exports.handleButtonInteractions = handleButtonInteractions;const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { createUltimateCinematicExperience } = require('../animations/gacha');
 const { DevilFruitDatabase } = require('../data/devilfruit');
 
@@ -109,26 +59,29 @@ module.exports = {
                 if (now < cooldownEnd) {
                     const timeLeft = Math.ceil((cooldownEnd - now) / 1000);
                     
+                    const userStatData = userStats.get(userId);
+                    const rarityText = Object.entries(userStatData.rarityCount || {})
+                        .map(([rarity, count]) => {
+                            const config = DevilFruitDatabase.getRarityConfig(rarity);
+                            return `${config.emoji} ${config.name}: ${count}`;
+                        }).join('\n');
+                    
                     const cooldownEmbed = new EmbedBuilder()
                         .setTitle('⏰ The Devil Fruit Tree Is Resting...')
                         .setDescription(`
 🍈 The Grand Line needs time to grow new Devil Fruits...
 
-**⏱️ Time Remaining:** ${timeLeft} seconds
+⏱️ Time Remaining: ${timeLeft} seconds
 
-🔮 *Use this moment to prepare your spirit for the next legendary hunt!*
+🔮 Use this moment to prepare your spirit for the next legendary hunt!
 
-**📊 Your Devil Fruit Statistics:**
-• **Total Hunts:** ${userStats.get(userId).totalHunts}
-• **Fruits Found:** ${userStats.get(userId).fruitsObtained.size}
-• **Last Hunt:** ${userStats.get(userId).lastHunt || 'Never'}
+📊 Your Devil Fruit Statistics:
+• Total Hunts: ${userStatData.totalHunts}
+• Fruits Found: ${userStatData.fruitsObtained.size}
+• Last Hunt: ${userStatData.lastHunt || 'Never'}
 
-**🍈 Rarity Collection:**
-${Object.entries(userStats.get(userId).rarityCount || {})
-    .map(([rarity, count]) => {
-        const config = DevilFruitDatabase.getRarityConfig(rarity);
-        return `${config.emoji} **${config.name}:** ${count}`;
-    }).join('\n')}
+🍈 Rarity Collection:
+${rarityText || 'No fruits collected yet!'}
                         `)
                         .setColor('#3498DB')
                         .setFooter({ text: 'Patience brings the greatest Devil Fruits from the sea!' });
@@ -167,11 +120,11 @@ ${Object.entries(userStats.get(userId).rarityCount || {})
                 .setDescription(`
 The Devil Fruit tree's power was too chaotic to harvest safely!
 
-**Error Code:** \`${error.message}\`
+Error Code: ${error.message}
 
-🍈 *The Grand Line's mystical energy sometimes overwhelms even the strongest hunters...*
+🍈 The Grand Line's mystical energy sometimes overwhelms even the strongest hunters...
 
-🏴‍☠️ *Please try again, brave treasure hunter! The adventure never truly ends!*
+🏴‍☠️ Please try again, brave treasure hunter! The adventure never truly ends!
                 `)
                 .setColor('#E74C3C')
                 .setFooter({ text: 'Even the Pirate King faced setbacks on his Devil Fruit journey!' });
@@ -252,12 +205,12 @@ async function handleMultiHunt(interaction, userStats) {
         const rarityDisplay = Object.entries(rarityCount)
             .map(([rarity, count]) => {
                 const config = DevilFruitDatabase.getRarityConfig(rarity);
-                return `${config.emoji} **${config.name}:** ${count}`;
+                return `${config.emoji} ${config.name}: ${count}`;
             })
             .join('\n');
             
         const typeDisplay = Object.entries(typeCount)
-            .map(([type, count]) => `📋 **${type}:** ${count}`)
+            .map(([type, count]) => `📋 ${type}: ${count}`)
             .join('\n');
         
         const bestConfig = DevilFruitDatabase.getRarityConfig(bestFind.rarity);
@@ -265,28 +218,26 @@ async function handleMultiHunt(interaction, userStats) {
         const multiEmbed = new EmbedBuilder()
             .setTitle('🍈 LEGENDARY DEVIL FRUIT HARVEST! 🍈')
             .setDescription(`
-🌟 **${interaction.user.username}'s Epic Multi-Hunt Results!** 🌟
+🌟 ${interaction.user.username}'s Epic Multi-Hunt Results! 🌟
 
-╔══════════════════════════════════════════╗
-║ 🏆 **BEST FIND:** ${bestFind.devilFruit.name.padEnd(20)} ║
-║ ⭐ **Rarity:** ${bestConfig.name.padEnd(25)} ║
-║ 📋 **Type:** ${bestFind.devilFruit.type.padEnd(27)} ║
-║ 🔥 **Power:** ${bestFind.devilFruit.powerLevel.toLocaleString().padEnd(26)} ║
-╚══════════════════════════════════════════╝
+BEST FIND: ${bestFind.devilFruit.name}
+Rarity: ${bestConfig.name}
+Type: ${bestFind.devilFruit.type}
+Power: ${bestFind.devilFruit.powerLevel.toLocaleString()}
 
-**📊 Harvest Summary:**
+📊 Harvest Summary:
 ${rarityDisplay}
 
-**🍈 Type Breakdown:**
+🍈 Type Breakdown:
 ${typeDisplay}
 
-**⚡ Total Power Level:** ${totalPowerLevel.toLocaleString()}
-**📈 Average Power:** ${averagePower.toLocaleString()}
-**🎯 Unique Fruits:** ${new Set(results.map(r => r.devilFruit.id)).size}/10
+⚡ Total Power Level: ${totalPowerLevel.toLocaleString()}
+📈 Average Power: ${averagePower.toLocaleString()}
+🎯 Unique Fruits: ${new Set(results.map(r => r.devilFruit.id)).size}/10
 
 ${bestConfig.stars.repeat(5)}
 
-*Your Devil Fruit collection grows stronger with these legendary additions!*
+Your Devil Fruit collection grows stronger with these legendary additions!
             `)
             .setColor(bestConfig.color)
             .setFooter({ 
@@ -312,29 +263,31 @@ ${bestConfig.stars.repeat(5)}
 // Handle legendary hunt (enhanced rates)
 async function handleLegendaryHunt(interaction, userStats) {
     try {
+        const typeText = Object.entries(userStats.typeCount || {})
+            .map(([type, count]) => `📋 ${type}: ${count}`)
+            .join('\n');
+            
         const legendaryEmbed = new EmbedBuilder()
             .setTitle('🌟 Legendary Devil Fruit Hunt 🌟')
             .setDescription(`
-🍈 **Legendary hunts are being prepared in the depths of the Grand Line!**
+🍈 Legendary hunts are being prepared in the depths of the Grand Line!
 
-🔮 **Coming Soon - Legendary Features:**
-• 🎯 **Guaranteed Rare or Higher**
-• 🌌 **Exclusive Legendary Devil Fruits**
-• ✨ **Enhanced Mystical Animations**
-• 🎁 **Bonus Awakening Insights**
-• 🏆 **Legendary-Only Achievements**
+🔮 Coming Soon - Legendary Features:
+• 🎯 Guaranteed Rare or Higher
+• 🌌 Exclusive Legendary Devil Fruits
+• ✨ Enhanced Mystical Animations
+• 🎁 Bonus Awakening Insights
+• 🏆 Legendary-Only Achievements
 
-🏴‍☠️ *The greatest Devil Fruits require the most legendary preparation!*
+🏴‍☠️ The greatest Devil Fruits require the most legendary preparation!
 
-**Your Current Collection:**
-• **Total Hunts:** ${userStats.totalHunts}
-• **Collection Size:** ${userStats.fruitsObtained.size}
-• **Legendary+ Count:** ${userStats.rarityCount.legendary + userStats.rarityCount.mythical + userStats.rarityCount.omnipotent}
+Your Current Collection:
+• Total Hunts: ${userStats.totalHunts}
+• Collection Size: ${userStats.fruitsObtained.size}
+• Legendary+ Count: ${userStats.rarityCount.legendary + userStats.rarityCount.mythical + userStats.rarityCount.omnipotent}
 
-**🍈 Your Devil Fruit Types:**
-${Object.entries(userStats.typeCount || {})
-    .map(([type, count]) => `📋 **${type}:** ${count}`)
-    .join('\n')}
+🍈 Your Devil Fruit Types:
+${typeText || 'No Devil Fruits collected yet!'}
             `)
             .setColor('#9B59B6')
             .setFooter({ text: 'The most legendary Devil Fruits await in the mythical realm...' });
@@ -422,48 +375,59 @@ async function handleButtonInteractions(interaction) {
                 
             case 'view_collection':
             case 'view_crew':
+                const rarityText = userStat ? Object.entries(userStat.rarityCount)
+                    .map(([rarity, count]) => {
+                        const config = DevilFruitDatabase.getRarityConfig(rarity);
+                        return `${config.emoji} ${config.name}: ${count}`;
+                    }).join('\n') : 'No hunts yet!';
+                    
+                const typeText = userStat ? Object.entries(userStat.typeCount || {})
+                    .map(([type, count]) => `📋 ${type}: ${count}`)
+                    .join('\n') : 'No Devil Fruits yet!';
+                
                 const collectionEmbed = new EmbedBuilder()
-                    .setTitle('📚 Your Legendary Pirate Fleet')
+                    .setTitle('📚 Your Legendary Devil Fruit Collection')
                     .setDescription(`
-🏴‍☠️ **Admiral ${interaction.user.username}'s Command Center**
+🍈 Captain ${interaction.user.username}'s Treasure Vault
 
-**📊 Fleet Statistics:**
-• **Total Summons:** ${userStat?.totalPulls || 0}
-• **Unique Characters:** ${userStat?.charactersObtained?.size || 0}
-• **Collection Rate:** ${userStat ? Math.floor((userStat.charactersObtained.size / CharacterDatabase.getCharacterCount()) * 100) : 0}%
+📊 Collection Statistics:
+• Total Hunts: ${userStat?.totalHunts || 0}
+• Unique Fruits: ${userStat?.fruitsObtained?.size || 0}
+• Collection Rate: ${userStat ? Math.floor((userStat.fruitsObtained.size / DevilFruitDatabase.getDevilFruitCount()) * 100) : 0}%
 
-**🌟 Rarity Breakdown:**
-${userStat ? Object.entries(userStat.rarityCount)
-    .map(([rarity, count]) => {
-        const config = CharacterDatabase.getRarityConfig(rarity);
-        return `${config.emoji} **${config.name}:** ${count}`;
-    }).join('\n') : 'No pulls yet!'}
+🌟 Rarity Breakdown:
+${rarityText}
 
-**⚡ Total Power Level:** ${userStat ? 
+🍈 Type Collection:
+${typeText}
+
+⚡ Total Power Level: ${userStat ? 
     Object.entries(userStat.rarityCount)
         .reduce((total, [rarity, count]) => {
-            const config = CharacterDatabase.getRarityConfig(rarity);
+            const config = DevilFruitDatabase.getRarityConfig(rarity);
             return total + (config.baseValue * count);
         }, 0).toLocaleString() : 0}
 
-🚀 *Your collection system is evolving! Soon you'll see detailed character cards and crew management!*
+🚀 Your Devil Fruit collection system is evolving! Soon you'll see detailed fruit cards and awakening management!
                     `)
                     .setColor('#3498DB')
-                    .setFooter({ text: 'Every great admiral needs a legendary fleet!' });
+                    .setFooter({ text: 'Every great pirate needs legendary Devil Fruits!' });
                 
                 await interaction.reply({ embeds: [collectionEmbed], ephemeral: true });
                 break;
                 
+            case 'fruit_details':
             case 'character_details':
                 await interaction.reply({ 
-                    content: '📊 Detailed character analysis system coming soon! This will show complete stats, abilities, and power breakdowns!', 
+                    content: '📊 Detailed Devil Fruit analysis system coming soon! This will show complete awakening info, power breakdowns, and type advantages!', 
                     ephemeral: true 
                 });
                 break;
                 
+            case 'view_all_hunts':
             case 'view_all_pulls':
                 await interaction.reply({ 
-                    content: '📋 Detailed pull history and analytics dashboard coming soon!', 
+                    content: '📋 Detailed hunt history and Devil Fruit analytics dashboard coming soon!', 
                     ephemeral: true 
                 });
                 break;
@@ -472,7 +436,7 @@ ${userStat ? Object.entries(userStat.rarityCount)
         console.error('Button interaction error:', error);
         try {
             await interaction.reply({ 
-                content: '❌ Something went wrong with that action! The cosmic forces are unstable!', 
+                content: '❌ Something went wrong with that action! The Devil Fruit tree is unstable!', 
                 ephemeral: true 
             });
         } catch (replyError) {
