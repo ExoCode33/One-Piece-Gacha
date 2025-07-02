@@ -1,220 +1,44 @@
-async function createUltimateCinematicExperience(interaction) {
-    try {
-        // Pre-determine results for consistent timing
-        const rarity = DevilFruitDatabase.calculateDropRarity();
-        const devilFruit = DevilFruitDatabase.getRandomDevilFruit(rarity);
-        
-        console.log(`🎭 ULTIMATE GACHA: ${devilFruit.name} (${rarity}) for ${interaction.user.username}`);
-        
-        // PHASE 1: Epic Prologue (10 frames, ~12 seconds)
-        for (let frame = 0; frame < 10; frame++) {
-            const embed = createEpicPrologue(frame);
-            await interaction.editReply({ embeds: [embed] });
-            await new Promise(resolve => setTimeout(resolve, CinematicMasterpiece.timing.prologue));
-        }
-        
-        // PHASE 2: Cosmic Awakening (8 frames, ~8 seconds)
-        for (let frame = 0; frame < 8; frame++) {
-            const embed = createCosmicAwakening(frame);
-            await interaction.editReply({ embeds: [embed] });
-            await new Promise(resolve => setTimeout(resolve, CinematicMasterpiece.timing.awakening));
-        }
-        
-        // PHASE 3: Energy Gathering (10 frames, ~8 seconds)
-        for (let frame = 0; frame < 10; frame++) {
-            const embed = createEnergyGathering(frame);
-            await interaction.editReply({ embeds: [embed] });
-            await new Promise(resolve => setTimeout(resolve, CinematicMasterpiece.timing.gathering));
-        }
-        
-        // PHASE 4: The Great Storm (12 frames, ~7 seconds)
-        for (let frame = 0; frame < 12; frame++) {
-            const embed = createGreatStorm(frame);
-            await interaction.editReply({ embeds: [embed] });
-            await new Promise(resolve => setTimeout(resolve, CinematicMasterpiece.timing.storm));
-        }
-        
-        // PHASE 5: Dimensional Rift (8 frames, ~8 seconds)
-        for (let frame = 0; frame < 8; frame++) {
-            const embed = createDimensionalRift(frame);
-            await interaction.editReply({ embeds: [embed] });
-            await new Promise(resolve => setTimeout(resolve, CinematicMasterpiece.timing.rift));
-        }
-        
-        // PHASE 6: The Great Revelation (dynamic duration based on rarity)
-        await createGreatRevelation(interaction, rarity);
-        
-        // PHASE 7: Devil Fruit Materialization (8 frames, ~10 seconds)
-        await createDevilFruitMaterialization(interaction, devilFruit, rarity);
-        
-        // PHASE 8: Ultimate Finale (permanent display)
-        const finale = createUltimateFinale(devilFruit, rarity, interaction);
-        await interaction.editReply({ 
-            embeds: [finale.embed], 
-            components: finale.components 
-        });
-        
-        // Log the epic result
-        console.log(`🎊 EPIC SUCCESS: ${devilFruit.name} (${rarity}, ${devilFruit.powerLevel} power) discovered by ${interaction.user.username}!`);
-        
-    } catch (error) {
-        console.error('🚨 Ultimate Cinematic Error:', error);
-        
-        const errorEmbed = new EmbedBuilder()
-            .setTitle('⚠️ The Cosmic Forces Were Too Powerful!')
-            .setDescription(`
-The dimensional rift became unstable during the Devil Fruit hunt!
-
-**Error:** \`${error.message}\`
-
-*The Grand Line's power was too intense to contain. Please try again, brave treasure hunter!*
-
-🌊 *Even the greatest legends face cosmic storms...*
-            `)
-            .setColor('#E74C3C')
-            .setFooter({ text: 'The adventure continues beyond any single setback!' });
-            
-        await interaction.editReply({ embeds: [errorEmbed], components: [] });
-    }
-}const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { DevilFruitDatabase } = require('../data/devilfruit');
 
 // ═══════════════════════════════════════════════════════════════════
-//                    ULTIMATE CINEMATIC ENGINE
+//                    GLORY ANIMATION ENGINE
 // ═══════════════════════════════════════════════════════════════════
 
-const CinematicMasterpiece = {
-    // Extended timing for maximum suspense
-    timing: {
-        prologue: 1200,        // Slow atmospheric build
-        awakening: 1000,       // Mystery deepens
-        gathering: 800,        // Energy building
-        storm: 600,            // Chaos increases
-        rift: 1000,            // Dimensional opening
-        revelation: 1500,      // The big reveal
-        materialization: 1200,  // Character forming
-        finale: 2000          // Epic celebration
+const GloryEngine = {
+    // Fast-changing glory colors for epic effects
+    gloryColors: [
+        '#FF0000', '#FF3300', '#FF6600', '#FF9900', '#FFCC00', '#FFFF00',  // Red to Yellow
+        '#CCFF00', '#99FF00', '#66FF00', '#33FF00', '#00FF00', '#00FF33',  // Yellow to Green
+        '#00FF66', '#00FF99', '#00FFCC', '#00FFFF', '#00CCFF', '#0099FF',  // Green to Cyan
+        '#0066FF', '#0033FF', '#0000FF', '#3300FF', '#6600FF', '#9900FF',  // Cyan to Blue
+        '#CC00FF', '#FF00FF', '#FF00CC', '#FF0099', '#FF0066', '#FF0033'   // Blue to Magenta
+    ],
+
+    // Quick visual effects
+    effects: {
+        spark: ['⚡', '✨', '🌟', '💫', '⭐'],
+        energy: ['💥', '🔥', '⚡', '✨', '🌟'],
+        cosmic: ['🌌', '🌠', '💫', '⭐', '✨'],
+        divine: ['👑', '💎', '🔮', '✨', '🌟'],
+        explosion: ['💥', '💥', '⚡', '⚡', '🌟']
     },
 
-    // Advanced visual effects library
-    visualLibrary: {
-        ocean: {
-            calm: ['〰️', '🌊', '〰️', '🌊', '〰️'],
-            rough: ['🌊', '💨', '🌊', '💨', '🌊', '💨'],
-            storm: ['🌩️', '⚡', '🌊', '💥', '⚡', '🌪️', '🌊'],
-            tsunami: ['🌊', '💥', '🌊', '💥', '🌊', '💥', '🌊']
-        },
-        energy: {
-            spark: ['✦', '✧', '✩', '✪', '✫'],
-            charge: ['⚡', '🔥', '💥', '✨', '🌟'],
-            overload: ['💥', '⚡', '🌟', '💫', '✨', '🔥', '💥'],
-            cosmic: ['🌌', '💫', '⭐', '🌟', '✨', '🌠']
-        },
-        mystical: {
-            glow: ['◯', '◉', '⦿', '●', '⭕'],
-            crystal: ['💎', '💍', '💠', '🔮', '💎'],
-            divine: ['🌟', '✨', '💫', '⭐', '🌠'],
-            ancient: ['◊', '◈', '◇', '♦', '💎', '◊']
-        },
-        reality: {
-            crack: ['⚡', '💥', '🌟', '💫', '⚡'],
-            tear: ['🌌', '🌠', '💫', '⭐', '🌌'],
-            collapse: ['💥', '🌪️', '⚡', '🌊', '💥'],
-            rebirth: ['✨', '🌟', '💫', '🌠', '✨']
-        }
+    // Fast color cycling
+    getGloryColor(frame) {
+        return this.gloryColors[frame % this.gloryColors.length];
     },
 
-    // Advanced atmospheric color systems
-    atmosphericSystems: {
-        mysterious: ['#0a0a0a', '#1a1a2e', '#16213e', '#0f3460', '#533a71'],
-        awakening: ['#2c3e50', '#34495e', '#5d6d7e', '#85929e', '#aeb6bf'],
-        building: ['#8e44ad', '#9b59b6', '#af7ac5', '#c39bd3', '#d7bde2'],
-        storm: ['#e74c3c', '#ec7063', '#f1948a', '#f5b7b1', '#fadbd8'],
-        cosmic: ['#3498db', '#5dade2', '#85c1e9', '#aed6f1', '#d6eaf8'],
-        divine: ['#f39c12', '#f8c471', '#fdeaa7', '#fff5b4', '#fffdd0'],
-        omnipotent: ['#9b59b6', '#bb8fce', '#d2b4de', '#e8daef', '#f4ecf7']
-    },
-
-    // Professional text animation system
-    createEpicText(text, intensity = 1, style = 'normal') {
-        const effects = {
-            whisper: text.toLowerCase(),
-            normal: text,
-            emphasis: `*${text}*`,
-            strong: `**${text}**`,
-            bold: `***${text}***`,
-            glowing: `✨ *${text}* ✨`,
-            shining: `🌟 **${text}** 🌟`,
-            blazing: `💫 ***${text}*** 💫`,
-            cosmic: `🌌 ✨ **${text}** ✨ 🌌`,
-            divine: `⭐ 🌟 ***${text}*** 🌟 ⭐`,
-            omnipotent: `🌌 💫 ⭐ 🌟 ***${text}*** 🌟 ⭐ 💫 🌌`
-        };
-
-        if (intensity <= 1) return effects.whisper;
-        if (intensity <= 2) return effects.normal;
-        if (intensity <= 3) return effects.emphasis;
-        if (intensity <= 4) return effects.strong;
-        if (intensity <= 5) return effects.glowing;
-        if (intensity <= 6) return effects.shining;
-        if (intensity <= 7) return effects.blazing;
-        if (intensity <= 8) return effects.cosmic;
-        if (intensity <= 9) return effects.divine;
-        return effects.omnipotent;
-    },
-
-    // Advanced frame creation with multiple styles
-    createLegendaryFrame(content, frameStyle = 'simple', glowIntensity = 1, width = 50) {
-        const frames = {
-            simple: { corners: ['┌', '┐', '└', '┘'], h: '─', v: '│' },
-            double: { corners: ['╔', '╗', '╚', '╝'], h: '═', v: '║' },
-            ornate: { corners: ['◆', '◆', '◆', '◆'], h: '◈', v: '◇' },
-            mystical: { corners: ['✦', '✦', '✦', '✦'], h: '✧', v: '✦' },
-            divine: { corners: ['🌟', '🌟', '🌟', '🌟'], h: '✨', v: '💫' },
-            cosmic: { corners: ['🌌', '🌌', '🌌', '🌌'], h: '💫', v: '⭐' },
-            omnipotent: { corners: ['💎', '💎', '💎', '💎'], h: '🌟', v: '✨' }
-        };
-
-        const frame = frames[frameStyle] || frames.simple;
-        const padding = Math.max(0, width - content.length - 4);
-        const leftPad = Math.floor(padding / 2);
-        const rightPad = padding - leftPad;
-        
-        const topLine = frame.h.repeat(width);
-        const contentLine = `${frame.v} ${' '.repeat(leftPad)}${content}${' '.repeat(rightPad)} ${frame.v}`;
-        const bottomLine = frame.h.repeat(width);
-        
-        // Add progressive glow effects
-        let glowEffect = '';
-        if (glowIntensity > 3) {
-            const glowChars = ['✨', '🌟', '💫', '⭐', '🌠'];
-            const glow = glowChars[Math.min(glowIntensity - 4, glowChars.length - 1)];
-            glowEffect = glow.repeat(Math.min(glowIntensity - 2, 8));
-        }
-        
-        return glowEffect ? 
-            `\`\`\`\n${glowEffect}\n${topLine}\n${contentLine}\n${bottomLine}\n${glowEffect}\n\`\`\`` :
-            `\`\`\`\n${topLine}\n${contentLine}\n${bottomLine}\n\`\`\``;
-    },
-
-    // Advanced particle field generator
-    createParticleStorm(intensity, effect = 'energy', pattern = 'random') {
-        const particles = this.visualLibrary[effect] || this.visualLibrary.energy.spark;
-        const maxIntensity = Math.min(intensity, 15);
+    // Create simple but effective particle field
+    createParticleField(intensity, effectType = 'spark') {
+        const particles = this.effects[effectType] || this.effects.spark;
         const lines = [];
         
-        for (let row = 0; row < 4; row++) {
+        for (let i = 0; i < 3; i++) {
             let line = '';
-            const particleCount = Math.floor(maxIntensity * (0.5 + Math.random()));
-            
-            for (let i = 0; i < particleCount; i++) {
-                if (pattern === 'wave') {
-                    const wavePos = Math.sin((i + row) * 0.5) * 2;
-                    line += ' '.repeat(Math.max(0, Math.floor(wavePos))) + 
-                           particles[Math.floor(Math.random() * particles.length)] + ' ';
-                } else {
-                    line += particles[Math.floor(Math.random() * particles.length)] + ' ';
-                }
+            for (let j = 0; j < Math.min(intensity + 3, 12); j++) {
+                const particle = particles[Math.floor(Math.random() * particles.length)];
+                line += particle + ' ';
             }
             lines.push(line.trim());
         }
@@ -222,509 +46,327 @@ const CinematicMasterpiece = {
         return lines.join('\n');
     },
 
-    // Dynamic color progression
-    getEvolutionColor(phase, frame, maxFrames, rarity = null) {
-        const systems = this.atmosphericSystems;
-        const progress = frame / maxFrames;
-        
-        if (rarity && phase >= 6) {
-            // Use rarity-specific colors for final phases
-            const rarityColors = {
-                omnipotent: systems.omnipotent,
-                mythical: systems.divine,
-                legendary: systems.cosmic,
-                rare: systems.building,
-                uncommon: systems.awakening,
-                common: systems.mysterious
-            };
-            const colors = rarityColors[rarity] || systems.mysterious;
-            return colors[Math.floor(progress * (colors.length - 1))];
-        }
-        
-        const phaseColors = [
-            systems.mysterious,   // Phase 1: Prologue
-            systems.awakening,    // Phase 2: Awakening  
-            systems.building,     // Phase 3: Gathering
-            systems.storm,        // Phase 4: Storm
-            systems.cosmic,       // Phase 5: Rift
-            systems.divine,       // Phase 6: Revelation
-            systems.omnipotent    // Phase 7+: Epic
-        ];
-        
-        const colors = phaseColors[Math.min(phase, phaseColors.length - 1)];
-        return colors[Math.floor(progress * (colors.length - 1))];
+    // Epic text styling
+    createEpicText(text, intensity = 1) {
+        if (intensity <= 2) return text;
+        if (intensity <= 4) return `**${text}**`;
+        if (intensity <= 6) return `***${text}***`;
+        if (intensity <= 8) return `✨ **${text}** ✨`;
+        return `🌟 ✨ ***${text}*** ✨ 🌟`;
     },
 
-    // Advanced typing effect with delays
-    createTypingEffect(text, frame, totalFrames, style = 'typewriter') {
-        const progress = Math.min(frame / totalFrames, 1);
-        const visibleChars = Math.floor(text.length * progress);
-        const visible = text.slice(0, visibleChars);
+    // Simple frame with glory effects
+    createGloryFrame(content, intensity = 1) {
+        const frameChars = {
+            1: '═',
+            2: '◆',
+            3: '✦',
+            4: '🌟'
+        };
         
-        if (style === 'typewriter') {
-            const cursor = frame % 20 < 10 ? '|' : ' ';
-            return visible + cursor;
-        } else if (style === 'decode') {
-            const remaining = text.length - visibleChars;
-            const scrambled = '◆'.repeat(remaining);
-            return visible + scrambled;
-        } else if (style === 'reveal') {
-            const remaining = text.length - visibleChars;
-            const hidden = '█'.repeat(remaining);
-            return visible + hidden;
-        }
+        const char = frameChars[Math.min(Math.floor(intensity / 2) + 1, 4)];
+        const width = 40;
+        const padding = Math.max(0, width - content.length - 4);
+        const leftPad = Math.floor(padding / 2);
+        const rightPad = padding - leftPad;
         
-        return visible;
+        const line = char.repeat(width);
+        const contentLine = `${char} ${' '.repeat(leftPad)}${content}${' '.repeat(rightPad)} ${char}`;
+        
+        return `\`\`\`\n${line}\n${contentLine}\n${line}\n\`\`\``;
     }
 };
 
 // ═══════════════════════════════════════════════════════════════════
-//                         EPIC ANIMATION PHASES
+//                         QUICK ANIMATION PHASES
 // ═══════════════════════════════════════════════════════════════════
 
-// PHASE 1: The Prologue (10 frames, ~12 seconds)
-function createEpicPrologue(frame) {
-    const prologueMessages = [
-        "In the vast expanse of the Grand Line...",
-        "Where legends sleep beneath the waves...",
-        "Ancient powers stir in the darkness...",
-        "The sea itself holds its breath...",
-        "For something extraordinary approaches...",
-        "A call echoes through the void...",
-        "Destiny prepares to unveil its secrets...",
-        "The very fabric of reality trembles...",
-        "And from the depths of eternity...",
-        "A legendary presence awakens..."
+// PHASE 1: Mystery Build-up (5 frames, 4 seconds)
+function createMysteryPhase(frame) {
+    const messages = [
+        "The Grand Line stirs...",
+        "Ancient powers awaken...",
+        "Devil Fruit energy builds...",
+        "Something legendary approaches...",
+        "The hunt begins..."
     ];
     
-    const message = prologueMessages[Math.min(frame, prologueMessages.length - 1)];
-    const typedMessage = CinematicMasterpiece.createTypingEffect(message, frame * 3, 20, 'typewriter');
-    const styledMessage = CinematicMasterpiece.createEpicText(typedMessage, Math.floor(frame / 2) + 1);
-    
-    const oceanEffect = CinematicMasterpiece.visualLibrary.ocean.calm[frame % 5];
-    const mysticalField = CinematicMasterpiece.createParticleStorm(frame + 1, 'mystical', 'wave');
-    const color = CinematicMasterpiece.getEvolutionColor(1, frame, 10);
+    const message = messages[frame] || messages[messages.length - 1];
+    const styledMessage = GloryEngine.createEpicText(message, frame + 1);
+    const particles = GloryEngine.createParticleField(frame + 1, 'spark');
+    const color = GloryEngine.getGloryColor(frame * 3);
     
     return new EmbedBuilder()
-        .setTitle('🏴‍☠️ The Grand Line Calls...')
+        .setTitle('🍈 Devil Fruit Hunt Begins')
         .setDescription(`
-${oceanEffect.repeat(10)}
+🌊 ${GloryEngine.effects.energy[frame % 5].repeat(8)} 🌊
 
-${CinematicMasterpiece.createLegendaryFrame(styledMessage, 'simple', frame)}
+${GloryEngine.createGloryFrame(styledMessage, frame + 1)}
 
-${mysticalField}
+${particles}
 
-*The ancient sea whispers of legends yet to be born...*
+*The seas respond to your call...*
         `)
         .setColor(color)
-        .setFooter({ text: `📖 Prologue: ${frame + 1}/10 | The story begins...` });
+        .setFooter({ text: `🌊 Mystery Phase: ${frame + 1}/5` });
 }
 
-// PHASE 2: The Awakening (8 frames, ~8 seconds)
-function createCosmicAwakening(frame) {
-    const awakeningMessages = [
-        "⚡ The first spark ignites...",
-        "🌟 Cosmic energy begins to flow...",
-        "💫 Reality starts to bend...",
-        "✨ Ancient seals weaken...",
-        "🌌 The void responds to your call...",
-        "💥 Dimensional barriers crack...",
-        "⚡ POWER BEYOND IMAGINATION STIRS...",
-        "🌠 THE AWAKENING HAS BEGUN!"
+// PHASE 2: Energy Surge (6 frames, 4 seconds)
+function createEnergySurge(frame) {
+    const energyMessages = [
+        "⚡ Energy crackles through the air...",
+        "🌩️ Storm clouds gather overhead...",
+        "💥 Lightning strikes the ocean...",
+        "🌪️ Reality begins to shift...",
+        "⚡ POWER SURGES THROUGH THE VOID...",
+        "🌟 THE GRAND LINE ROARS WITH ENERGY!"
     ];
     
-    const message = awakeningMessages[Math.min(frame, awakeningMessages.length - 1)];
-    const intensity = Math.floor(frame / 2) + 2;
-    const styledMessage = CinematicMasterpiece.createEpicText(message, intensity);
-    
-    const energyStorm = CinematicMasterpiece.createParticleStorm(frame + 3, 'energy', 'random');
-    const glowEffect = CinematicMasterpiece.visualLibrary.mystical.glow[frame % 5];
-    const color = CinematicMasterpiece.getEvolutionColor(2, frame, 8);
+    const message = energyMessages[frame] || energyMessages[energyMessages.length - 1];
+    const intensity = frame + 3;
+    const styledMessage = GloryEngine.createEpicText(message, intensity);
+    const particles = GloryEngine.createParticleField(intensity, 'energy');
+    const color = GloryEngine.getGloryColor(frame * 5 + 10);
     
     return new EmbedBuilder()
-        .setTitle(`⚡ ${CinematicMasterpiece.createEpicText('COSMIC AWAKENING', intensity)} ⚡`)
+        .setTitle(`⚡ ${GloryEngine.createEpicText('ENERGY SURGE', intensity)} ⚡`)
         .setDescription(`
-${glowEffect.repeat(12)}
+⚡ ${GloryEngine.effects.explosion[frame % 5].repeat(12)} ⚡
 
-${CinematicMasterpiece.createLegendaryFrame(styledMessage, 'ornate', intensity)}
+${GloryEngine.createGloryFrame(styledMessage, intensity)}
 
-${energyStorm}
+${particles}
 
-*The Grand Line trembles as ancient forces awaken!*
+*The very fabric of reality trembles!*
         `)
         .setColor(color)
-        .setFooter({ text: `⚡ Awakening Phase: ${frame + 1}/8 | Power Level Rising...` });
+        .setFooter({ text: `⚡ Energy Level: ${Math.floor((frame / 6) * 100)}% | POWER RISING!` });
 }
 
-// PHASE 3: Energy Gathering (10 frames, ~8 seconds)
-function createEnergyGathering(frame) {
-    const gatheringMessages = [
-        "🌩️ Storm clouds gather from all horizons...",
-        "⚡ Lightning begins to dance across the sky...",
-        "🌊 The ocean itself rises in response...",
-        "💥 Thunder echoes through dimensions...",
-        "🌪️ Reality warps around the gathering power...",
-        "⚡ Energy cascades from the heavens...",
-        "🌩️ The very air crackles with potential...",
-        "💥 Space and time begin to FRACTURE...",
-        "⚡ COSMIC FORCES ALIGN IN PERFECT HARMONY...",
-        "🌌 THE GATHERING REACHES CRITICAL MASS!"
-    ];
-    
-    const message = gatheringMessages[Math.min(frame, gatheringMessages.length - 1)];
-    const intensity = Math.floor(frame / 2) + 3;
-    const styledMessage = CinematicMasterpiece.createEpicText(message, intensity);
-    
-    const stormEffect = CinematicMasterpiece.createParticleStorm(frame + 5, 'energy', 'wave');
-    const lightningField = CinematicMasterpiece.visualLibrary.energy.overload[frame % 7];
-    const color = CinematicMasterpiece.getEvolutionColor(3, frame, 10);
-    
-    return new EmbedBuilder()
-        .setTitle(`🌩️ ${CinematicMasterpiece.createEpicText('ENERGY GATHERING', intensity)} 🌩️`)
-        .setDescription(`
-${lightningField.repeat(15)}
-
-${CinematicMasterpiece.createLegendaryFrame(styledMessage, 'mystical', intensity)}
-
-${stormEffect}
-
-*The universe itself bends to accommodate this incredible power!*
-        `)
-        .setColor(color)
-        .setFooter({ text: `🌩️ Energy Level: ${Math.floor((frame / 10) * 100)}% | BRACE FOR IMPACT!` });
-}
-
-// PHASE 4: The Great Storm (12 frames, ~7 seconds)
-function createGreatStorm(frame) {
-    const stormMessages = [
-        "🌊 Massive waves crash against reality itself...",
-        "⚡ Lightning tears through the fabric of space...",
-        "🌪️ A cosmic hurricane forms around you...",
-        "💥 Reality SHATTERS and REBUILDS repeatedly...",
-        "🌩️ The storm reaches UNIMAGINABLE proportions...",
-        "⚡ Chaos and order dance in perfect balance...",
-        "🌊 The ocean becomes a sea of pure energy...",
-        "💥 DIMENSIONAL BARRIERS EXPLODE OUTWARD...",
-        "🌪️ THE STORM BECOMES A LIVING ENTITY...",
-        "⚡ TIME ITSELF BENDS TO THE STORM'S WILL...",
-        "🌩️ REALITY SCREAMS AS IT TEARS APART...",
-        "💥 THE STORM REACHES ITS ULTIMATE CRESCENDO!"
-    ];
-    
-    const message = stormMessages[Math.min(frame, stormMessages.length - 1)];
-    const intensity = Math.floor(frame / 2) + 4;
-    const styledMessage = CinematicMasterpiece.createEpicText(message, intensity);
-    
-    const chaosField = CinematicMasterpiece.createParticleStorm(frame + 8, 'reality', 'random');
-    const stormCore = CinematicMasterpiece.visualLibrary.ocean.tsunami[frame % 7];
-    const color = CinematicMasterpiece.getEvolutionColor(4, frame, 12);
-    
-    return new EmbedBuilder()
-        .setTitle(`🌪️ ${CinematicMasterpiece.createEpicText('THE GREAT STORM', intensity)} 🌪️`)
-        .setDescription(`
-${stormCore.repeat(18)}
-
-${CinematicMasterpiece.createLegendaryFrame(styledMessage, 'divine', intensity)}
-
-${chaosField}
-
-*The Grand Line itself ROARS with primal fury!*
-        `)
-        .setColor(color)
-        .setFooter({ text: `🌪️ Storm Intensity: ${Math.floor((frame / 12) * 100)}% | CHAOS INCARNATE!` });
-}
-
-// PHASE 5: Dimensional Rift (8 frames, ~8 seconds)
-function createDimensionalRift(frame) {
+// PHASE 3: Cosmic Rift (5 frames, 4 seconds)
+function createCosmicRift(frame) {
     const riftMessages = [
-        "🌌 A crack appears in the void...",
-        "💫 The rift widens, revealing infinite possibilities...",
-        "⭐ Cosmic light pours through the opening...",
-        "🌠 Time and space collapse into singularity...",
-        "🌌 The dimensional barrier SHATTERS completely...",
-        "💫 Infinite realities converge at this point...",
-        "⭐ THE VOID ITSELF ANSWERS YOUR SUMMONS...",
-        "🌠 OMNIPOTENT FORCES BREACH INTO REALITY!"
+        "🌌 A dimensional rift tears open...",
+        "💫 Cosmic energy floods through...",
+        "🌠 Space and time bend and twist...",
+        "⭐ THE VOID ANSWERS YOUR CALL...",
+        "🌌 REALITY FRACTURES COMPLETELY!"
     ];
     
-    const message = riftMessages[Math.min(frame, riftMessages.length - 1)];
+    const message = riftMessages[frame] || riftMessages[riftMessages.length - 1];
     const intensity = frame + 5;
-    const styledMessage = CinematicMasterpiece.createEpicText(message, intensity);
-    
-    const cosmicField = CinematicMasterpiece.createParticleStorm(frame + 10, 'mystical', 'wave');
-    const voidEffect = CinematicMasterpiece.visualLibrary.reality.tear[frame % 5];
-    const color = CinematicMasterpiece.getEvolutionColor(5, frame, 8);
+    const styledMessage = GloryEngine.createEpicText(message, intensity);
+    const particles = GloryEngine.createParticleField(intensity, 'cosmic');
+    const color = GloryEngine.getGloryColor(frame * 7 + 20);
     
     return new EmbedBuilder()
-        .setTitle(`🌌 ${CinematicMasterpiece.createEpicText('DIMENSIONAL BREACH', intensity)} 🌌`)
+        .setTitle(`🌌 ${GloryEngine.createEpicText('COSMIC RIFT', intensity)} 🌌`)
         .setDescription(`
-${voidEffect.repeat(20)}
+🌌 ${GloryEngine.effects.cosmic[frame % 5].repeat(15)} 🌌
 
-${CinematicMasterpiece.createLegendaryFrame(styledMessage, 'cosmic', intensity)}
+${GloryEngine.createGloryFrame(styledMessage, intensity)}
 
-${cosmicField}
+${particles}
 
-*What unimaginable power will emerge from beyond the veil?*
+*What incredible Devil Fruit will emerge?*
         `)
         .setColor(color)
-        .setFooter({ text: `🌌 Dimensional Integrity: ${100 - Math.floor((frame / 8) * 100)}% | REALITY COMPROMISED!` });
+        .setFooter({ text: `🌌 Rift Intensity: ${Math.floor((frame / 5) * 100)}%` });
 }
 
-// PHASE 6: The Great Revelation (Dynamic based on rarity)
-async function createGreatRevelation(interaction, rarity) {
+// PHASE 4: Rarity Revelation (dynamic frames)
+async function createRarityRevelation(interaction, rarity) {
     const config = DevilFruitDatabase.getRarityConfig(rarity);
-    const revealFrames = {
-        common: 5, uncommon: 6, rare: 7, 
-        legendary: 9, mythical: 12, omnipotent: 15
-    }[rarity] || 5;
+    const frames = {
+        common: 3, uncommon: 4, rare: 5, 
+        legendary: 6, mythical: 8, omnipotent: 10
+    }[rarity] || 3;
     
-    for (let frame = 0; frame < revealFrames; frame++) {
+    for (let frame = 0; frame < frames; frame++) {
         const intensity = frame + 6;
-        const progress = frame / revealFrames;
+        const progress = frame / frames;
         
-        // Progressive reveal of rarity name
-        const hiddenText = '◆'.repeat(config.name.length);
-        const revealedChars = Math.floor(config.name.length * progress);
-        const partialReveal = config.name.slice(0, revealedChars) + hiddenText.slice(revealedChars);
-        
+        // Progressive reveal
         let displayText;
         if (frame < 2) {
             displayText = '???';
-        } else if (frame < revealFrames - 2) {
-            displayText = partialReveal;
+        } else if (frame < frames - 1) {
+            const revealed = Math.floor(config.name.length * progress);
+            displayText = config.name.slice(0, revealed) + '?'.repeat(config.name.length - revealed);
         } else {
             displayText = config.name.toUpperCase();
         }
         
-        const styledText = CinematicMasterpiece.createEpicText(displayText, intensity);
+        const styledText = GloryEngine.createEpicText(displayText, intensity);
         
-        // Rarity-specific revelation effects
-        let revelationEffect = '';
-        let revelationMessage = '';
-        
+        // Rarity-specific effects
+        let rarityEffect = '';
         if (rarity === 'omnipotent') {
-            revelationEffect = '🌌'.repeat(20) + '\n' + '💫'.repeat(15) + '\n' + '⭐'.repeat(12) + '\n' + '🌟'.repeat(10);
-            revelationMessage = frame >= revealFrames - 1 ? 
-                '*THE MULTIVERSE ITSELF KNEELS BEFORE THIS OMNIPOTENT BEING!*' :
-                '*Reality bends and reshapes itself...*';
+            rarityEffect = '🌌'.repeat(20);
         } else if (rarity === 'mythical') {
-            revelationEffect = '🔮'.repeat(15) + '\n' + '✨'.repeat(12) + '\n' + '🌟'.repeat(10);
-            revelationMessage = frame >= revealFrames - 1 ? 
-                '*MYTHICAL LEGENDS TRANSCEND THE BOUNDARIES OF POSSIBILITY!*' :
-                '*Ancient powers surge through dimensions...*';
+            rarityEffect = '🔮'.repeat(15);
         } else if (rarity === 'legendary') {
-            revelationEffect = '👑'.repeat(12) + '\n' + '⚡'.repeat(10) + '\n' + '🔥'.repeat(8);
-            revelationMessage = frame >= revealFrames - 1 ? 
-                '*LEGENDARY HEROES RESHAPE THE COURSE OF HISTORY!*' :
-                '*Heroic power radiates through time and space...*';
+            rarityEffect = '👑'.repeat(12);
         } else {
-            revelationEffect = config.emoji.repeat(Math.min(frame + 6, 15));
-            revelationMessage = frame >= revealFrames - 1 ? 
-                `*${config.description}*` :
-                '*The truth emerges from the cosmic void...*';
+            rarityEffect = config.emoji.repeat(Math.min(frame + 5, 10));
         }
         
-        const color = frame < 3 ? '#1a1a1a' : 
-                     CinematicMasterpiece.getEvolutionColor(6, frame, revealFrames, rarity);
+        // Fast color cycling for glory
+        const color = GloryEngine.getGloryColor(frame * 8 + 30);
         
         const embed = new EmbedBuilder()
-            .setTitle(`${config.emoji} THE GREAT REVELATION ${config.emoji}`)
+            .setTitle(`${config.emoji} RARITY REVEALED! ${config.emoji}`)
             .setDescription(`
-${revelationEffect}
+${rarityEffect}
 
-${CinematicMasterpiece.createLegendaryFrame(styledText, 'omnipotent', intensity)}
+${GloryEngine.createGloryFrame(styledText, intensity)}
 
-${config.stars.repeat(Math.min(frame + 2, 8))}
+${config.stars.repeat(Math.min(frame + 1, 6))}
 
-${revelationMessage}
+${frame >= frames - 1 ? `*${config.description}*` : '*The truth emerges...*'}
             `)
             .setColor(color)
             .setFooter({ 
-                text: frame >= revealFrames - 1 ? 
-                    `${config.stars} ${config.name.toUpperCase()} POWER CONFIRMED! ${config.stars}` :
-                    `Revelation Progress: ${Math.floor(progress * 100)}% | Truth Emerges...`
+                text: frame >= frames - 1 ? 
+                    `${config.stars} ${config.name.toUpperCase()} CONFIRMED! ${config.stars}` :
+                    `Revelation: ${Math.floor(progress * 100)}%`
             });
 
         await interaction.editReply({ embeds: [embed] });
-        await new Promise(resolve => setTimeout(resolve, 
-            CinematicMasterpiece.timing.revelation - (frame * 100)
-        ));
+        await new Promise(resolve => setTimeout(resolve, 300 + (frame * 50)));
     }
 }
 
-// PHASE 7: Devil Fruit Materialization (8 frames, ~10 seconds)
+// PHASE 5: Devil Fruit Materialization (6 frames, 5 seconds)
 async function createDevilFruitMaterialization(interaction, devilFruit, rarity) {
     const config = DevilFruitDatabase.getRarityConfig(rarity);
-    const materializationFrames = 8;
+    const frames = 6;
     
-    for (let frame = 0; frame < materializationFrames; frame++) {
+    for (let frame = 0; frame < frames; frame++) {
         const intensity = frame + 7;
-        const progress = frame / (materializationFrames - 1);
+        const progress = frame / (frames - 1);
         
-        // Progressive Devil Fruit name reveal with special effects
-        const nameReveal = CinematicMasterpiece.createTypingEffect(
-            devilFruit.name, frame * 3, 20, 'decode'
-        );
-        const styledName = CinematicMasterpiece.createEpicText(nameReveal, intensity);
+        // Progressive name reveal
+        const nameProgress = Math.floor(devilFruit.name.length * progress);
+        const visibleName = devilFruit.name.slice(0, nameProgress);
+        const hiddenName = '◇'.repeat(devilFruit.name.length - nameProgress);
+        const displayName = frame === frames - 1 ? devilFruit.name : visibleName + hiddenName;
         
-        // Materialization stages with epic descriptions
-        const stages = [
-            "A mysterious fruit begins to coalesce from the void...",
-            "Ancient patterns start to form on its surface...",
-            "The fruit gains supernatural essence and power...",
-            "Legendary aura radiates from the Devil Fruit...",
-            "Immense power flows through its very being...",
-            "Its true form becomes crystal clear...",
-            "The Devil Fruit manifests in all its glory...",
-            "MATERIALIZATION ACHIEVED PERFECTLY!"
-        ];
+        const styledName = GloryEngine.createEpicText(displayName, intensity);
         
-        const stage = stages[frame];
-        const styledStage = CinematicMasterpiece.createEpicText(stage, intensity);
-        
-        // Progressive information reveal
+        // Progressive info reveal
         const infoLines = [
-            `**Type:** ${frame >= 2 ? devilFruit.type : '???'}`,
-            `**Current User:** ${frame >= 3 ? devilFruit.user : '???'}`,
-            `**Power:** ${frame >= 4 ? devilFruit.power : '???'}`,
-            `**Awakening:** ${frame >= 5 ? devilFruit.awakening : '???'}`,
-            `**Weakness:** ${frame >= 6 ? devilFruit.weakness : '???'}`,
-            `**Power Level:** ${frame >= 7 ? devilFruit.powerLevel.toLocaleString() : '???'}`
+            `**Type:** ${frame >= 1 ? devilFruit.type : '???'}`,
+            `**User:** ${frame >= 2 ? devilFruit.user : '???'}`,
+            `**Power:** ${frame >= 3 ? devilFruit.power : '???'}`,
+            `**Power Level:** ${frame >= 4 ? devilFruit.powerLevel.toLocaleString() : '???'}`,
+            `**Rarity:** ${frame >= 5 ? config.name : 'Materializing...'}`
         ];
         
-        const materializationField = CinematicMasterpiece.createParticleStorm(
-            frame + 12, 'reality', 'wave'
-        );
-        const color = CinematicMasterpiece.getEvolutionColor(7, frame, 8, rarity);
+        const particles = GloryEngine.createParticleField(intensity, 'divine');
+        
+        // Super fast color cycling for epic effect
+        const color = GloryEngine.getGloryColor(frame * 10 + 40);
         
         const embed = new EmbedBuilder()
-            .setTitle(`${config.emoji} DEVIL FRUIT MATERIALIZATION ${config.emoji}`)
+            .setTitle(`${config.emoji} DEVIL FRUIT MATERIALIZES ${config.emoji}`)
             .setDescription(`
-${materializationField}
+${particles}
 
-${CinematicMasterpiece.createLegendaryFrame(styledName, 'omnipotent', intensity)}
-
-**${styledStage}**
+${GloryEngine.createGloryFrame(styledName, intensity)}
 
 ${infoLines.join('\n')}
 
-${config.stars.repeat(Math.min(frame + 3, 8))}
+${config.stars.repeat(Math.min(frame + 2, 6))}
             `)
             .setColor(color)
             .setFooter({ 
-                text: `Materialization: ${Math.floor(progress * 100)}% | ${config.power} Energy Detected`
+                text: `Materialization: ${Math.floor(progress * 100)}%`
             });
 
         await interaction.editReply({ embeds: [embed] });
-        await new Promise(resolve => setTimeout(resolve, CinematicMasterpiece.timing.materialization));
+        await new Promise(resolve => setTimeout(resolve, 800));
     }
 }
 
-// PHASE 8: The Ultimate Finale (Epic celebration)
-function createUltimateFinale(character, rarity, interaction) {
-    const config = CharacterDatabase.getRarityConfig(rarity);
+// PHASE 6: Epic Finale
+function createEpicFinale(devilFruit, rarity, interaction) {
+    const config = DevilFruitDatabase.getRarityConfig(rarity);
     
-    // Rarity-specific ultimate celebrations
-    const finaleSpectaculars = {
+    const finaleEffects = {
         omnipotent: {
-            title: '🌌 OMNIPOTENT DEITY SUMMONED! 🌌',
-            subtitle: '✨ REALITY ITSELF BOWS TO YOUR SUPREME POWER! ✨',
-            effect: '🌌💫⭐🌟💫🌌💫⭐🌟💫🌌💫⭐🌟💫🌌',
-            celebration: 'THE ENTIRE MULTIVERSE ACKNOWLEDGES YOUR DOMINION!',
-            description: 'You have summoned a being beyond mortal comprehension!'
+            title: '🌌 OMNIPOTENT DEVIL FRUIT! 🌌',
+            effect: '🌌💫⭐🌟💫🌌💫⭐🌟💫🌌',
+            message: 'REALITY ITSELF BOWS TO YOUR POWER!'
         },
         mythical: {
-            title: '🔮 MYTHICAL LEGEND INCARNATED! 🔮',
-            subtitle: '⚡ ANCIENT POWERS FLOW THROUGH YOUR VERY SOUL! ⚡',
-            effect: '🔮✨🌟💎🌟✨🔮✨🌟💎🌟✨🔮✨🌟💎🌟✨🔮',
-            celebration: 'LEGENDS ACROSS ALL AGES SING YOUR NAME!',
-            description: 'A mythical being of immense power has answered your call!'
+            title: '🔮 MYTHICAL DEVIL FRUIT! 🔮',
+            effect: '🔮✨🌟💎🌟✨🔮✨🌟💎🌟✨🔮',
+            message: 'LEGENDARY POWER FLOWS THROUGH YOU!'
         },
         legendary: {
-            title: '👑 LEGENDARY HERO ASCENDANT! 👑',
-            subtitle: '🔥 HISTORY WILL FOREVER REMEMBER THIS GLORIOUS MOMENT! 🔥',
-            effect: '👑⚡🔥🌟🔥⚡👑⚡🔥🌟🔥⚡👑⚡🔥🌟🔥⚡👑',
-            celebration: 'EPIC GLORY TRANSCENDS TIME AND SPACE!',
-            description: 'A legendary hero whose name echoes through eternity!'
+            title: '👑 LEGENDARY DEVIL FRUIT! 👑',
+            effect: '👑⚡🔥🌟🔥⚡👑⚡🔥🌟🔥⚡👑',
+            message: 'EPIC GLORY ACHIEVED!'
         },
         rare: {
-            title: '💎 RARE CHAMPION EMERGES! 💎',
-            subtitle: '✨ EXCEPTIONAL POWER JOINS YOUR LEGENDARY FLEET! ✨',
-            effect: '💎🌟✨⭐✨🌟💎🌟✨⭐✨🌟💎🌟✨⭐✨🌟💎',
-            celebration: 'REMARKABLE STRENGTH FLOWS THROUGH YOUR RANKS!',
-            description: 'A rare warrior of exceptional skill and power!'
+            title: '💎 RARE DEVIL FRUIT! 💎',
+            effect: '💎🌟✨⭐✨🌟💎🌟✨⭐✨🌟💎',
+            message: 'EXCEPTIONAL POWER OBTAINED!'
         },
         uncommon: {
-            title: '🌟 SKILLED WARRIOR MANIFESTS! 🌟',
-            subtitle: '⭐ PROMISING POTENTIAL AWAITS YOUR COMMAND! ⭐',
-            effect: '🌟⭐✨💫✨⭐🌟⭐✨💫✨⭐🌟⭐✨💫✨⭐🌟',
-            celebration: 'RISING STARS ILLUMINATE YOUR PATH!',
-            description: 'A skilled pirate with untapped potential!'
+            title: '🌟 UNCOMMON DEVIL FRUIT! 🌟',
+            effect: '🌟⭐✨💫✨⭐🌟⭐✨💫✨⭐🌟',
+            message: 'PROMISING POTENTIAL UNLOCKED!'
         },
         common: {
-            title: '⚓ RELIABLE CREW MEMBER JOINS! ⚓',
-            subtitle: '⭐ EVERY LEGEND NEEDS A STRONG FOUNDATION! ⭐',
-            effect: '⚓⭐🌊⭐🌊⭐⚓⭐🌊⭐🌊⭐⚓⭐🌊⭐🌊⭐⚓',
-            celebration: 'SOLID FOUNDATIONS BUILD ETERNAL LEGENDS!',
-            description: 'A dependable crew member ready for adventure!'
+            title: '⚓ DEVIL FRUIT DISCOVERED! ⚓',
+            effect: '⚓⭐🌊⭐🌊⭐⚓⭐🌊⭐🌊⭐⚓',
+            message: 'SOLID FOUNDATION BUILT!'
         }
     };
     
-    const finale = finaleSpectaculars[rarity] || finaleSpectaculars.common;
-    const epicName = CinematicMasterpiece.createEpicText(character.name, 10);
+    const finale = finaleEffects[rarity] || finaleEffects.common;
+    const epicName = GloryEngine.createEpicText(devilFruit.name, 10);
     
-    // Create epic character card
-    const characterCard = `
-╔════════════════════════════════════════════╗
-║ 👑 **${character.title.padEnd(30)}**     ║
-║ ⚓ **Crew:** ${character.crew.padEnd(25)}     ║
-║ 💰 **Bounty:** ${character.bounty.padEnd(22)} Berry ║  
-║ 🍎 **Devil Fruit:** ${character.devilFruit.padEnd(18)}     ║
-║ ⚡ **Specialty:** ${character.specialty.padEnd(20)}     ║
-║ 🔥 **Power Level:** ${character.powerLevel.toLocaleString().padEnd(15)}     ║
-║ ⭐ **Rarity:** ${config.name.padEnd(23)}     ║
-╚════════════════════════════════════════════╝`;
-
     const description = `
 ${finale.effect}
 
-${CinematicMasterpiece.createLegendaryFrame(epicName, 'omnipotent', 10)}
+${GloryEngine.createGloryFrame(epicName, 10)}
 
 **${finale.title}**
-*${finale.subtitle}*
+*${finale.message}*
 
-${characterCard}
+🍈 **${devilFruit.name}**
+📋 **Type:** ${devilFruit.type}
+👤 **User:** ${devilFruit.user}
+⚡ **Power:** ${devilFruit.power}
+🔥 **Power Level:** ${devilFruit.powerLevel.toLocaleString()}
+⭐ **Rarity:** ${config.name}
 
-${config.stars.repeat(10)}
+${config.stars.repeat(8)}
 
-🏆 **${finale.celebration}** 🏆
-🎊 **CONGRATULATIONS ${interaction.user.username.toUpperCase()}!** 🎊
+🏆 **CONGRATULATIONS ${interaction.user.username.toUpperCase()}!** 🏆
 
-*${finale.description}*
-
-> **"${character.quote}"**
+*"${devilFruit.description}"*
 
 ${finale.effect}
     `;
 
-    // Create enhanced action row with more options
     const actionRow = new ActionRowBuilder()
         .addComponents(
             new ButtonBuilder()
                 .setCustomId('pull_again')
-                .setLabel('🏴‍☠️ Set Sail Again!')
-                .setStyle(ButtonStyle.Primary)
-                .setEmoji('⚓'),
+                .setLabel('🍈 Hunt Again!')
+                .setStyle(ButtonStyle.Primary),
             new ButtonBuilder()
-                .setCustomId('view_crew')
-                .setLabel('👥 View Fleet')
-                .setStyle(ButtonStyle.Secondary)
-                .setEmoji('📚'),
+                .setCustomId('view_collection')
+                .setLabel('📚 Collection')
+                .setStyle(ButtonStyle.Secondary),
             new ButtonBuilder()
-                .setCustomId('character_details')
-                .setLabel('📊 Character Details')
+                .setCustomId('fruit_details')
+                .setLabel('🔍 Details')
                 .setStyle(ButtonStyle.Success)
-                .setEmoji('🔍')
         );
 
     return {
@@ -733,7 +375,7 @@ ${finale.effect}
             .setDescription(description)
             .setColor(config.color)
             .setFooter({ 
-                text: `🌊 One Piece Ultimate Gacha | Epic summon by ${interaction.user.username} | ${new Date().toLocaleTimeString()}`,
+                text: `🍈 Devil Fruit Hunt Complete | Found by ${interaction.user.username}`,
                 iconURL: interaction.user.displayAvatarURL()
             })
             .setTimestamp(),
@@ -742,90 +384,68 @@ ${finale.effect}
 }
 
 // ═══════════════════════════════════════════════════════════════════
-//                    MASTER ANIMATION ORCHESTRATOR
+//                    MAIN ANIMATION FUNCTION
 // ═══════════════════════════════════════════════════════════════════
 
 async function createUltimateCinematicExperience(interaction) {
     try {
-        // Pre-determine results for consistent timing
         const rarity = DevilFruitDatabase.calculateDropRarity();
         const devilFruit = DevilFruitDatabase.getRandomDevilFruit(rarity);
         
-        console.log(`🎭 ULTIMATE GACHA: ${devilFruit.name} (${rarity}) for ${interaction.user.username}`);
+        console.log(`🎭 EPIC HUNT: ${devilFruit.name} (${rarity}) for ${interaction.user.username}`);
         
-        // PHASE 1: Epic Prologue (10 frames, ~12 seconds)
-        for (let frame = 0; frame < 10; frame++) {
-            const embed = createEpicPrologue(frame);
+        // PHASE 1: Mystery (5 frames, 4 seconds)
+        for (let frame = 0; frame < 5; frame++) {
+            const embed = createMysteryPhase(frame);
             await interaction.editReply({ embeds: [embed] });
-            await new Promise(resolve => setTimeout(resolve, CinematicMasterpiece.timing.prologue));
+            await new Promise(resolve => setTimeout(resolve, 800));
         }
         
-        // PHASE 2: Cosmic Awakening (8 frames, ~8 seconds)
-        for (let frame = 0; frame < 8; frame++) {
-            const embed = createCosmicAwakening(frame);
+        // PHASE 2: Energy Surge (6 frames, 4 seconds)
+        for (let frame = 0; frame < 6; frame++) {
+            const embed = createEnergySurge(frame);
             await interaction.editReply({ embeds: [embed] });
-            await new Promise(resolve => setTimeout(resolve, CinematicMasterpiece.timing.awakening));
+            await new Promise(resolve => setTimeout(resolve, 650));
         }
         
-        // PHASE 3: Energy Gathering (10 frames, ~8 seconds)
-        for (let frame = 0; frame < 10; frame++) {
-            const embed = createEnergyGathering(frame);
+        // PHASE 3: Cosmic Rift (5 frames, 4 seconds)
+        for (let frame = 0; frame < 5; frame++) {
+            const embed = createCosmicRift(frame);
             await interaction.editReply({ embeds: [embed] });
-            await new Promise(resolve => setTimeout(resolve, CinematicMasterpiece.timing.gathering));
+            await new Promise(resolve => setTimeout(resolve, 800));
         }
         
-        // PHASE 4: The Great Storm (12 frames, ~7 seconds)
-        for (let frame = 0; frame < 12; frame++) {
-            const embed = createGreatStorm(frame);
-            await interaction.editReply({ embeds: [embed] });
-            await new Promise(resolve => setTimeout(resolve, CinematicMasterpiece.timing.storm));
-        }
+        // PHASE 4: Rarity Revelation (dynamic)
+        await createRarityRevelation(interaction, rarity);
         
-        // PHASE 5: Dimensional Rift (8 frames, ~8 seconds)
-        for (let frame = 0; frame < 8; frame++) {
-            const embed = createDimensionalRift(frame);
-            await interaction.editReply({ embeds: [embed] });
-            await new Promise(resolve => setTimeout(resolve, CinematicMasterpiece.timing.rift));
-        }
-        
-        // PHASE 6: The Great Revelation (dynamic duration based on rarity)
-        await createGreatRevelation(interaction, rarity);
-        
-        // PHASE 7: Devil Fruit Materialization (8 frames, ~10 seconds)
+        // PHASE 5: Materialization (6 frames, 5 seconds)
         await createDevilFruitMaterialization(interaction, devilFruit, rarity);
         
-        // PHASE 8: Ultimate Finale (permanent display)
-        const finale = createUltimateFinale(devilFruit, rarity, interaction);
+        // PHASE 6: Epic Finale
+        const finale = createEpicFinale(devilFruit, rarity, interaction);
         await interaction.editReply({ 
             embeds: [finale.embed], 
             components: finale.components 
         });
         
-        // Log the epic result
-        console.log(`🎊 EPIC SUCCESS: ${devilFruit.name} (${rarity}, ${devilFruit.powerLevel} power) discovered by ${interaction.user.username}!`);
+        console.log(`🎊 SUCCESS: ${devilFruit.name} (${rarity}) found by ${interaction.user.username}!`);
         
     } catch (error) {
-        console.error('🚨 Ultimate Cinematic Error:', error);
+        console.error('🚨 Animation Error:', error);
         
         const errorEmbed = new EmbedBuilder()
-            .setTitle('⚠️ The Cosmic Forces Were Too Powerful!')
+            .setTitle('⚠️ Hunt Failed!')
             .setDescription(`
-The dimensional rift became unstable during the summoning!
+The Devil Fruit hunt encountered an error!
 
-**Error:** \`${error.message}\`
-
-*The Grand Line's power was too intense to contain. Please try again, brave admiral!*
-
-🌊 *Even the greatest legends face cosmic storms...*
+*Please try again, brave hunter!*
             `)
-            .setColor('#E74C3C')
-            .setFooter({ text: 'The adventure continues beyond any single setback!' });
+            .setColor('#E74C3C');
             
         await interaction.editReply({ embeds: [errorEmbed], components: [] });
     }
 }
 
 module.exports = {
-    createUltimateCinematicExperience,
-    CinematicMasterpiece
+    createUltimateCinematicExperience
 };
