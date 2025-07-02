@@ -1,359 +1,538 @@
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { timings } = require('../../config/bot');
 const { rarities, getRarity, getRandomCharacter } = require('../data/examples');
 
-// Helper function for delays
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
-// GLORY VISUAL EFFECTS SYSTEM
-const GloryEffects = {
-    // Light patterns for glorious reveals
-    lightPatterns: {
-        glow: ['◯', '◉', '⦿', '●', '⦿', '◉'],
-        sparkle: ['✦', '✧', '✩', '✪', '✫', '✬', '✭', '✮', '✯', '✰'],
-        divine: ['◊', '◈', '◇', '♦', '◊', '◈'],
-        energy: ['◐', '◓', '◑', '◒', '◐', '◓'],
-        cosmic: ['✦', '※', '⁂', '✱', '✲', '✳', '✴', '✵', '✶', '✷']
+// Professional Animation Framework
+const GachaTheater = {
+    // Sophisticated timing system
+    timing: {
+        intro: 800,
+        mystery: 1200,
+        suspense: 2000,
+        climax: 3000,
+        revelation: 1500,
+        finale: 2500
     },
 
-    // Color cascades for rainbow effects
-    rainbowColors: ['#FF0000', '#FF7F00', '#FFFF00', '#00FF00', '#0000FF', '#4B0082', '#9400D3'],
-    
-    // Glory light box creator
-    createLightBox(content, intensity = 1, pattern = 'glow') {
-        const lights = this.lightPatterns[pattern];
-        const lightFrame = lights[intensity % lights.length];
-        
-        const topGlow = lightFrame.repeat(20);
-        const sideGlow = lightFrame.repeat(3);
-        
-        return `
-${topGlow}
-${sideGlow}                    ${sideGlow}
-${sideGlow}      ${content}      ${sideGlow}
-${sideGlow}                    ${sideGlow}
-${topGlow}
-        `.trim();
+    // Cinematic color palettes
+    palettes: {
+        ocean: ['#001122', '#003366', '#004488', '#0066BB', '#0088DD', '#00AAFF'],
+        storm: ['#2C1810', '#442818', '#5C3820', '#744828', '#8C5830', '#A46838'],
+        treasure: ['#1A0F00', '#331E00', '#4D2D00', '#663C00', '#804B00', '#995A00'],
+        divine: ['#0A0015', '#14002A', '#1E003F', '#280054', '#320069', '#3C007E'],
+        legendary: ['#150A00', '#2A1400', '#3F1E00', '#542800', '#693200', '#7E3C00'],
+        mythical: ['#1A001A', '#330033', '#4D004D', '#660066', '#800080', '#990099']
     },
 
-    // Pulsing text effect
-    createPulsingText(text, intensity = 1) {
-        const effects = [
+    // Dynamic visual effects
+    effects: {
+        waves: ['〰️', '🌊', '〰️', '🌊', '〰️'],
+        lightning: ['⚡', '🌩️', '⚡', '🌩️', '⚡'],
+        treasure: ['💎', '✨', '💰', '⭐', '💎'],
+        cosmos: ['🌌', '⭐', '🌟', '💫', '🌠'],
+        fire: ['🔥', '💥', '⚡', '🌟', '🔥'],
+        divine: ['🌌', '✨', '🔮', '💫', '⚡']
+    },
+
+    // Professional text animations
+    createTypingEffect(text, frame, maxFrames) {
+        const progress = Math.min(frame / maxFrames, 1);
+        const visibleChars = Math.floor(text.length * progress);
+        const visible = text.slice(0, visibleChars);
+        const cursor = frame % 20 < 10 ? '|' : '';
+        return visible + cursor;
+    },
+
+    // Sophisticated pulsing system
+    createPulse(text, intensity) {
+        const levels = [
             text,
+            `*${text}*`,
             `**${text}**`,
             `***${text}***`,
-            `**✨ ${text} ✨**`,
-            `***⭐ ${text} ⭐***`,
-            `**🌟 ✨ ${text} ✨ 🌟**`,
-            `***💫 ⭐ ✨ ${text} ✨ ⭐ 💫***`
+            `✨ **${text}** ✨`,
+            `🌟 ***${text}*** 🌟`,
+            `⭐ 🌟 **${text}** 🌟 ⭐`,
+            `💫 ⭐ 🌟 ***${text}*** 🌟 ⭐ 💫`
         ];
-        return effects[Math.min(intensity, effects.length - 1)];
+        return levels[Math.min(intensity, levels.length - 1)];
     },
 
-    // Color transition for glory effects
-    getGloryColor(frame, type = 'normal') {
-        if (type === 'rainbow') {
-            return this.rainbowColors[frame % this.rainbowColors.length];
-        }
-        
-        const colorSets = {
-            normal: ['#1E40AF', '#3B82F6', '#60A5FA', '#93C5FD'],
-            fire: ['#DC2626', '#EF4444', '#F87171', '#FCA5A5'],
-            divine: ['#7C3AED', '#8B5CF6', '#A78BFA', '#C4B5FD'],
-            cosmic: ['#DB2777', '#EC4899', '#F472B6', '#F9A8D4'],
-            legendary: ['#D97706', '#F59E0B', '#FBBF24', '#FCD34D']
-        };
-        
-        const colors = colorSets[type] || colorSets.normal;
+    // Dynamic color transitions
+    getTransitionColor(frame, palette) {
+        const colors = this.palettes[palette] || this.palettes.ocean;
         return colors[frame % colors.length];
     },
 
-    // Flash effect simulation
-    createFlash(intensity = 5) {
-        const flashChars = ['▓', '▒', '░', ' '];
-        const char = flashChars[Math.min(intensity, flashChars.length - 1)];
-        return char.repeat(30);
+    // Professional visual frames
+    createFrame(content, style = 'simple', intensity = 1) {
+        const styles = {
+            simple: {
+                top: '═'.repeat(40),
+                side: '║',
+                corner: '╔╗╚╝'
+            },
+            ornate: {
+                top: '♦'.repeat(20),
+                side: '◆',
+                corner: '◊◊◊◊'
+            },
+            mystical: {
+                top: '✦'.repeat(18),
+                side: '✧',
+                corner: '✨✨✨✨'
+            },
+            divine: {
+                top: '⭐'.repeat(15),
+                side: '🌟',
+                corner: '💫💫💫💫'
+            }
+        };
+
+        const frame = styles[style] || styles.simple;
+        const padding = ' '.repeat(Math.max(0, 38 - content.length));
+        
+        return `\`\`\`
+${frame.top}
+${frame.side} ${content}${padding} ${frame.side}
+${frame.top}
+\`\`\``;
     },
 
-    // Cascading light effect
-    createCascade(frame, height = 5) {
-        const cascade = [];
-        for (let i = 0; i < height; i++) {
-            const position = (frame + i) % 15;
-            const line = ' '.repeat(position) + '✦' + ' '.repeat(15 - position);
-            cascade.push(line);
-        }
-        return cascade.join('\n');
+    // Epic effect combinations
+    createEpicEffect(frame, rarity) {
+        const effects = this.effects[rarity] || this.effects.waves;
+        const effect = effects[frame % effects.length];
+        const count = Math.floor(frame / 3) + 1;
+        return effect.repeat(Math.min(count, 8));
     }
 };
 
 /**
- * Creates a GLORIOUS starting animation with light effects
+ * PHASE 1: Mysterious Beginning - Sets the atmosphere
  */
-function createGloriousStartEmbed(frame = 0) {
-    const lightIntensity = Math.floor(frame / 2);
-    const pulsingTitle = GloryEffects.createPulsingText('SUMMONING BEGINS', lightIntensity);
-    const color = GloryEffects.getGloryColor(frame, 'normal');
-    
-    const lightBox = GloryEffects.createLightBox('THE SEAS AWAKEN', frame, 'glow');
-    
-    return new EmbedBuilder()
-        .setTitle('🏴‍☠️ One Piece Gacha Pull')
-        .setDescription(`
-${pulsingTitle}
-
-\`\`\`
-${lightBox}
-\`\`\`
-
-*✨ The Grand Line responds to your call... ✨*
-        `)
-        .setColor(color)
-        .setFooter({ text: `✦ Power gathering... ${lightIntensity + 1}/6 ✦` });
-}
-
-/**
- * Creates SPECTACULAR spinning with cascading lights
- */
-function createSpectacularSpinEmbed(frame) {
-    const intensity = Math.floor(frame / 3);
-    const maxIntensity = 4;
-    
-    // Build up to maximum glory
-    const pulsingText = GloryEffects.createPulsingText('PULLING', intensity + 2);
-    const colorType = ['normal', 'fire', 'divine', 'cosmic'][Math.min(intensity, 3)];
-    const color = GloryEffects.getGloryColor(frame, colorType);
-    
-    // Create cascading light show
-    const cascade = GloryEffects.createCascade(frame, 5);
-    const lightPattern = intensity >= 3 ? 'cosmic' : intensity >= 2 ? 'divine' : 'sparkle';
-    const lightBox = GloryEffects.createLightBox(pulsingText, frame, lightPattern);
-    
-    // Flash effects for maximum intensity
-    const flash = intensity >= 3 ? GloryEffects.createFlash(frame % 4) : '';
-    
+function createMysteriousIntro(frame) {
     const messages = [
-        '✨ Energy gathering...',
-        '⚡ Power building...',
-        '🔥 Reality shifting...',
-        '🌌 COSMIC FORCES UNLEASHED!'
+        "The Grand Line stirs...",
+        "Ancient powers awaken...",
+        "The sea calls to you...",
+        "Destiny approaches...",
+        "Something legendary stirs..."
     ];
     
+    const typewriterText = GachaTheater.createTypingEffect(
+        messages[Math.min(frame, messages.length - 1)], 
+        frame * 3, 
+        20
+    );
+    
+    const color = GachaTheater.getTransitionColor(frame, 'ocean');
+    const waves = GachaTheater.createEpicEffect(frame, 'waves');
+    
     return new EmbedBuilder()
-        .setTitle('🏴‍☠️ One Piece Gacha Pull')
+        .setTitle('🏴‍☠️ One Piece Treasure Summon')
         .setDescription(`
-${flash}
+🌊 ${waves} 🌊
 
-\`\`\`
-${lightBox}
-\`\`\`
+${GachaTheater.createFrame(typewriterText, 'simple')}
 
-\`\`\`
-${cascade}
-\`\`\`
-
-${flash}
+*The winds of adventure begin to blow...*
         `)
         .setColor(color)
-        .setFooter({ text: messages[Math.min(intensity, messages.length - 1)] });
+        .setFooter({ text: 'Preparing for the greatest adventure...' });
 }
 
 /**
- * Creates EXPLOSIVE rarity reveal with light bursts
+ * PHASE 2: Building Suspense - Creates anticipation
  */
-async function createExplosiveRarityReveal(interaction, rarity) {
+function createSuspensePhase(frame) {
+    const suspenseMessages = [
+        "⚡ Storm clouds gather...",
+        "🌊 The seas grow restless...",
+        "⚡ Lightning strikes the horizon...",
+        "🌪️ A whirlpool forms...",
+        "⚡ The very air crackles with power...",
+        "🌊 Massive waves crash around you...",
+        "⚡ Thunder echoes across the ocean...",
+        "🌩️ THE STORM REACHES ITS PEAK!"
+    ];
+    
+    const intensity = Math.floor(frame / 2);
+    const message = suspenseMessages[Math.min(frame, suspenseMessages.length - 1)];
+    const pulsingMessage = GachaTheater.createPulse(message, intensity);
+    
+    const stormColor = GachaTheater.getTransitionColor(frame, 'storm');
+    const lightning = GachaTheater.createEpicEffect(frame, 'lightning');
+    
+    // Progressive visual intensity
+    const visualIntensity = Math.min(frame, 8);
+    const stormEffect = '🌩️'.repeat(visualIntensity) + '⚡'.repeat(Math.floor(visualIntensity / 2));
+    
+    return new EmbedBuilder()
+        .setTitle(`⚡ ${GachaTheater.createPulse('STORM APPROACHING', intensity)} ⚡`)
+        .setDescription(`
+${stormEffect}
+
+${GachaTheater.createFrame(pulsingMessage, 'ornate', intensity)}
+
+${lightning}
+
+*The power builds... something extraordinary approaches!*
+        `)
+        .setColor(stormColor)
+        .setFooter({ 
+            text: `Storm Intensity: ${Math.floor((frame / 8) * 100)}% | Brace yourself!`
+        });
+}
+
+/**
+ * PHASE 3: The Revelation Tease - Hints at rarity without revealing
+ */
+function createRevelationTease(frame, actualRarity) {
+    // Create false suspense - don't reveal the actual rarity yet
+    const mysteryHints = [
+        "Something stirs in the depths...",
+        "A presence makes itself known...",
+        "The treasure chest begins to glow...",
+        "Ancient seals start to break...",
+        "Power beyond measure awakens...",
+        "The very fabric of reality trembles...",
+        "SOMETHING LEGENDARY EMERGES!"
+    ];
+    
+    const hint = mysteryHints[Math.min(frame, mysteryHints.length - 1)];
+    const pulsingHint = GachaTheater.createPulse(hint, frame);
+    
+    // Use colors that don't give away the rarity
+    const mysteryColor = GachaTheater.getTransitionColor(frame, 'treasure');
+    const treasureEffect = GachaTheater.createEpicEffect(frame, 'treasure');
+    
+    // Progressive mystery reveal without spoiling
+    const mysterySymbols = ['◇', '◈', '◆', '♦', '💎'];
+    const symbol = mysterySymbols[Math.min(frame, mysterySymbols.length - 1)];
+    const symbolPattern = symbol.repeat(Math.min(frame + 1, 12));
+    
+    return new EmbedBuilder()
+        .setTitle(`💎 TREASURE AWAKENING 💎`)
+        .setDescription(`
+${treasureEffect}
+
+${GachaTheater.createFrame('THE CHEST OPENS...', 'mystical')}
+
+${symbolPattern}
+${pulsingHint}
+${symbolPattern}
+
+*What incredible power will emerge?*
+        `)
+        .setColor(mysteryColor)
+        .setFooter({ text: 'The moment of truth approaches...' });
+}
+
+/**
+ * PHASE 4: Epic Rarity Reveal - The big moment
+ */
+async function createEpicRarityReveal(interaction, rarity) {
     const config = rarities[rarity];
-    const frames = {
-        common: 3, uncommon: 4, rare: 5, 
-        legendary: 7, mythical: 10, omnipotent: 15
+    const revealFrames = {
+        common: 3,
+        uncommon: 4, 
+        rare: 5,
+        legendary: 7,
+        mythical: 10,
+        omnipotent: 15
     }[rarity] || 3;
     
-    // Build up explosion
-    for (let frame = 0; frame < frames; frame++) {
-        const explosionIntensity = Math.min(6, frame);
-        const isRainbow = rarity === 'omnipotent' || rarity === 'mythical';
-        const color = isRainbow ? 
-            GloryEffects.getGloryColor(frame, 'rainbow') : 
-            config.color;
+    // Build up the reveal with increasing intensity
+    for (let frame = 0; frame < revealFrames; frame++) {
+        const intensity = Math.min(frame, 7);
+        const progress = frame / revealFrames;
         
-        // Create expanding light burst
-        const burstSize = frame + 1;
-        const lightBurst = '✦'.repeat(Math.min(20, burstSize * 3));
-        const innerGlow = '◉'.repeat(Math.min(15, burstSize * 2));
+        // Color revelation
+        const revealColor = frame < 3 ? '#2C2C2C' : config.color;
         
-        const rarityText = GloryEffects.createPulsingText(config.name.toUpperCase(), explosionIntensity);
-        const flash = frame > 2 ? GloryEffects.createFlash(frame % 3) : '';
+        // Progressive text reveal
+        const rarityName = config.name.toUpperCase();
+        const revealedText = frame < 2 ? 
+            '???'.repeat(rarityName.length) :
+            GachaTheater.createTypingEffect(rarityName, frame * 2, 10);
+        
+        const pulsingText = GachaTheater.createPulse(revealedText, intensity);
+        
+        // Epic visual effects based on rarity
+        let epicEffects = '';
+        if (rarity === 'omnipotent') {
+            epicEffects = '🌌'.repeat(15) + '\n' + '💫'.repeat(12) + '\n' + '⭐'.repeat(10);
+        } else if (rarity === 'mythical') {
+            epicEffects = '🔮'.repeat(12) + '\n' + '✨'.repeat(10) + '\n' + '🌟'.repeat(8);
+        } else if (rarity === 'legendary') {
+            epicEffects = '👑'.repeat(10) + '\n' + '⚡'.repeat(8) + '\n' + '🔥'.repeat(6);
+        } else {
+            epicEffects = config.emoji.repeat(Math.min(frame + 3, 8));
+        }
         
         const description = `
-${flash}
+${epicEffects}
 
-\`\`\`
-${lightBurst}
-${innerGlow}
-     ${config.emoji} ${rarityText} ${config.emoji}
-${innerGlow}
-${lightBurst}
-\`\`\`
+${GachaTheater.createFrame(pulsingText, 'divine')}
 
-${config.stars.repeat(3)}
+${config.stars.repeat(Math.min(frame + 1, 5))}
 
-${flash}
+${frame >= 2 ? `*${config.name} power courses through the air!*` : '*The power reveals itself...*'}
         `;
 
         const embed = new EmbedBuilder()
-            .setTitle('🏴‍☠️ RARITY REVEALED!')
+            .setTitle(`${config.emoji} RARITY REVEALED! ${config.emoji}`)
             .setDescription(description)
-            .setColor(color)
-            .setFooter({ text: `${config.stars} BEHOLD THE ${config.name.toUpperCase()}! ${config.stars}` });
+            .setColor(revealColor)
+            .setFooter({ 
+                text: frame >= 2 ? 
+                    `${config.stars} ${config.name.toUpperCase()} CONFIRMED! ${config.stars}` :
+                    'The truth emerges...'
+            });
 
         await interaction.editReply({ embeds: [embed] });
-        await sleep(100 + (frame * 20)); // Accelerating reveals
+        await new Promise(resolve => setTimeout(resolve, 200 + (frame * 50)));
     }
     
-    await sleep(1000);
+    // Pause for dramatic effect
+    await new Promise(resolve => setTimeout(resolve, 1000));
 }
 
 /**
- * Creates DIVINE character materialization
+ * PHASE 5: Character Materialization - The grand finale
  */
-function createDivineMaterialization(character, rarity, interaction, frame = 0) {
+async function createCharacterMaterialization(interaction, character, rarity) {
     const config = rarities[rarity];
-    const isEntrance = frame < 5;
+    const materializationFrames = 6;
     
-    if (isEntrance) {
-        const materializationStage = frame;
-        const glowIntensity = materializationStage + 1;
-        const pulsingName = GloryEffects.createPulsingText('MATERIALIZING', glowIntensity);
+    // Build up the character appearance
+    for (let frame = 0; frame < materializationFrames; frame++) {
+        const progress = frame / materializationFrames;
+        const intensity = Math.min(frame + 2, 7);
         
-        // Character name reveal effect
-        const nameLength = character.name.length;
-        const revealedChars = Math.floor((nameLength * frame) / 4);
-        const hiddenName = '◆'.repeat(Math.max(0, nameLength - revealedChars));
-        const partialName = character.name.slice(0, revealedChars) + hiddenName;
+        // Progressive character name reveal
+        const nameReveal = GachaTheater.createTypingEffect(
+            character.name, 
+            frame * 3, 
+            15
+        );
         
-        const lightBox = GloryEffects.createLightBox(pulsingName, frame, 'divine');
-        const cascade = GloryEffects.createCascade(frame * 2, 4);
+        const pulsingName = GachaTheater.createPulse(nameReveal, intensity);
         
-        const isHighRarity = ['mythical', 'omnipotent'].includes(rarity);
-        const color = isHighRarity ? 
-            GloryEffects.getGloryColor(frame, 'rainbow') : 
-            config.color;
+        // Materialization effects
+        const materializationStages = [
+            'A shadow forms...',
+            'Features begin to emerge...',
+            'The silhouette takes shape...',
+            'Power radiates from the figure...',
+            'The legend stands before you...',
+            'MATERIALIZATION COMPLETE!'
+        ];
         
-        return new EmbedBuilder()
-            .setTitle(`${config.emoji} SUMMONING... ${config.emoji}`)
-            .setDescription(`
-**${config.stars}**
+        const stage = materializationStages[frame] || materializationStages[materializationStages.length - 1];
+        const stageText = GachaTheater.createPulse(stage, intensity);
+        
+        // Dynamic color transitions
+        const materializationColor = frame < 2 ? '#1a1a1a' : 
+                                   frame < 4 ? GachaTheater.getTransitionColor(frame, 'divine') :
+                                   config.color;
+        
+        // Progressive visual effects
+        const characterEffects = GachaTheater.createEpicEffect(frame, 
+            ['divine', 'cosmos', 'fire'][Math.floor(frame / 2)] || 'divine'
+        );
+        
+        const description = `
+${characterEffects}
 
-\`\`\`
-${lightBox}
-\`\`\`
+${GachaTheater.createFrame(pulsingName, 'divine')}
 
-**${partialName}**
+**${stageText}**
 
-\`\`\`
-${cascade}
-\`\`\`
+${frame >= 3 ? `**Crew:** ${character.crew}` : '**Crew:** ???'}
+${frame >= 4 ? `**Bounty:** ${character.bounty} Berry` : '**Bounty:** ???'}
+${frame >= 5 ? `**Rarity:** ${config.name}` : '**Rarity:** Materializing...'}
 
-*✨ A legendary presence emerges from the void... ✨*
-            `)
-            .setColor(color)
-            .setFooter({ text: `Materialization: ${Math.floor((frame / 4) * 100)}%` });
+${config.stars.repeat(Math.min(frame + 1, 6))}
+        `;
+
+        const embed = new EmbedBuilder()
+            .setTitle(`${config.emoji} LEGENDARY SUMMON ${config.emoji}`)
+            .setDescription(description)
+            .setColor(materializationColor)
+            .setFooter({ 
+                text: `Materialization: ${Math.floor(progress * 100)}%`
+            });
+
+        await interaction.editReply({ embeds: [embed] });
+        await new Promise(resolve => setTimeout(resolve, 800));
     }
-    
-    // Final glorious reveal
-    const finalGlowText = GloryEffects.createPulsingText(character.name, 6);
-    const isUltimate = ['mythical', 'omnipotent'].includes(rarity);
-    const finalColor = isUltimate ? 
-        GloryEffects.getGloryColor(frame, 'rainbow') : 
-        config.color;
-    
-    const gloriousBox = GloryEffects.createLightBox(finalGlowText, 6, 'cosmic');
-    
-    let description = `
-**${config.stars}**
+}
 
-\`\`\`
-${gloriousBox}
-\`\`\`
-
-**Bounty:** ${character.bounty} Berry
-**Crew:** ${character.crew}
-**Rarity:** ${config.name}
-
-*"The seas have chosen their champion!"*
-    `;
+/**
+ * PHASE 6: Epic Finale - The ultimate reveal
+ */
+function createEpicFinale(character, rarity, interaction) {
+    const config = rarities[rarity];
     
-    // Add rarity-specific glory effects
-    const gloryEffects = {
-        omnipotent: `\n\n🌌 ***OMNIPOTENT BEING SUMMONED!*** 🌌\n✨ *Reality itself kneels before your power!* ✨\n💫 *The multiverse trembles!* 💫`,
-        mythical: `\n\n🔮 ***MYTHICAL LEGEND AWAKENED!*** 🔮\n🌟 *Ancient powers flow through time!* 🌟\n⚡ *Destiny reshapes itself!* ⚡`,
-        legendary: `\n\n🟡 ***LEGENDARY HERO RISES!*** 🟡\n⭐ *History remembers this moment!* ⭐\n🔥 *Epic glory achieved!* 🔥`,
-        rare: `\n\n🔵 **RARE WARRIOR APPEARS!** 🔵\n💎 *Skilled power joins your cause!* 💎`,
-        uncommon: `\n\n🟢 **PROMISING SOUL EMERGES!** 🟢\n🌟 *Potential awaits unleashing!* 🌟`,
-        common: `\n\n⚪ **RELIABLE ALLY JOINS!** ⚪\n⭐ *Every legend needs a foundation!* ⭐`
+    // Rarity-specific finale messages
+    const finaleMessages = {
+        omnipotent: {
+            title: '🌌 OMNIPOTENT BEING SUMMONED! 🌌',
+            subtitle: '✨ Reality bends to your will! ✨',
+            effect: '🌌💫⭐🌟💫🌌'
+        },
+        mythical: {
+            title: '🔮 MYTHICAL LEGEND AWAKENED! 🔮',
+            subtitle: '⚡ Ancient powers flow through time! ⚡',
+            effect: '🔮✨🌟💎🌟✨🔮'
+        },
+        legendary: {
+            title: '👑 LEGENDARY HERO RISES! 👑',
+            subtitle: '🔥 History remembers this moment! 🔥',
+            effect: '👑⚡🔥🌟🔥⚡👑'
+        },
+        rare: {
+            title: '💎 RARE WARRIOR APPEARS! 💎',
+            subtitle: '✨ Exceptional power joins your crew! ✨',
+            effect: '💎🌟✨⭐✨🌟💎'
+        },
+        uncommon: {
+            title: '🌟 SKILLED PIRATE EMERGES! 🌟',
+            subtitle: '⭐ Promising potential awaits! ⭐',
+            effect: '🌟⭐✨💫✨⭐🌟'
+        },
+        common: {
+            title: '⚓ RELIABLE CREW MEMBER! ⚓',
+            subtitle: '⭐ Every legend needs a foundation! ⭐',
+            effect: '⚓⭐🌊⭐🌊⭐⚓'
+        }
     };
     
-    description += gloryEffects[rarity] || '';
+    const finale = finaleMessages[rarity] || finaleMessages.common;
     
-    return new EmbedBuilder()
-        .setTitle(`${config.emoji} ${finalGlowText} ${config.emoji}`)
-        .setDescription(description)
-        .setColor(finalColor)
-        .setFooter({ 
-            text: `🏆 GLORIOUS VICTORY ${interaction.user.username}! 🏆 | One Piece Gacha`,
-            iconURL: interaction.user.displayAvatarURL()
-        })
-        .setTimestamp();
+    const description = `
+${finale.effect}
+
+${GachaTheater.createFrame(
+    GachaTheater.createPulse(character.name, 7), 
+    'divine'
+)}
+
+**${finale.title}**
+*${finale.subtitle}*
+
+╔══════════════════════╗
+║ **CREW:** ${character.crew.padEnd(15)} ║
+║ **BOUNTY:** ${character.bounty.padEnd(12)} Berry ║  
+║ **RARITY:** ${config.name.padEnd(15)} ║
+╚══════════════════════╝
+
+${config.stars.repeat(6)}
+
+🏆 **CONGRATULATIONS ${interaction.user.username.toUpperCase()}!** 🏆
+*The seas have blessed you with incredible power!*
+
+${finale.effect}
+    `;
+
+    // Create action row with interaction button
+    const actionRow = new ActionRowBuilder()
+        .addComponents(
+            new ButtonBuilder()
+                .setCustomId('pull_again')
+                .setLabel('⚓ Set Sail Again!')
+                .setStyle(ButtonStyle.Primary)
+                .setEmoji('🏴‍☠️'),
+            new ButtonBuilder()
+                .setCustomId('view_crew')
+                .setLabel('👥 View Crew')
+                .setStyle(ButtonStyle.Secondary)
+                .setEmoji('⚓')
+        );
+
+    return {
+        embed: new EmbedBuilder()
+            .setTitle(`${config.emoji} ${GachaTheater.createPulse(character.name, 7)} ${config.emoji}`)
+            .setDescription(description)
+            .setColor(config.color)
+            .setFooter({ 
+                text: `🌊 One Piece Gacha | Summoned by ${interaction.user.username}`,
+                iconURL: interaction.user.displayAvatarURL()
+            })
+            .setTimestamp(),
+        components: [actionRow]
+    };
 }
 
 /**
- * Main GLORIOUS animation function
+ * MASTER ANIMATION ORCHESTRATOR
  */
-async function createGachaAnimation(interaction) {
+async function createProfessionalGachaAnimation(interaction) {
     try {
+        // Pre-determine results for consistent animation timing
         const rarity = getRarity();
         const character = getRandomCharacter(rarity);
         
-        // Phase 1: Glorious awakening (6 frames)
-        for (let frame = 0; frame < 6; frame++) {
-            const embed = createGloriousStartEmbed(frame);
-            await interaction.editReply({ embeds: [embed] });
-            await sleep(400);
-        }
+        console.log(`🎲 Gacha Roll: ${character.name} (${rarity}) for ${interaction.user.username}`);
         
-        // Phase 2: Spectacular spinning light show (16 frames)
-        for (let frame = 0; frame < 16; frame++) {
-            const embed = createSpectacularSpinEmbed(frame);
-            await interaction.editReply({ embeds: [embed] });
-            await sleep(200 - (frame * 5)); // Accelerating intensity
-        }
-        
-        // Phase 3: Explosive rarity reveal
-        await createExplosiveRarityReveal(interaction, rarity);
-        
-        // Phase 4: Divine materialization entrance (5 frames)
+        // PHASE 1: Mysterious Intro (5 frames)
         for (let frame = 0; frame < 5; frame++) {
-            const embed = createDivineMaterialization(character, rarity, interaction, frame);
+            const embed = createMysteriousIntro(frame);
             await interaction.editReply({ embeds: [embed] });
-            await sleep(600);
+            await new Promise(resolve => setTimeout(resolve, GachaTheater.timing.intro));
         }
         
-        // Phase 5: Final glorious reveal
-        const finalEmbed = createDivineMaterialization(character, rarity, interaction, 10);
-        await interaction.editReply({ embeds: [finalEmbed] });
+        // PHASE 2: Building Suspense (8 frames)
+        for (let frame = 0; frame < 8; frame++) {
+            const embed = createSuspensePhase(frame);
+            await interaction.editReply({ embeds: [embed] });
+            await new Promise(resolve => setTimeout(resolve, GachaTheater.timing.mystery - (frame * 50)));
+        }
+        
+        // PHASE 3: Revelation Tease (7 frames)
+        for (let frame = 0; frame < 7; frame++) {
+            const embed = createRevelationTease(frame, rarity);
+            await interaction.editReply({ embeds: [embed] });
+            await new Promise(resolve => setTimeout(resolve, GachaTheater.timing.suspense - (frame * 100)));
+        }
+        
+        // PHASE 4: Epic Rarity Reveal
+        await createEpicRarityReveal(interaction, rarity);
+        
+        // PHASE 5: Character Materialization
+        await createCharacterMaterialization(interaction, character, rarity);
+        
+        // PHASE 6: Epic Finale
+        const finale = createEpicFinale(character, rarity, interaction);
+        await interaction.editReply({ 
+            embeds: [finale.embed], 
+            components: finale.components 
+        });
         
     } catch (error) {
-        console.error('Animation error:', error);
+        console.error('🚨 Animation Error:', error);
         
         const errorEmbed = new EmbedBuilder()
-            .setTitle('❌ Error')
-            .setDescription('The glory was too intense! Please try again...')
-            .setColor('#FF0000');
+            .setTitle('⚠️ The Seas Are Too Rough!')
+            .setDescription(`
+The Grand Line's power was too intense for this summon!
+
+\`\`\`
+Error: ${error.message}
+\`\`\`
+
+*Please try your luck again, brave pirate!*
+            `)
+            .setColor('#FF6B6B')
+            .setFooter({ text: 'The adventure continues...' });
             
-        await interaction.editReply({ embeds: [errorEmbed] });
+        await interaction.editReply({ embeds: [errorEmbed], components: [] });
     }
 }
 
 module.exports = {
-    createGachaAnimation
+    createGachaAnimation: createProfessionalGachaAnimation,
+    GachaTheater
 };
