@@ -18,24 +18,35 @@ const SurpriseEngine = {
     // PERFECT width system
     PERFECT_WIDTH: 50,
     
-    // Create perfectly sized frame
+    // Create perfectly sized frame with exact character counting
     createPerfectFrame(content, frameStyle = '█') {
-        const innerWidth = this.PERFECT_WIDTH - 4;
-        let displayContent = content;
+        const totalWidth = this.PERFECT_WIDTH;
+        const borderWidth = 2; // 1 char each side
+        const innerWidth = totalWidth - borderWidth;
         
-        if (displayContent.length > innerWidth) {
-            displayContent = displayContent.slice(0, innerWidth - 3) + '...';
+        // Clean content - remove any existing formatting
+        let cleanContent = content.replace(/\*+/g, '').replace(/[⚡💥]/g, '').trim();
+        
+        // Truncate if too long
+        if (cleanContent.length > innerWidth) {
+            cleanContent = cleanContent.slice(0, innerWidth - 3) + '...';
         }
         
-        const padding = innerWidth - displayContent.length;
-        const leftPad = Math.floor(padding / 2);
-        const rightPad = padding - leftPad;
+        // Calculate exact padding
+        const contentLength = cleanContent.length;
+        const totalPadding = innerWidth - contentLength;
+        const leftPad = Math.floor(totalPadding / 2);
+        const rightPad = totalPadding - leftPad;
         
-        const topLine = frameStyle.repeat(this.PERFECT_WIDTH);
-        const contentLine = `${frameStyle} ${' '.repeat(leftPad)}${displayContent}${' '.repeat(rightPad)} ${frameStyle}`;
-        const bottomLine = frameStyle.repeat(this.PERFECT_WIDTH);
+        // Create lines with exact width
+        const topLine = frameStyle.repeat(totalWidth);
+        const contentLine = frameStyle + ' '.repeat(leftPad) + cleanContent + ' '.repeat(rightPad) + frameStyle;
+        const bottomLine = frameStyle.repeat(totalWidth);
         
-        return `\`\`\`\n${topLine}\n${contentLine}\n${bottomLine}\n\`\`\``;
+        // Ensure each line is exactly the same length
+        const paddedContentLine = contentLine.padEnd(totalWidth, ' ').slice(0, totalWidth);
+        
+        return `\`\`\`\n${topLine}\n${paddedContentLine}\n${bottomLine}\n\`\`\``;
     },
     
     // Perfect separator
@@ -43,30 +54,35 @@ const SurpriseEngine = {
         return char.repeat(this.PERFECT_WIDTH);
     },
     
-    // Perfect effects bar
+    // Perfect effects bar with exact width control
     createPerfectEffects(effects) {
-        let effectsLine = effects;
+        let effectsLine = effects.toString();
+        const targetWidth = this.PERFECT_WIDTH;
         
-        if (effectsLine.length > this.PERFECT_WIDTH) {
-            effectsLine = effectsLine.slice(0, this.PERFECT_WIDTH);
-        } else if (effectsLine.length < this.PERFECT_WIDTH) {
-            const padding = this.PERFECT_WIDTH - effectsLine.length;
+        if (effectsLine.length > targetWidth) {
+            // Truncate if too long
+            effectsLine = effectsLine.slice(0, targetWidth);
+        } else if (effectsLine.length < targetWidth) {
+            // Pad to exact width
+            const padding = targetWidth - effectsLine.length;
             const leftPad = Math.floor(padding / 2);
             const rightPad = padding - leftPad;
             effectsLine = ' '.repeat(leftPad) + effectsLine + ' '.repeat(rightPad);
         }
         
-        return effectsLine;
+        // Ensure exactly the target width
+        return effectsLine.slice(0, targetWidth).padEnd(targetWidth, ' ');
     },
     
-    // Perfect charging bar
+    // Perfect charging bar with exact width
     createPerfectChargingBar(percentage) {
-        const barWidth = 35;
+        const barWidth = 30; // Fixed bar width
         const filled = Math.floor((percentage / 100) * barWidth);
         const empty = barWidth - filled;
         const bar = '█'.repeat(filled) + '░'.repeat(empty);
         const barText = `[${bar}] ${percentage}%`;
         
+        // Ensure exact width
         return this.createPerfectEffects(barText);
     },
     
@@ -75,24 +91,27 @@ const SurpriseEngine = {
         return this.rainbowColors[frame % this.rainbowColors.length];
     },
     
-    // Power level effects with color variety
+    // Power level effects with clean text for frames
     createPowerText(text, level, useRed = false) {
+        // For frame display, keep text clean and measure correctly
+        let baseText = text;
+        
         if (useRed) {
-            // Red text variations
-            if (level <= 2) return `🔴 ${text}`;
-            if (level <= 4) return `🔴 *${text}*`;
-            if (level <= 6) return `🔴 **${text}**`;
-            if (level <= 8) return `🔴 ***${text}***`;
-            if (level <= 10) return `🔴 ⚡ **${text}** ⚡`;
-            return `🔴 💥 ⚡ ***${text}*** ⚡ 💥`;
+            // Red text variations - but keep length predictable
+            if (level <= 2) return `🔴 ${baseText}`;
+            if (level <= 4) return `🔴 ${baseText}`;
+            if (level <= 6) return `🔴 ${baseText}`;
+            if (level <= 8) return `🔴 ${baseText}`;
+            if (level <= 10) return `🔴 ${baseText}`;
+            return `🔴 ${baseText}`;
         } else {
-            // Regular text variations
-            if (level <= 2) return text;
-            if (level <= 4) return `*${text}*`;
-            if (level <= 6) return `**${text}**`;
-            if (level <= 8) return `***${text}***`;
-            if (level <= 10) return `⚡ **${text}** ⚡`;
-            return `💥 ⚡ ***${text}*** ⚡ 💥`;
+            // Regular text variations - clean for frame calculations
+            if (level <= 2) return baseText;
+            if (level <= 4) return baseText;
+            if (level <= 6) return baseText;
+            if (level <= 8) return baseText;
+            if (level <= 10) return baseText;
+            return baseText;
         }
     },
     
