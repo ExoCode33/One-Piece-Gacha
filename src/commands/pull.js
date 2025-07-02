@@ -92,9 +92,9 @@ ${rarityText || 'No fruits collected yet!'}
 
             // Set cooldown based on hunt type
             const cooldownTimes = {
-                single: 45000,   // 45 seconds for single hunt
-                multi: 180000,   // 3 minutes for multi hunt  
-                premium: 300000  // 5 minutes for legendary hunt
+                single: 5000,    // 5 seconds for single hunt
+                multi: 30000,    // 30 seconds for multi hunt  
+                premium: 60000   // 1 minute for legendary hunt
             };
             
             userCooldowns.set(userId, Date.now() + cooldownTimes[pullType]);
@@ -362,7 +362,7 @@ async function handleButtonInteractions(interaction) {
                 }
                 
                 // Set new cooldown and run single hunt
-                userCooldowns.set(userId, Date.now() + 45000);
+                userCooldowns.set(userId, Date.now() + 5000);
                 await interaction.deferReply();
                 await handleSingleHunt(interaction, userStat || {
                     totalHunts: 0,
