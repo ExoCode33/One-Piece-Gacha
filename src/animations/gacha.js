@@ -2,36 +2,31 @@ const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('
 const { DevilFruitDatabase } = require('../data/devilfruit');
 
 // ═══════════════════════════════════════════════════════════════════
-//                    ULTIMATE TROLLING ENGINE
+//                    PERFECT SURPRISE ENGINE
 // ═══════════════════════════════════════════════════════════════════
 
-const TrollingEngine = {
+const SurpriseEngine = {
     // Lightning-fast rainbow colors
     rainbowColors: [
-        '#FF0000', '#FF2200', '#FF4400', '#FF6600', '#FF8800', '#FFAA00',
-        '#FFCC00', '#FFEE00', '#EEFF00', '#CCFF00', '#AAFF00', '#88FF00',
-        '#66FF00', '#44FF00', '#22FF00', '#00FF00', '#00FF22', '#00FF44',
-        '#00FF66', '#00FF88', '#00FFAA', '#00FFCC', '#00FFEE', '#00FFFF',
-        '#00EEFF', '#00CCFF', '#00AAFF', '#0088FF', '#0066FF', '#0044FF',
-        '#0022FF', '#0000FF', '#2200FF', '#4400FF', '#6600FF', '#8800FF',
-        '#AA00FF', '#CC00FF', '#EE00FF', '#FF00FF', '#FF00EE', '#FF00CC',
-        '#FF00AA', '#FF0088', '#FF0066', '#FF0044', '#FF0022'
+        '#FF0000', '#FF3300', '#FF6600', '#FF9900', '#FFCC00', '#FFFF00',
+        '#CCFF00', '#99FF00', '#66FF00', '#33FF00', '#00FF00', '#00FF33',
+        '#00FF66', '#00FF99', '#00FFCC', '#00FFFF', '#00CCFF', '#0099FF',
+        '#0066FF', '#0033FF', '#0000FF', '#3300FF', '#6600FF', '#9900FF',
+        '#CC00FF', '#FF00FF', '#FF00CC', '#FF0099', '#FF0066', '#FF0033'
     ],
 
-    // PERFECT width system - everything exactly 52 characters
-    PERFECT_WIDTH: 52,
+    // PERFECT width system
+    PERFECT_WIDTH: 50,
     
     // Create perfectly sized frame
     createPerfectFrame(content, frameStyle = '█') {
-        const innerWidth = this.PERFECT_WIDTH - 4; // Account for frame borders
+        const innerWidth = this.PERFECT_WIDTH - 4;
         let displayContent = content;
         
-        // Truncate if too long
         if (displayContent.length > innerWidth) {
             displayContent = displayContent.slice(0, innerWidth - 3) + '...';
         }
         
-        // Pad to exact width
         const padding = innerWidth - displayContent.length;
         const leftPad = Math.floor(padding / 2);
         const rightPad = padding - leftPad;
@@ -43,7 +38,7 @@ const TrollingEngine = {
         return `\`\`\`\n${topLine}\n${contentLine}\n${bottomLine}\n\`\`\``;
     },
     
-    // Perfect separator line
+    // Perfect separator
     createPerfectSeparator(char = '═') {
         return char.repeat(this.PERFECT_WIDTH);
     },
@@ -66,7 +61,7 @@ const TrollingEngine = {
     
     // Perfect charging bar
     createPerfectChargingBar(percentage) {
-        const barWidth = 40;
+        const barWidth = 35;
         const filled = Math.floor((percentage / 100) * barWidth);
         const empty = barWidth - filled;
         const bar = '█'.repeat(filled) + '░'.repeat(empty);
@@ -80,297 +75,274 @@ const TrollingEngine = {
         return this.rainbowColors[frame % this.rainbowColors.length];
     },
     
-    // Trolling fake reveals
-    createFakeReveal(frame) {
-        const fakeRarities = [
-            { name: 'LEGENDARY', emoji: '🟡', color: '#F39C12' },
-            { name: 'MYTHICAL', emoji: '🔴', color: '#E74C3C' },
-            { name: 'OMNIPOTENT', emoji: '🌌', color: '#9B59B6' }
-        ];
-        
-        const fake = fakeRarities[frame % fakeRarities.length];
-        return fake;
+    // Power level effects with color variety
+    createPowerText(text, level, useRed = false) {
+        if (useRed) {
+            // Red text variations
+            if (level <= 2) return `🔴 ${text}`;
+            if (level <= 4) return `🔴 *${text}*`;
+            if (level <= 6) return `🔴 **${text}**`;
+            if (level <= 8) return `🔴 ***${text}***`;
+            if (level <= 10) return `🔴 ⚡ **${text}** ⚡`;
+            return `🔴 💥 ⚡ ***${text}*** ⚡ 💥`;
+        } else {
+            // Regular text variations
+            if (level <= 2) return text;
+            if (level <= 4) return `*${text}*`;
+            if (level <= 6) return `**${text}**`;
+            if (level <= 8) return `***${text}***`;
+            if (level <= 10) return `⚡ **${text}** ⚡`;
+            return `💥 ⚡ ***${text}*** ⚡ 💥`;
+        }
     },
     
-    // Power level effects
-    createPowerText(text, level) {
-        if (level <= 2) return text;
-        if (level <= 4) return `*${text}*`;
-        if (level <= 6) return `**${text}**`;
-        if (level <= 8) return `***${text}***`;
-        if (level <= 10) return `⚡ **${text}** ⚡`;
-        return `💥 ⚡ ***${text}*** ⚡ 💥`;
+    // Randomized message pools
+    getRandomMessage(messagePool) {
+        return messagePool[Math.floor(Math.random() * messagePool.length)];
+    },
+    
+    // Randomize fake rarity sequence
+    getRandomFakeSequence() {
+        const sequences = [
+            ['legendary', 'mythical', 'omnipotent'],
+            ['mythical', 'legendary', 'omnipotent'],
+            ['legendary', 'omnipotent', 'mythical'],
+            ['mythical', 'omnipotent', 'legendary'],
+            ['omnipotent', 'legendary', 'mythical'],
+            ['legendary', 'mythical'] // Sometimes skip omnipotent
+        ];
+        return sequences[Math.floor(Math.random() * sequences.length)];
     }
 };
 
 // ═══════════════════════════════════════════════════════════════════
-//                    TROLLING ANIMATION PHASES
+//                    SURPRISE ANIMATION PHASES
 // ═══════════════════════════════════════════════════════════════════
 
 // PHASE 1: Initial Scan (6 frames)
 function createInitialScan(frame) {
-    const percentage = Math.floor((frame / 5) * 20); // 0-20%
+    const percentage = Math.floor((frame / 5) * 25);
     
-    const messages = [
-        "🔍 Scanning the Grand Line...",
-        "🌊 Detecting Devil Fruit energy...",
-        "⚡ Energy patterns emerging...",
-        "🔮 Mystical signature found...",
-        "🌟 Something powerful detected...",
-        "💫 Analyzing power levels..."
+    const messagePool = [
+        "🔍 Scanning Devil Fruit energy...",
+        "🌊 Detecting mystical signatures...",
+        "⚡ Analyzing power patterns...",
+        "🔮 Reading energy frequencies...",
+        "🌟 Locating Devil Fruit source...",
+        "💫 Probing dimensional barriers..."
     ];
     
-    const message = messages[frame] || messages[messages.length - 1];
-    const styledMessage = TrollingEngine.createPowerText(message, frame + 1);
+    const message = SurpriseEngine.getRandomMessage(messagePool);
+    const useRed = Math.random() < 0.3; // 30% chance for red text
+    const styledMessage = SurpriseEngine.createPowerText(message, frame + 1, useRed);
     
-    const effects = '🔍'.repeat(Math.min(frame * 3 + 5, 15));
-    const separator = TrollingEngine.createPerfectSeparator('─');
-    const chargingBar = TrollingEngine.createPerfectChargingBar(percentage);
-    const effectsBar = TrollingEngine.createPerfectEffects(effects);
+    const effectsPool = ['🔍', '🌊', '⚡', '🔮', '🌟', '💫'];
+    const effect = effectsPool[frame % effectsPool.length];
+    const effects = effect.repeat(Math.min(frame * 2 + 6, 16));
+    
+    const separator = SurpriseEngine.createPerfectSeparator('─');
+    const chargingBar = SurpriseEngine.createPerfectChargingBar(percentage);
+    const effectsBar = SurpriseEngine.createPerfectEffects(effects);
     
     return new EmbedBuilder()
         .setTitle('🔍 DEVIL FRUIT SCANNER ACTIVATED')
         .setDescription(`
 ${effectsBar}
 ${separator}
-${TrollingEngine.createPerfectFrame(styledMessage, '═')}
+${SurpriseEngine.createPerfectFrame(styledMessage, '═')}
 ${separator}
 🔋 **SCANNING SYSTEM ONLINE** 🔋
 ${chargingBar}
 ${separator}
-*Probing the mysteries of the sea...*
+*Probing the mysteries of the Grand Line...*
 ${effectsBar}
         `)
-        .setColor(TrollingEngine.getUltraColor(frame * 6))
-        .setFooter({ text: `🔍 Scan Progress: ${percentage}% | Phase 1/7` });
+        .setColor(SurpriseEngine.getUltraColor(frame * 6))
+        .setFooter({ text: `🔍 Scan Progress: ${percentage}% | Initializing Systems` });
 }
 
-// PHASE 2: Energy Build-up (8 frames)
-function createEnergyBuildup(frame) {
-    const percentage = 20 + Math.floor((frame / 7) * 30); // 20-50%
+// PHASE 2: Energy Detection (8 frames)
+function createEnergyDetection(frame) {
+    const percentage = 25 + Math.floor((frame / 7) * 30);
     
-    const energyMessages = [
-        "⚡ Low energy detected...",
-        "🔥 Energy levels rising...",
-        "⚡ Power signature strengthening...",
-        "💥 Significant energy spike...",
-        "⚡ STRONG POWER DETECTED...",
-        "🔥 IMPRESSIVE ENERGY LEVELS...",
-        "⚡ EXCEPTIONAL POWER FOUND...",
-        "💥 EXTRAORDINARY ENERGY..."
+    const messagePool = [
+        "⚡ Weak energy signature found...",
+        "🔥 Energy levels increasing...",
+        "⚡ Power readings climbing...",
+        "💥 Significant energy detected...",
+        "⚡ STRONG power levels found...",
+        "🔥 IMPRESSIVE energy readings...",
+        "⚡ EXCEPTIONAL power detected...",
+        "💥 EXTRAORDINARY energy levels..."
     ];
     
-    const message = energyMessages[frame] || energyMessages[energyMessages.length - 1];
-    const styledMessage = TrollingEngine.createPowerText(message, frame + 2);
+    const message = messagePool[frame] || SurpriseEngine.getRandomMessage(messagePool);
+    const useRed = Math.random() < 0.4; // 40% chance for red text
+    const styledMessage = SurpriseEngine.createPowerText(message, frame + 2, useRed);
     
-    const effects = '⚡'.repeat(Math.min(frame * 2 + 3, 18));
-    const separator = TrollingEngine.createPerfectSeparator('═');
-    const chargingBar = TrollingEngine.createPerfectChargingBar(percentage);
-    const effectsBar = TrollingEngine.createPerfectEffects(effects);
+    const effectsPool = ['⚡', '🔥', '💥', '⭐', '🌟', '💫'];
+    const effect = effectsPool[Math.floor(Math.random() * effectsPool.length)];
+    const effects = effect.repeat(Math.min(frame * 2 + 4, 18));
+    
+    const separator = SurpriseEngine.createPerfectSeparator('═');
+    const chargingBar = SurpriseEngine.createPerfectChargingBar(percentage);
+    const effectsBar = SurpriseEngine.createPerfectEffects(effects);
     
     return new EmbedBuilder()
-        .setTitle('⚡ ENERGY BUILD-UP DETECTED')
+        .setTitle('⚡ ENERGY SIGNATURE DETECTED')
         .setDescription(`
 ${effectsBar}
 ${separator}
-${TrollingEngine.createPerfectFrame(styledMessage, '▬')}
+${SurpriseEngine.createPerfectFrame(styledMessage, '▬')}
 ${separator}
 ⚡ **POWER LEVELS RISING** ⚡
 ${chargingBar}
 ${separator}
-*The energy grows stronger...*
+*Energy signature strengthening...*
 ${effectsBar}
         `)
-        .setColor(TrollingEngine.getUltraColor(frame * 8 + 10))
-        .setFooter({ text: `⚡ Energy Level: ${percentage}% | Phase 2/7` });
+        .setColor(SurpriseEngine.getUltraColor(frame * 8 + 15))
+        .setFooter({ text: `⚡ Energy Level: ${percentage}% | Power Detection Active` });
 }
 
-// PHASE 3: FAKE LEGENDARY ALERT (10 frames) - MAJOR TROLLING
-function createFakeLegendaryAlert(frame) {
-    const percentage = 50 + Math.floor((frame / 9) * 25); // 50-75%
+// PHASE 3: Fake High Rarity Detection (randomized)
+function createFakeHighRarityDetection(frame, fakeRarity) {
+    const percentage = 50 + Math.floor((frame / 9) * 30);
     
-    const trollMessages = [
-        "🟡 LEGENDARY signature detected...",
-        "👑 LEGENDARY power confirmed...",
-        "🟡 LEGENDARY Devil Fruit found...",
-        "👑 LEGENDARY rarity verified...",
-        "🟡 LEGENDARY energy overwhelming...",
-        "👑 LEGENDARY class confirmed...",
-        "🟡 LEGENDARY tier validated...",
-        "👑 Wait... recalibrating...",
-        "⚠️ Energy fluctuation detected...",
-        "🔄 Rescanning power levels..."
-    ];
+    const rarityConfigs = {
+        legendary: {
+            emoji: '🟡',
+            color: '#F39C12',
+            name: 'LEGENDARY',
+            effects: '👑🟡⚡🌟⚡🟡👑',
+            messages: [
+                "🟡 High-tier signature detected...",
+                "👑 Exceptional power confirmed...",
+                "🟡 Elite-class energy found...",
+                "👑 Superior rarity detected...",
+                "🟡 HIGH-GRADE Devil Fruit located...",
+                "👑 PREMIUM power signature...",
+                "🟡 ELITE-TIER energy confirmed...",
+                "👑 Wait... the winds are shifting...",
+                "⚠️ The Grand Line is changing course...",
+                "🔄 Mysterious currents detected..."
+            ]
+        },
+        mythical: {
+            emoji: '🔴',
+            color: '#E74C3C',
+            name: 'MYTHICAL',
+            effects: '🔮🔴✨💎✨🔴🔮',
+            messages: [
+                "🔴 Ancient power signature...",
+                "🔮 Legendary-tier energy found...",
+                "🔴 Mythic-class power detected...",
+                "🔮 World-class energy confirmed...",
+                "🔴 ANCIENT Devil Fruit located...",
+                "🔮 MYTHIC power overwhelming...",
+                "🔴 WORLD-TIER energy detected...",
+                "🔮 Actually... the sea is shifting...",
+                "⚠️ Ocean currents are changing...",
+                "🔄 The Grand Line stirs again..."
+            ]
+        },
+        omnipotent: {
+            emoji: '🌌',
+            color: '#9B59B6',
+            name: 'OMNIPOTENT',
+            effects: '🌌💫⭐🌟💫🌌💫',
+            messages: [
+                "🌌 Cosmic signature detected...",
+                "💫 Reality-tier power found...",
+                "🌌 Universal-class energy...",
+                "💫 Omnipotent force detected...",
+                "🌌 COSMIC Devil Fruit found...",
+                "💫 REALITY-BENDING power...",
+                "🌌 UNIVERSAL energy confirmed...",
+                "💫 Hold on... the seas are restless...",
+                "⚠️ Ocean mysteries deepening...",
+                "🔄 The Grand Line reveals more..."
+            ]
+        }
+    };
     
-    const message = trollMessages[frame] || trollMessages[trollMessages.length - 1];
-    const styledMessage = TrollingEngine.createPowerText(message, frame + 3);
+    const config = rarityConfigs[fakeRarity];
+    const message = config.messages[frame] || SurpriseEngine.getRandomMessage(config.messages);
+    const useRed = Math.random() < 0.5; // 50% chance for red text
+    const styledMessage = SurpriseEngine.createPowerText(message, frame + 4, useRed);
     
-    // Use fake legendary colors for most frames
-    let color = '#F39C12'; // Legendary gold
+    // Change color and effects in final frames to show "error"
+    let color = config.color;
+    let effects = config.effects.repeat(2);
+    let title = `${config.emoji} ${config.name} DETECTED! ${config.emoji}`;
+    
     if (frame >= 7) {
-        color = TrollingEngine.getUltraColor(frame * 12 + 30); // Switch to random at the end
+        color = SurpriseEngine.getUltraColor(frame * 15 + 40);
+        effects = '🌊🔄🌊🔄🌊🔄🌊🔄🌊🔄🌊🔄🌊';
+        title = '🌊 THE SEAS ARE SHIFTING 🌊';
     }
     
-    const effects = frame < 7 ? '👑🟡⚡🌟⚡🟡👑'.repeat(2) : '⚠️🔄⚠️🔄⚠️🔄⚠️🔄⚠️';
-    const separator = TrollingEngine.createPerfectSeparator('█');
-    const chargingBar = TrollingEngine.createPerfectChargingBar(percentage);
-    const effectsBar = TrollingEngine.createPerfectEffects(effects);
-    
-    const title = frame < 7 ? '👑 LEGENDARY DETECTION! 👑' : '⚠️ RECALIBRATING SYSTEMS ⚠️';
+    const separator = SurpriseEngine.createPerfectSeparator('█');
+    const chargingBar = SurpriseEngine.createPerfectChargingBar(percentage);
+    const effectsBar = SurpriseEngine.createPerfectEffects(effects);
     
     return new EmbedBuilder()
         .setTitle(title)
         .setDescription(`
 ${effectsBar}
 ${separator}
-${TrollingEngine.createPerfectFrame(styledMessage, '█')}
+${SurpriseEngine.createPerfectFrame(styledMessage, '█')}
 ${separator}
-👑 **${frame < 7 ? 'LEGENDARY CONFIRMED' : 'SYSTEM RECALIBRATION'}** 👑
+${config.emoji} **${frame < 7 ? config.name + ' CONFIRMED' : 'RECALIBRATING SYSTEMS'}** ${config.emoji}
 ${chargingBar}
 ${separator}
-*${frame < 7 ? 'Incredible legendary power detected!' : 'Wait... something changed...'}*
+*${frame < 7 ? 'Incredible power detected!' : 'Sensors require adjustment...'}*
 ${effectsBar}
         `)
         .setColor(color)
-        .setFooter({ text: `${frame < 7 ? '👑' : '⚠️'} Status: ${frame < 7 ? 'LEGENDARY CONFIRMED' : 'RECALIBRATING'} | ${percentage}%` });
+        .setFooter({ text: `${frame < 7 ? config.emoji : '🌊'} Status: ${frame < 7 ? config.name + ' CLASS' : 'SEAS SHIFTING'} | ${percentage}%` });
 }
 
-// PHASE 4: FAKE MYTHICAL ESCALATION (8 frames) - MORE TROLLING
-function createFakeMythicalEscalation(frame) {
-    const percentage = 75 + Math.floor((frame / 7) * 15); // 75-90%
+// PHASE 4: Final Calibration (6 frames)
+function createFinalCalibration(frame) {
+    const percentage = 80 + Math.floor((frame / 5) * 20);
     
-    const mythicalMessages = [
-        "🔴 Wait... MYTHICAL energy detected!",
-        "🔮 MYTHICAL power signature found!",
-        "🔴 MYTHICAL tier Devil Fruit!",
-        "🔮 MYTHICAL class confirmed!",
-        "🔴 MYTHICAL rarity validated!",
-        "🔮 MYTHICAL power overwhelming!",
-        "🔴 Actually... detecting errors...",
-        "⚠️ System malfunction detected..."
+    const messagePool = [
+        "🌊 The sea reveals its true nature...",
+        "📊 Reading the ocean's final secrets...",
+        "🎯 The Grand Line shows its hand...",
+        "✅ The seas have spoken...",
+        "📍 Ocean mysteries unveiled...",
+        "🎯 The true treasure emerges..."
     ];
     
-    const message = mythicalMessages[frame] || mythicalMessages[mythicalMessages.length - 1];
-    const styledMessage = TrollingEngine.createPowerText(message, frame + 5);
+    const message = messagePool[frame] || SurpriseEngine.getRandomMessage(messagePool);
+    const useRed = Math.random() < 0.3;
+    const styledMessage = SurpriseEngine.createPowerText(message, frame + 3, useRed);
     
-    let color = '#E74C3C'; // Mythical red
-    if (frame >= 6) {
-        color = TrollingEngine.getUltraColor(frame * 15 + 45);
-    }
-    
-    const effects = frame < 6 ? '🔮🔴✨💎✨🔴🔮'.repeat(2) : '⚠️❌⚠️❌⚠️❌⚠️❌⚠️';
-    const separator = TrollingEngine.createPerfectSeparator('█');
-    const chargingBar = TrollingEngine.createPerfectChargingBar(percentage);
-    const effectsBar = TrollingEngine.createPerfectEffects(effects);
-    
-    const title = frame < 6 ? '🔮 MYTHICAL DETECTION! 🔮' : '⚠️ SYSTEM ERROR DETECTED ⚠️';
+    const effects = '🌊📊🎯✅📍🎯'.repeat(Math.floor(frame / 2) + 2);
+    const separator = SurpriseEngine.createPerfectSeparator('═');
+    const chargingBar = SurpriseEngine.createPerfectChargingBar(percentage);
+    const effectsBar = SurpriseEngine.createPerfectEffects(effects);
     
     return new EmbedBuilder()
-        .setTitle(title)
+        .setTitle('📍 THE SEAS REVEAL TRUTH')
         .setDescription(`
 ${effectsBar}
 ${separator}
-${TrollingEngine.createPerfectFrame(styledMessage, '█')}
+${SurpriseEngine.createPerfectFrame(styledMessage, '═')}
 ${separator}
-🔮 **${frame < 6 ? 'MYTHICAL CONFIRMED' : 'ERROR CORRECTION'}** 🔮
+✅ **THE OCEAN HAS SPOKEN** ✅
 ${chargingBar}
 ${separator}
-*${frame < 6 ? 'Unbelievable mythical power!' : 'Systems detecting anomalies...'}*
+*The Grand Line reveals its secrets...*
 ${effectsBar}
         `)
-        .setColor(color)
-        .setFooter({ text: `${frame < 6 ? '🔮' : '⚠️'} Status: ${frame < 6 ? 'MYTHICAL CONFIRMED' : 'ERROR CORRECTION'} | ${percentage}%` });
+        .setColor(SurpriseEngine.getUltraColor(frame * 20 + 60))
+        .setFooter({ text: `📍 Ocean Truth: ${percentage}% | The Seas Speak` });
 }
 
-// PHASE 5: ULTIMATE FAKE OMNIPOTENT (6 frames) - MAXIMUM TROLLING
-function createFakeOmnipotent(frame) {
-    const percentage = 90 + Math.floor((frame / 5) * 10); // 90-100%
-    
-    const omnipotentMessages = [
-        "🌌 OMNIPOTENT energy detected!!!",
-        "💫 OMNIPOTENT power confirmed!!!",
-        "🌌 OMNIPOTENT Devil Fruit found!!!",
-        "💫 OMNIPOTENT class validated!!!",
-        "🌌 Just kidding! Final scan...",
-        "🔍 Revealing true results..."
-    ];
-    
-    const message = omnipotentMessages[frame] || omnipotentMessages[omnipotentMessages.length - 1];
-    const styledMessage = TrollingEngine.createPowerText(message, frame + 8);
-    
-    let color = '#9B59B6'; // Omnipotent purple
-    if (frame >= 4) {
-        color = TrollingEngine.getUltraColor(frame * 20 + 60);
-    }
-    
-    const effects = frame < 4 ? '🌌💫⭐🌟💫🌌💫⭐🌟💫🌌💫⭐' : '😏🎭😏🎭😏🎭😏🎭😏🎭😏🎭😏';
-    const separator = TrollingEngine.createPerfectSeparator('█');
-    const chargingBar = TrollingEngine.createPerfectChargingBar(percentage);
-    const effectsBar = TrollingEngine.createPerfectEffects(effects);
-    
-    const title = frame < 4 ? '🌌 OMNIPOTENT DETECTION! 🌌' : '😏 TROLLING COMPLETE! 😏';
-    
-    return new EmbedBuilder()
-        .setTitle(title)
-        .setDescription(`
-${effectsBar}
-${separator}
-${TrollingEngine.createPerfectFrame(styledMessage, '█')}
-${separator}
-🌌 **${frame < 4 ? 'OMNIPOTENT CONFIRMED' : 'GOTCHA! FINAL SCAN'}** 🌌
-${chargingBar}
-${separator}
-*${frame < 4 ? 'REALITY-BENDING POWER!!!' : 'Did we get you excited? Now for real...'}*
-${effectsBar}
-        `)
-        .setColor(color)
-        .setFooter({ text: `${frame < 4 ? '🌌' : '😏'} Status: ${frame < 4 ? 'OMNIPOTENT!!!' : 'TROLLING COMPLETE'} | ${percentage}%` });
-}
-
-// PHASE 6: Real Result Reveal (5 frames)
-async function createRealReveal(interaction, rarity) {
-    const config = DevilFruitDatabase.getRarityConfig(rarity);
-    const frames = 5;
-    
-    for (let frame = 0; frame < frames; frame++) {
-        const realMessages = [
-            "📍 Actual scan complete...",
-            "🔍 Real results incoming...",
-            "📊 True rarity confirmed...",
-            "✅ Genuine Devil Fruit found...",
-            "🎯 Final result ready..."
-        ];
-        
-        const message = realMessages[frame] || realMessages[realMessages.length - 1];
-        const styledMessage = TrollingEngine.createPowerText(message, frame + 3);
-        
-        const effects = config.emoji.repeat(Math.min(frame * 4 + 8, 20));
-        const separator = TrollingEngine.createPerfectSeparator('═');
-        const chargingBar = TrollingEngine.createPerfectChargingBar(100);
-        const effectsBar = TrollingEngine.createPerfectEffects(effects);
-        
-        const embed = new EmbedBuilder()
-            .setTitle('📍 REAL SCAN RESULTS')
-            .setDescription(`
-${effectsBar}
-${separator}
-${TrollingEngine.createPerfectFrame(styledMessage, '═')}
-${separator}
-✅ **GENUINE RESULTS INCOMING** ✅
-${chargingBar}
-${separator}
-*Here's what you actually got...*
-${effectsBar}
-            `)
-            .setColor(TrollingEngine.getUltraColor(frame * 25 + 80))
-            .setFooter({ text: `📍 Final Scan: ${Math.floor(((frame + 1) / frames) * 100)}% | REAL RESULTS` });
-
-        await interaction.editReply({ embeds: [embed] });
-        await new Promise(resolve => setTimeout(resolve, 600));
-    }
-}
-
-// PHASE 7: True Devil Fruit Reveal
+// PHASE 5: True Devil Fruit Reveal
 async function createTrueDevilFruitReveal(interaction, devilFruit, rarity) {
     const config = DevilFruitDatabase.getRarityConfig(rarity);
     const frames = 6;
@@ -385,7 +357,8 @@ async function createTrueDevilFruitReveal(interaction, devilFruit, rarity) {
         const hiddenName = '◆'.repeat(nameLength - revealedChars);
         const displayName = frame === frames - 1 ? devilFruit.name : visibleName + hiddenName;
         
-        const styledName = TrollingEngine.createPowerText(displayName, 10);
+        const useRed = Math.random() < 0.4;
+        const styledName = SurpriseEngine.createPowerText(displayName, 10, useRed);
         
         // Info reveal
         const infoLines = [
@@ -396,16 +369,16 @@ async function createTrueDevilFruitReveal(interaction, devilFruit, rarity) {
             `🔥 **Power Level:** ${frame >= 5 ? devilFruit.powerLevel.toLocaleString() : '???'}`
         ];
         
-        const effects = config.emoji.repeat(Math.min(frame * 3 + 10, 25));
-        const separator = TrollingEngine.createPerfectSeparator('█');
-        const effectsBar = TrollingEngine.createPerfectEffects(effects);
+        const effects = config.emoji.repeat(Math.min(frame * 3 + 8, 20));
+        const separator = SurpriseEngine.createPerfectSeparator('█');
+        const effectsBar = SurpriseEngine.createPerfectEffects(effects);
         
         const embed = new EmbedBuilder()
             .setTitle(`${config.emoji} DEVIL FRUIT MATERIALIZED ${config.emoji}`)
             .setDescription(`
 ${effectsBar}
 ${separator}
-${TrollingEngine.createPerfectFrame(styledName, '█')}
+${SurpriseEngine.createPerfectFrame(styledName, '█')}
 ${separator}
 ${infoLines.join('\n')}
 ${separator}
@@ -420,47 +393,48 @@ ${effectsBar}
     }
 }
 
-// PHASE 8: Epic Finale
+// PHASE 6: Epic Finale
 function createEpicFinale(devilFruit, rarity, interaction) {
     const config = DevilFruitDatabase.getRarityConfig(rarity);
     
     const finaleMessages = {
-        omnipotent: '🌌 ACTUALLY OMNIPOTENT! 🌌',
-        mythical: '🔮 ACTUALLY MYTHICAL! 🔮',
-        legendary: '👑 ACTUALLY LEGENDARY! 👑',
+        omnipotent: '🌌 OMNIPOTENT DEVIL FRUIT! 🌌',
+        mythical: '🔮 MYTHICAL DEVIL FRUIT! 🔮',
+        legendary: '👑 LEGENDARY DEVIL FRUIT! 👑',
         rare: '💎 RARE DEVIL FRUIT! 💎',
         uncommon: '🌟 UNCOMMON DEVIL FRUIT! 🌟',
-        common: '⚓ COMMON DEVIL FRUIT! ⚓'
+        common: '⚓ DEVIL FRUIT DISCOVERED! ⚓'
     };
     
     const effects = {
-        omnipotent: '🌌💫⭐🌟💫🌌💫⭐🌟💫🌌💫⭐🌟💫🌌💫⭐🌟💫',
-        mythical: '🔮✨🌟💎🌟✨🔮✨🌟💎🌟✨🔮✨🌟💎🌟✨🔮',
-        legendary: '👑⚡🔥🌟🔥⚡👑⚡🔥🌟🔥⚡👑⚡🔥🌟🔥⚡👑',
-        rare: '💎🌟✨⭐✨🌟💎🌟✨⭐✨🌟💎🌟✨⭐✨🌟💎',
-        uncommon: '🌟⭐✨💫✨⭐🌟⭐✨💫✨⭐🌟⭐✨💫✨⭐🌟',
-        common: '⚓⭐🌊⭐🌊⭐⚓⭐🌊⭐🌊⭐⚓⭐🌊⭐🌊⭐⚓'
+        omnipotent: '🌌💫⭐🌟💫🌌💫⭐🌟💫🌌💫⭐🌟💫🌌',
+        mythical: '🔮✨🌟💎🌟✨🔮✨🌟💎🌟✨🔮✨🌟💎',
+        legendary: '👑⚡🔥🌟🔥⚡👑⚡🔥🌟🔥⚡👑⚡🔥🌟',
+        rare: '💎🌟✨⭐✨🌟💎🌟✨⭐✨🌟💎🌟✨⭐',
+        uncommon: '🌟⭐✨💫✨⭐🌟⭐✨💫✨⭐🌟⭐✨💫',
+        common: '⚓⭐🌊⭐🌊⭐⚓⭐🌊⭐🌊⭐⚓⭐🌊⭐'
     };
     
-    const epicName = TrollingEngine.createPowerText(devilFruit.name, 10);
+    const epicName = SurpriseEngine.createPowerText(devilFruit.name, 10);
     const finalEffect = effects[rarity] || effects.common;
     const finalTitle = finaleMessages[rarity] || finaleMessages.common;
     
-    const trollMessage = rarity === 'omnipotent' ? 
-        "Wait... this is ACTUALLY omnipotent! We weren't trolling this time! 😱" :
+    // Special message for high rarities without revealing the surprise
+    const specialMessage = rarity === 'omnipotent' ? 
+        "Incredible! This is genuinely omnipotent-tier! 😲" :
         rarity === 'mythical' ? 
-        "Plot twist - it's ACTUALLY mythical! The troll became real! 🤯" :
+        "Amazing! This is actually mythical-class! 🤯" :
         rarity === 'legendary' ?
-        "Surprise! It's ACTUALLY legendary after all! 😲" :
-        "Well, the trolling was fun, but here's your real Devil Fruit! 😄";
+        "Fantastic! This is truly legendary-grade! 😍" :
+        "Great discovery! Here's your Devil Fruit! 😊";
     
-    const perfectEffects = TrollingEngine.createPerfectEffects(finalEffect);
-    const separator = TrollingEngine.createPerfectSeparator('█');
+    const perfectEffects = SurpriseEngine.createPerfectEffects(finalEffect);
+    const separator = SurpriseEngine.createPerfectSeparator('█');
     
     const description = `
 ${perfectEffects}
 ${separator}
-${TrollingEngine.createPerfectFrame(epicName, '█')}
+${SurpriseEngine.createPerfectFrame(epicName, '█')}
 ${separator}
 **${finalTitle}**
 
@@ -471,11 +445,11 @@ ${separator}
 🔥 **Power Level:** ${devilFruit.powerLevel.toLocaleString()}
 ⭐ **Rarity:** ${config.name}
 
-${config.stars.repeat(10)}
+${config.stars.repeat(8)}
 
 🏆 **CONGRATULATIONS ${interaction.user.username.toUpperCase()}!** 🏆
 
-😏 *${trollMessage}*
+😊 *${specialMessage}*
 
 > *"${devilFruit.description}"*
 
@@ -487,7 +461,7 @@ ${perfectEffects}
         .addComponents(
             new ButtonBuilder()
                 .setCustomId('pull_again')
-                .setLabel('🎭 Get Trolled Again!')
+                .setLabel('🍈 Hunt Again!')
                 .setStyle(ButtonStyle.Primary),
             new ButtonBuilder()
                 .setCustomId('view_collection')
@@ -505,7 +479,7 @@ ${perfectEffects}
             .setDescription(description)
             .setColor(config.color)
             .setFooter({ 
-                text: `🎭 Trolling Complete | Devil Fruit found by ${interaction.user.username}`,
+                text: `🍈 Devil Fruit Hunt Complete | Discovered by ${interaction.user.username}`,
                 iconURL: interaction.user.displayAvatarURL()
             })
             .setTimestamp(),
@@ -514,7 +488,7 @@ ${perfectEffects}
 }
 
 // ═══════════════════════════════════════════════════════════════════
-//                    MASTER TROLLING SEQUENCE
+//                    MASTER SURPRISE SEQUENCE
 // ═══════════════════════════════════════════════════════════════════
 
 async function createUltimateCinematicExperience(interaction) {
@@ -522,7 +496,10 @@ async function createUltimateCinematicExperience(interaction) {
         const rarity = DevilFruitDatabase.calculateDropRarity();
         const devilFruit = DevilFruitDatabase.getRandomDevilFruit(rarity);
         
-        console.log(`🎭 TROLLING SEQUENCE: ${devilFruit.name} (${rarity}) for ${interaction.user.username}`);
+        // Randomize fake sequence
+        const fakeSequence = SurpriseEngine.getRandomFakeSequence();
+        
+        console.log(`🎮 SURPRISE SEQUENCE: ${devilFruit.name} (${rarity}) for ${interaction.user.username}`);
         
         // PHASE 1: Initial Scan (6 frames, 3 seconds)
         for (let frame = 0; frame < 6; frame++) {
@@ -531,58 +508,50 @@ async function createUltimateCinematicExperience(interaction) {
             await new Promise(resolve => setTimeout(resolve, 500));
         }
         
-        // PHASE 2: Energy Build-up (8 frames, 3 seconds)
+        // PHASE 2: Energy Detection (8 frames, 3 seconds)
         for (let frame = 0; frame < 8; frame++) {
-            const embed = createEnergyBuildup(frame);
+            const embed = createEnergyDetection(frame);
             await interaction.editReply({ embeds: [embed] });
             await new Promise(resolve => setTimeout(resolve, 375));
         }
         
-        // PHASE 3: FAKE LEGENDARY (10 frames, 4 seconds) - TROLLING BEGINS
-        for (let frame = 0; frame < 10; frame++) {
-            const embed = createFakeLegendaryAlert(frame);
-            await interaction.editReply({ embeds: [embed] });
-            await new Promise(resolve => setTimeout(resolve, 400));
+        // PHASE 3: Randomized Fake High Rarity Detection (10 frames each)
+        for (const fakeRarity of fakeSequence) {
+            for (let frame = 0; frame < 10; frame++) {
+                const embed = createFakeHighRarityDetection(frame, fakeRarity);
+                await interaction.editReply({ embeds: [embed] });
+                await new Promise(resolve => setTimeout(resolve, 350));
+            }
         }
         
-        // PHASE 4: FAKE MYTHICAL (8 frames, 3 seconds) - MORE TROLLING
-        for (let frame = 0; frame < 8; frame++) {
-            const embed = createFakeMythicalEscalation(frame);
-            await interaction.editReply({ embeds: [embed] });
-            await new Promise(resolve => setTimeout(resolve, 375));
-        }
-        
-        // PHASE 5: FAKE OMNIPOTENT (6 frames, 3 seconds) - MAXIMUM TROLL
+        // PHASE 4: Final Calibration (6 frames, 3 seconds)
         for (let frame = 0; frame < 6; frame++) {
-            const embed = createFakeOmnipotent(frame);
+            const embed = createFinalCalibration(frame);
             await interaction.editReply({ embeds: [embed] });
             await new Promise(resolve => setTimeout(resolve, 500));
         }
         
-        // PHASE 6: Real Reveal (5 frames, 3 seconds)
-        await createRealReveal(interaction, rarity);
-        
-        // PHASE 7: True Devil Fruit Reveal (6 frames, 5 seconds)
+        // PHASE 5: True Devil Fruit Reveal (6 frames, 5 seconds)
         await createTrueDevilFruitReveal(interaction, devilFruit, rarity);
         
-        // PHASE 8: Epic Finale
+        // PHASE 6: Epic Finale
         const finale = createEpicFinale(devilFruit, rarity, interaction);
         await interaction.editReply({ 
             embeds: [finale.embed], 
             components: finale.components 
         });
         
-        console.log(`🎭 TROLLING COMPLETE: ${devilFruit.name} (${rarity}) for ${interaction.user.username}!`);
+        console.log(`🎊 SURPRISE COMPLETE: ${devilFruit.name} (${rarity}) for ${interaction.user.username}!`);
         
     } catch (error) {
-        console.error('🚨 Trolling Error:', error);
+        console.error('🚨 Surprise Error:', error);
         
         const errorEmbed = new EmbedBuilder()
-            .setTitle('⚠️ Trolling System Failed!')
+            .setTitle('⚠️ Hunt System Error!')
             .setDescription(`
-The trolling sequence crashed!
+The Devil Fruit hunt encountered an error!
 
-*Even our trolls have bugs sometimes!*
+*Please try hunting again!*
             `)
             .setColor('#E74C3C');
             
