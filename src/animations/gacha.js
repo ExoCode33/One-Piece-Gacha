@@ -748,10 +748,10 @@ ${finale.effect}
 async function createUltimateCinematicExperience(interaction) {
     try {
         // Pre-determine results for consistent timing
-        const rarity = CharacterDatabase.calculateDropRarity();
-        const character = CharacterDatabase.getRandomCharacter(rarity);
+        const rarity = DevilFruitDatabase.calculateDropRarity();
+        const devilFruit = DevilFruitDatabase.getRandomDevilFruit(rarity);
         
-        console.log(`🎭 ULTIMATE GACHA: ${character.name} (${rarity}) for ${interaction.user.username}`);
+        console.log(`🎭 ULTIMATE GACHA: ${devilFruit.name} (${rarity}) for ${interaction.user.username}`);
         
         // PHASE 1: Epic Prologue (10 frames, ~12 seconds)
         for (let frame = 0; frame < 10; frame++) {
@@ -791,18 +791,18 @@ async function createUltimateCinematicExperience(interaction) {
         // PHASE 6: The Great Revelation (dynamic duration based on rarity)
         await createGreatRevelation(interaction, rarity);
         
-        // PHASE 7: Character Materialization (8 frames, ~10 seconds)
-        await createCharacterMaterialization(interaction, character, rarity);
+        // PHASE 7: Devil Fruit Materialization (8 frames, ~10 seconds)
+        await createDevilFruitMaterialization(interaction, devilFruit, rarity);
         
         // PHASE 8: Ultimate Finale (permanent display)
-        const finale = createUltimateFinale(character, rarity, interaction);
+        const finale = createUltimateFinale(devilFruit, rarity, interaction);
         await interaction.editReply({ 
             embeds: [finale.embed], 
             components: finale.components 
         });
         
         // Log the epic result
-        console.log(`🎊 EPIC SUCCESS: ${character.name} (${rarity}, ${character.powerLevel} power) summoned for ${interaction.user.username}!`);
+        console.log(`🎊 EPIC SUCCESS: ${devilFruit.name} (${rarity}, ${devilFruit.powerLevel} power) discovered by ${interaction.user.username}!`);
         
     } catch (error) {
         console.error('🚨 Ultimate Cinematic Error:', error);
