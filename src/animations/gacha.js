@@ -95,19 +95,47 @@ const ChargingEngine = {
         return this.rainbowColors[frame % this.rainbowColors.length];
     },
 
-    // Charging frame
+    // Charging frame with consistent width
     createChargingFrame(content, chargeLevel = 1) {
         const frames = ['─', '═', '▬', '█'];
         const frameChar = frames[Math.min(Math.floor(chargeLevel / 3), frames.length - 1)];
-        const width = 40;
+        const width = 50; // Increased width for consistency
         const line = frameChar.repeat(width);
         
-        const padding = Math.max(0, width - content.length - 4);
+        // Force consistent content width
+        const maxContentLength = 42; // Reserve space for frame chars
+        let displayContent = content;
+        if (content.length > maxContentLength) {
+            displayContent = content.slice(0, maxContentLength - 3) + '...';
+        }
+        
+        const padding = maxContentLength - displayContent.length;
         const leftPad = Math.floor(padding / 2);
         const rightPad = padding - leftPad;
-        const contentLine = `${frameChar} ${' '.repeat(leftPad)}${content}${' '.repeat(rightPad)} ${frameChar}`;
+        const contentLine = `${frameChar} ${' '.repeat(leftPad)}${displayContent}${' '.repeat(rightPad)} ${frameChar}`;
         
         return `\`\`\`\n${line}\n${contentLine}\n${line}\n\`\`\``;
+    },
+
+    // Consistent visual separator
+    createVisualSeparator(intensity = 1) {
+        const chars = ['─', '═', '▬', '█'];
+        const char = chars[Math.min(Math.floor(intensity / 3), chars.length - 1)];
+        return char.repeat(50);
+    },
+
+    // Consistent effects bar
+    createEffectsBar(effects, minWidth = 50) {
+        let effectsLine = effects;
+        if (effectsLine.length < minWidth) {
+            const padding = minWidth - effectsLine.length;
+            const leftPad = Math.floor(padding / 2);
+            const rightPad = padding - leftPad;
+            effectsLine = ' '.repeat(leftPad) + effectsLine + ' '.repeat(rightPad);
+        } else if (effectsLine.length > minWidth) {
+            effectsLine = effectsLine.slice(0, minWidth);
+        }
+        return effectsLine;
     }
 };
 
@@ -118,7 +146,7 @@ const ChargingEngine = {
 // PHASE 1: Initial Charging (8 frames, fast)
 function createInitialCharging(frame) {
     const percentage = Math.floor((frame / 7) * 25); // 0-25%
-    const chargingBar = ChargingEngine.createChargingBar(percentage);
+    const chargingBar = ChargingEngine.createChargingBar(percentage, 30); // Wider bar
     const pulse = ChargingEngine.createEnergyPulse(frame, 7);
     const aura = ChargingEngine.createChargingAura(frame);
     
@@ -136,17 +164,29 @@ function createInitialCharging(frame) {
     const message = messages[frame] || messages[messages.length - 1];
     const styledMessage = ChargingEngine.createPowerText(message, frame);
     
+    // Consistent visual layout
+    const separator = ChargingEngine.createVisualSeparator(frame);
+    const effectsBar = ChargingEngine.createEffectsBar(aura);
+    
     return new EmbedBuilder()
         .setTitle('🔋 DEVIL FRUIT SCANNER ONLINE')
         .setDescription(`
-${aura}
+${effectsBar}
+
+${separator}
 
 ${ChargingEngine.createChargingFrame(styledMessage, frame)}
+
+${separator}
 
 ${pulse} **CHARGING SYSTEM** ${pulse}
 ${chargingBar}
 
+${separator}
+
 *Scanning the depths of the Grand Line...*
+
+${effectsBar}
         `)
         .setColor(ChargingEngine.getUltraColor(frame * 8))
         .setFooter({ text: `🔋 System Status: INITIALIZING | Power: ${percentage}%` });
@@ -155,7 +195,7 @@ ${chargingBar}
 // PHASE 2: Power Surge (10 frames, intense)
 function createPowerSurge(frame) {
     const percentage = 25 + Math.floor((frame / 9) * 40); // 25-65%
-    const chargingBar = ChargingEngine.createChargingBar(percentage);
+    const chargingBar = ChargingEngine.createChargingBar(percentage, 30);
     const lightning = ChargingEngine.createLightning(frame);
     const pulse = ChargingEngine.createEnergyPulse(frame + 3, 10);
     const aura = ChargingEngine.createChargingAura(frame + 5);
@@ -176,19 +216,32 @@ function createPowerSurge(frame) {
     const message = surgeMessages[frame] || surgeMessages[surgeMessages.length - 1];
     const styledMessage = ChargingEngine.createPowerText(message, frame + 3);
     
+    // Consistent layout
+    const separator = ChargingEngine.createVisualSeparator(frame + 3);
+    const effectsBar = ChargingEngine.createEffectsBar(aura);
+    const lightningBar = ChargingEngine.createEffectsBar(lightning);
+    
     return new EmbedBuilder()
         .setTitle(`⚡ POWER SURGE ${pulse} DETECTED`)
         .setDescription(`
-${aura}
+${effectsBar}
 
-${lightning}
+${separator}
+
+${lightningBar}
 
 ${ChargingEngine.createChargingFrame(styledMessage, frame + 3)}
+
+${separator}
 
 ${pulse} **ENERGY OVERLOAD** ${pulse}
 ${chargingBar}
 
+${separator}
+
 *The Grand Line responds with incredible force!*
+
+${effectsBar}
         `)
         .setColor(ChargingEngine.getUltraColor(frame * 12 + 20))
         .setFooter({ text: `⚡ Status: SURGE MODE | Power: ${percentage}%` });
@@ -197,7 +250,7 @@ ${chargingBar}
 // PHASE 3: Critical Overload (12 frames, explosive)
 function createCriticalOverload(frame) {
     const percentage = 65 + Math.floor((frame / 11) * 25); // 65-90%
-    const chargingBar = ChargingEngine.createChargingBar(percentage);
+    const chargingBar = ChargingEngine.createChargingBar(percentage, 30);
     const pulse = ChargingEngine.createEnergyPulse(frame + 5, 12);
     const aura = ChargingEngine.createChargingAura(frame + 8);
     
@@ -219,23 +272,34 @@ function createCriticalOverload(frame) {
     const message = overloadMessages[frame] || overloadMessages[overloadMessages.length - 1];
     const styledMessage = ChargingEngine.createPowerText(message, frame + 5);
     
-    // Extra lightning effects for overload
-    const megaLightning = ChargingEngine.createLightning(Math.floor(frame / 2)) + '\n' + 
-                         ChargingEngine.createLightning(Math.floor(frame / 2) + 3);
+    // Extra lightning effects for overload - but keep consistent width
+    const megaLightning1 = ChargingEngine.createEffectsBar(ChargingEngine.createLightning(Math.floor(frame / 2)));
+    const megaLightning2 = ChargingEngine.createEffectsBar(ChargingEngine.createLightning(Math.floor(frame / 2) + 3));
+    const separator = ChargingEngine.createVisualSeparator(frame + 5);
+    const effectsBar = ChargingEngine.createEffectsBar(aura);
     
     return new EmbedBuilder()
         .setTitle(`💥 CRITICAL OVERLOAD ${pulse} WARNING`)
         .setDescription(`
-${aura}
+${effectsBar}
 
-${megaLightning}
+${separator}
+
+${megaLightning1}
+${megaLightning2}
 
 ${ChargingEngine.createChargingFrame(styledMessage, frame + 5)}
+
+${separator}
 
 ${pulse} **SYSTEM OVERLOAD** ${pulse}
 ${chargingBar}
 
+${separator}
+
 *DANGER: POWER LEVELS BEYOND SAFE PARAMETERS!*
+
+${effectsBar}
         `)
         .setColor(ChargingEngine.getUltraColor(frame * 15 + 40))
         .setFooter({ text: `💥 Status: CRITICAL OVERLOAD | Power: ${percentage}%` });
