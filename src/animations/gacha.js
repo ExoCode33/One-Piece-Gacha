@@ -2,259 +2,230 @@ const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('
 const { DevilFruitDatabase } = require('../data/devilfruit');
 
 // ═══════════════════════════════════════════════════════════════════
-//                    NATURAL SAILING ENGINE
+//                    FAST BLINKING CHARGING ENGINE
 // ═══════════════════════════════════════════════════════════════════
 
-const SailingEngine = {
-    // Ultra-fast rainbow colors
-    rainbowColors: [
-        '#FF0000', '#FF3300', '#FF6600', '#FF9900', '#FFCC00', '#FFFF00',
-        '#CCFF00', '#99FF00', '#66FF00', '#33FF00', '#00FF00', '#00FF33',
-        '#00FF66', '#00FF99', '#00FFCC', '#00FFFF', '#00CCFF', '#0099FF',
-        '#0066FF', '#0033FF', '#0000FF', '#3300FF', '#6600FF', '#9900FF',
-        '#CC00FF', '#FF00FF', '#FF00CC', '#FF0099', '#FF0066', '#FF0033'
+const ChargingEngine = {
+    // SUPER FAST color blinking - changes every frame
+    blinkColors: [
+        '#FF0000', '#FF1100', '#FF2200', '#FF3300', '#FF4400', '#FF5500',
+        '#FF6600', '#FF7700', '#FF8800', '#FF9900', '#FFAA00', '#FFBB00',
+        '#FFCC00', '#FFDD00', '#FFEE00', '#FFFF00', '#EEFF00', '#DDFF00',
+        '#CCFF00', '#BBFF00', '#AAFF00', '#99FF00', '#88FF00', '#77FF00',
+        '#66FF00', '#55FF00', '#44FF00', '#33FF00', '#22FF00', '#11FF00',
+        '#00FF00', '#00FF11', '#00FF22', '#00FF33', '#00FF44', '#00FF55',
+        '#00FF66', '#00FF77', '#00FF88', '#00FF99', '#00FFAA', '#00FFBB',
+        '#00FFCC', '#00FFDD', '#00FFEE', '#00FFFF', '#00EEFF', '#00DDFF',
+        '#00CCFF', '#00BBFF', '#00AAFF', '#0099FF', '#0088FF', '#0077FF',
+        '#0066FF', '#0055FF', '#0044FF', '#0033FF', '#0022FF', '#0011FF',
+        '#0000FF', '#1100FF', '#2200FF', '#3300FF', '#4400FF', '#5500FF',
+        '#6600FF', '#7700FF', '#8800FF', '#9900FF', '#AA00FF', '#BB00FF',
+        '#CC00FF', '#DD00FF', '#EE00FF', '#FF00FF', '#FF00EE', '#FF00DD',
+        '#FF00CC', '#FF00BB', '#FF00AA', '#FF0099', '#FF0088', '#FF0077',
+        '#FF0066', '#FF0055', '#FF0044', '#FF0033', '#FF0022', '#FF0011'
     ],
 
-    // Create sailing ship progress bar
-    createShipProgress(percentage) {
-        const totalWidth = 40;
-        const shipPosition = Math.floor((percentage / 100) * (totalWidth - 3));
-        
-        let progressBar = '';
-        for (let i = 0; i < totalWidth; i++) {
-            if (i === shipPosition) {
-                progressBar += '🚢';
-            } else if (i === shipPosition + 1) {
-                progressBar += '💨';
-            } else if (i < shipPosition) {
-                progressBar += '🌊';
-            } else {
-                progressBar += '⋅';
-            }
-        }
-        
-        return `${progressBar} ${percentage}%`;
+    // Create charging bar
+    createChargingBar(percentage, width = 30) {
+        const filled = Math.floor((percentage / 100) * width);
+        const empty = width - filled;
+        const bar = '█'.repeat(filled) + '░'.repeat(empty);
+        return `[${bar}] ${percentage}%`;
     },
 
-    // Ultra-fast color
-    getUltraColor(frame) {
-        return this.rainbowColors[frame % this.rainbowColors.length];
+    // Super fast color blinking
+    getFastBlinkColor(frame) {
+        return this.blinkColors[frame % this.blinkColors.length];
     },
 
-    // Simple text styling
-    createText(text, useRed = false) {
-        return useRed ? `🔴 ${text}` : text;
+    // Text that stays same for multiple frames
+    getStableText(messages, frame, framesPerMessage = 3) {
+        const messageIndex = Math.floor(frame / framesPerMessage);
+        return messages[messageIndex] || messages[messages.length - 1];
     }
 };
 
 // ═══════════════════════════════════════════════════════════════════
-//                    NATURAL ANIMATION PHASES
+//                    FAST BLINKING ANIMATION PHASES
 // ═══════════════════════════════════════════════════════════════════
 
-// PHASE 1: Hunt Beginning (6 frames)
-function createHuntBeginning(frame) {
-    const percentage = Math.floor((frame / 5) * 25);
+// PHASE 1: Initial Charging (12 frames - text changes every 3 frames)
+function createInitialCharging(frame) {
+    const percentage = Math.floor((frame / 11) * 30);
     
     const messages = [
-        "Starting Devil Fruit hunt...",
-        "Searching the Grand Line...",
-        "Detecting energy signatures...",
-        "Something is out there...",
-        "Power levels rising...",
-        "Getting closer to something..."
+        "🔍 Starting Devil Fruit hunt...",
+        "🌊 Searching the Grand Line...", 
+        "⚡ Detecting energy signatures...",
+        "🔮 Something powerful nearby..."
     ];
     
-    const message = messages[frame];
-    const useRed = Math.random() < 0.3;
-    const styledMessage = SailingEngine.createText(message, useRed);
-    
-    const shipProgress = SailingEngine.createShipProgress(percentage);
-    const effects = '🔍🌊⚡'.repeat(8);
+    const message = ChargingEngine.getStableText(messages, frame, 3);
+    const chargingBar = ChargingEngine.createChargingBar(percentage);
+    const effects = '🔍🌊⚡🔮'.repeat(6);
     
     return new EmbedBuilder()
-        .setTitle('🔍 Devil Fruit Hunt')
+        .setTitle('🔋 DEVIL FRUIT SCANNER')
         .setDescription(`
 ${effects}
 
-**${styledMessage}**
+**${message}**
 
-${shipProgress}
+${chargingBar}
 
-*Sailing through the Grand Line...*
+*Charging power systems...*
         `)
-        .setColor(SailingEngine.getUltraColor(frame * 8))
-        .setFooter({ text: `Hunt Progress: ${percentage}%` });
+        .setColor(ChargingEngine.getFastBlinkColor(frame))
+        .setFooter({ text: `🔋 Charging: ${percentage}%` });
 }
 
-// PHASE 2: Energy Detection (8 frames)
-function createEnergyDetection(frame) {
-    const percentage = 25 + Math.floor((frame / 7) * 35);
+// PHASE 2: Power Building (15 frames - text changes every 3 frames)
+function createPowerBuilding(frame) {
+    const percentage = 30 + Math.floor((frame / 14) * 30);
     
     const messages = [
-        "Weak energy detected...",
-        "Power signature found...",
-        "Energy getting stronger...",
-        "Significant power ahead...",
-        "Strong energy confirmed...",
-        "Impressive power levels...",
-        "Exceptional energy detected...",
-        "Incredible power found..."
+        "⚡ Weak power detected...",
+        "🔥 Energy levels rising...",
+        "⚡ Power signature strengthening...",
+        "💥 Significant energy found...",
+        "⚡ Strong power confirmed..."
     ];
     
-    const message = messages[frame];
-    const useRed = Math.random() < 0.4;
-    const styledMessage = SailingEngine.createText(message, useRed);
-    
-    const shipProgress = SailingEngine.createShipProgress(percentage);
-    const effects = '⚡🔥💫'.repeat(8);
+    const message = ChargingEngine.getStableText(messages, frame, 3);
+    const chargingBar = ChargingEngine.createChargingBar(percentage);
+    const effects = '⚡🔥💥🌟💫✨'.repeat(5);
     
     return new EmbedBuilder()
-        .setTitle('⚡ Energy Rising')
+        .setTitle('⚡ POWER BUILDING')
         .setDescription(`
 ${effects}
 
-**${styledMessage}**
+**${message}**
 
-${shipProgress}
+${chargingBar}
 
-*Power building in the distance...*
+*Energy systems charging...*
         `)
-        .setColor(SailingEngine.getUltraColor(frame * 10 + 20))
-        .setFooter({ text: `Energy Level: ${percentage}%` });
+        .setColor(ChargingEngine.getFastBlinkColor(frame * 2))
+        .setFooter({ text: `⚡ Power: ${percentage}%` });
 }
 
-// PHASE 3: Rarity Lock-On (Pick ONE rarity and stick with it)
+// PHASE 3: Rarity Lock-On (18 frames - text changes every 2 frames, ONE rarity)
 function createRarityLockOn(frame, lockedRarity) {
-    const percentage = 60 + Math.floor((frame / 11) * 30);
+    const percentage = 60 + Math.floor((frame / 17) * 25);
     
-    // Get the locked rarity config
     const rarityConfigs = {
         legendary: {
             emoji: '🟡',
             color: '#F39C12',
             name: 'LEGENDARY',
             messages: [
-                "LEGENDARY signature detected...",
-                "LEGENDARY power confirmed...",
-                "LEGENDARY Devil Fruit found...",
-                "LEGENDARY class verified...",
-                "LEGENDARY energy strong...",
-                "LEGENDARY power building...",
-                "LEGENDARY signature locked...",
-                "LEGENDARY energy at peak...",
-                "Wait... something's changing...",
-                "Energy pattern shifting...",
-                "Different power emerging...",
-                "Final reading coming in..."
+                "🟡 LEGENDARY signature detected...",
+                "👑 LEGENDARY power confirmed...",
+                "🟡 LEGENDARY Devil Fruit found...",
+                "👑 LEGENDARY class verified...",
+                "🟡 LEGENDARY energy building...",
+                "👑 LEGENDARY power at peak...",
+                "🟡 LEGENDARY confirmed...",
+                "👑 Wait... energy shifting...",
+                "🌊 Power pattern changing..."
             ]
         },
         mythical: {
             emoji: '🔴',
-            color: '#E74C3C',
+            color: '#E74C3C', 
             name: 'MYTHICAL',
             messages: [
-                "MYTHICAL signature detected...",
-                "MYTHICAL power confirmed...",
-                "MYTHICAL Devil Fruit found...",
-                "MYTHICAL class verified...",
-                "MYTHICAL energy strong...",
-                "MYTHICAL power building...",
-                "MYTHICAL signature locked...",
-                "MYTHICAL energy at peak...",
-                "Hold on... readings changing...",
-                "Power signature shifting...",
-                "New energy pattern found...",
-                "True result incoming..."
+                "🔴 MYTHICAL signature detected...",
+                "🔮 MYTHICAL power confirmed...",
+                "🔴 MYTHICAL Devil Fruit found...",
+                "🔮 MYTHICAL class verified...",
+                "🔴 MYTHICAL energy building...",
+                "🔮 MYTHICAL power at peak...",
+                "🔴 MYTHICAL confirmed...",
+                "🔮 Actually... readings changing...",
+                "🌊 Different energy found..."
             ]
         },
         omnipotent: {
             emoji: '🌌',
             color: '#9B59B6',
-            name: 'OMNIPOTENT',
+            name: 'OMNIPOTENT', 
             messages: [
-                "OMNIPOTENT signature detected...",
-                "OMNIPOTENT power confirmed...",
-                "OMNIPOTENT Devil Fruit found...",
-                "OMNIPOTENT class verified...",
-                "OMNIPOTENT energy strong...",
-                "OMNIPOTENT power building...",
-                "OMNIPOTENT signature locked...",
-                "OMNIPOTENT energy at peak...",
-                "Something unexpected...",
-                "Energy completely changing...",
-                "Totally different power...",
-                "Real result appearing..."
+                "🌌 OMNIPOTENT signature detected...",
+                "💫 OMNIPOTENT power confirmed...",
+                "🌌 OMNIPOTENT Devil Fruit found...",
+                "💫 OMNIPOTENT class verified...",
+                "🌌 OMNIPOTENT energy building...",
+                "💫 OMNIPOTENT power at peak...",
+                "🌌 OMNIPOTENT confirmed...",
+                "💫 Hold on... something different...",
+                "🌊 Energy completely changing..."
             ]
         }
     };
     
     const config = rarityConfigs[lockedRarity];
-    const message = config.messages[frame];
-    const useRed = frame >= 8 ? true : Math.random() < 0.2;
-    const styledMessage = SailingEngine.createText(message, useRed);
+    const message = ChargingEngine.getStableText(config.messages, frame, 2);
+    const chargingBar = ChargingEngine.createChargingBar(percentage);
     
-    // Use the locked rarity color for most frames, then change
+    // Use locked rarity color for most frames, then fast blink in final frames
     let color = config.color;
-    let effects = config.emoji.repeat(20);
+    let effects = config.emoji.repeat(15);
     let title = `${config.emoji} ${config.name} DETECTED! ${config.emoji}`;
     
-    // In final frames, show it's changing
-    if (frame >= 8) {
-        color = SailingEngine.getUltraColor(frame * 15 + 60);
-        effects = '🌊💫🌊💫🌊💫🌊💫🌊💫🌊💫🌊💫🌊💫🌊💫🌊';
-        title = '🌊 Power Signature Changing 🌊';
+    // In final frames, show change with fast blinking
+    if (frame >= 14) {
+        color = ChargingEngine.getFastBlinkColor(frame * 3);
+        effects = '🌊💫🌊💫🌊💫🌊💫🌊💫🌊💫🌊💫🌊💫🌊';
+        title = '🌊 ENERGY CHANGING 🌊';
     }
-    
-    const shipProgress = SailingEngine.createShipProgress(percentage);
     
     return new EmbedBuilder()
         .setTitle(title)
         .setDescription(`
 ${effects}
 
-**${styledMessage}**
+**${message}**
 
-${shipProgress}
+${chargingBar}
 
-*${frame < 8 ? config.name + ' power confirmed!' : 'Wait... something different...'}*
+*${frame < 14 ? config.name + ' power charging...' : 'Power signature shifting...'}*
         `)
         .setColor(color)
-        .setFooter({ text: `${frame < 8 ? config.emoji : '🌊'} ${frame < 8 ? config.name + ' CLASS' : 'CHANGING'} | ${percentage}%` });
+        .setFooter({ text: `${frame < 14 ? config.emoji : '🌊'} Charge: ${percentage}%` });
 }
 
-// PHASE 4: Final Approach (6 frames)
-function createFinalApproach(frame) {
-    const percentage = 90 + Math.floor((frame / 5) * 10);
+// PHASE 4: Final Charging (12 frames - text changes every 2 frames)
+function createFinalCharging(frame) {
+    const percentage = 85 + Math.floor((frame / 11) * 15);
     
     const messages = [
-        "Final approach...",
-        "Devil Fruit materializing...",
-        "Almost there...",
-        "Power stabilizing...",
-        "Ready to reveal...",
-        "Here it comes..."
+        "🎯 Final charging sequence...",
+        "🔋 Power at maximum...",
+        "🎯 Systems fully charged...",
+        "🔋 Ready for revelation...",
+        "🎯 Charging complete...",
+        "🔋 Devil Fruit incoming..."
     ];
     
-    const message = messages[frame];
-    const useRed = Math.random() < 0.3;
-    const styledMessage = SailingEngine.createText(message, useRed);
-    
-    const shipProgress = SailingEngine.createShipProgress(percentage);
-    const effects = '🎯✨🎯✨🎯✨🎯✨🎯✨🎯✨🎯✨🎯✨🎯✨🎯';
+    const message = ChargingEngine.getStableText(messages, frame, 2);
+    const chargingBar = ChargingEngine.createChargingBar(percentage);
+    const effects = '🎯🔋⚡💫🌟✨'.repeat(5);
     
     return new EmbedBuilder()
-        .setTitle('🎯 Final Approach')
+        .setTitle('🔋 FINAL CHARGING')
         .setDescription(`
 ${effects}
 
-**${styledMessage}**
+**${message}**
 
-${shipProgress}
+${chargingBar}
 
-*Your Devil Fruit is materializing...*
+*Maximum power achieved...*
         `)
-        .setColor(SailingEngine.getUltraColor(frame * 25 + 100))
-        .setFooter({ text: `Final Approach: ${percentage}%` });
+        .setColor(ChargingEngine.getFastBlinkColor(frame * 4))
+        .setFooter({ text: `🔋 Final Charge: ${percentage}%` });
 }
 
 // PHASE 5: Devil Fruit Materialization
@@ -272,8 +243,6 @@ async function createDevilFruitMaterialization(interaction, devilFruit, rarity) 
         const hiddenName = '◆'.repeat(nameLength - revealedChars);
         const displayName = frame === frames - 1 ? devilFruit.name : visibleName + hiddenName;
         
-        const styledName = SailingEngine.createText(displayName, Math.random() < 0.4);
-        
         // Info reveal
         const infoLines = [
             `📋 **Type:** ${frame >= 1 ? devilFruit.type : '???'}`,
@@ -284,23 +253,23 @@ async function createDevilFruitMaterialization(interaction, devilFruit, rarity) 
         ];
         
         const effects = config.emoji.repeat(20);
-        const shipProgress = SailingEngine.createShipProgress(100);
+        const chargingBar = ChargingEngine.createChargingBar(100);
         
         const embed = new EmbedBuilder()
-            .setTitle(`${config.emoji} Devil Fruit Found! ${config.emoji}`)
+            .setTitle(`${config.emoji} DEVIL FRUIT MATERIALIZED! ${config.emoji}`)
             .setDescription(`
 ${effects}
 
-**${styledName}**
+**${displayName}**
 
 ${infoLines.join('\n')}
 
-${shipProgress}
+${chargingBar}
 
 ${config.stars.repeat(Math.min(frame + 3, 8))}
             `)
             .setColor(config.color)
-            .setFooter({ text: `🍈 ${config.name} Devil Fruit | ${Math.floor(progress * 100)}% materialized` });
+            .setFooter({ text: `🍈 Materialization: ${Math.floor(progress * 100)}% | ${config.name}` });
 
         await interaction.editReply({ embeds: [embed] });
         await new Promise(resolve => setTimeout(resolve, 800));
@@ -313,11 +282,11 @@ function createFinalResult(devilFruit, rarity, interaction) {
     
     const finaleMessages = {
         omnipotent: '🌌 OMNIPOTENT DEVIL FRUIT! 🌌',
-        mythical: '🔮 MYTHICAL DEVIL FRUIT! 🔮',
+        mythical: '🔮 MYTHICAL DEVIL FRUIT! 🔮', 
         legendary: '👑 LEGENDARY DEVIL FRUIT! 👑',
         rare: '💎 RARE DEVIL FRUIT! 💎',
         uncommon: '🌟 UNCOMMON DEVIL FRUIT! 🌟',
-        common: '⚓ DEVIL FRUIT FOUND! ⚓'
+        common: '⚓ DEVIL FRUIT DISCOVERED! ⚓'
     };
     
     const effects = {
@@ -329,11 +298,9 @@ function createFinalResult(devilFruit, rarity, interaction) {
         common: '⚓⭐🌊⭐🌊⭐⚓⭐🌊⭐🌊⭐⚓⭐🌊⭐'
     };
     
-    const epicName = SailingEngine.createText(devilFruit.name);
     const finalEffect = effects[rarity] || effects.common;
     const finalTitle = finaleMessages[rarity] || finaleMessages.common;
-    
-    const shipProgress = SailingEngine.createShipProgress(100);
+    const chargingBar = ChargingEngine.createChargingBar(100);
     
     const description = `
 ${finalEffect}
@@ -347,7 +314,7 @@ ${finalEffect}
 🔥 **Power Level:** ${devilFruit.powerLevel.toLocaleString()}
 ⭐ **Rarity:** ${config.name}
 
-${shipProgress}
+${chargingBar}
 
 ${config.stars.repeat(8)}
 
@@ -376,7 +343,7 @@ ${finalEffect}
 
     return {
         embed: new EmbedBuilder()
-            .setTitle(`${config.emoji} ${epicName} ${config.emoji}`)
+            .setTitle(`${config.emoji} ${devilFruit.name} ${config.emoji}`)
             .setDescription(description)
             .setColor(config.color)
             .setFooter({ 
@@ -389,7 +356,7 @@ ${finalEffect}
 }
 
 // ═══════════════════════════════════════════════════════════════════
-//                    MASTER NATURAL SEQUENCE
+//                    MASTER FAST BLINKING SEQUENCE
 // ═══════════════════════════════════════════════════════════════════
 
 async function createUltimateCinematicExperience(interaction) {
@@ -397,40 +364,40 @@ async function createUltimateCinematicExperience(interaction) {
         const rarity = DevilFruitDatabase.calculateDropRarity();
         const devilFruit = DevilFruitDatabase.getRandomDevilFruit(rarity);
         
-        // Pick a fake high rarity to lock onto (if not already high)
+        // Pick fake high rarity for low rarities
         const fakeRarities = ['legendary', 'mythical', 'omnipotent'];
         const lockedRarity = rarity === 'common' || rarity === 'uncommon' || rarity === 'rare' ? 
             fakeRarities[Math.floor(Math.random() * fakeRarities.length)] : 
-            rarity; // If already high rarity, don't fake it
+            rarity;
         
-        console.log(`🎮 NATURAL HUNT: ${devilFruit.name} (${rarity}) for ${interaction.user.username} | Fake: ${lockedRarity}`);
+        console.log(`🔋 FAST BLINK: ${devilFruit.name} (${rarity}) for ${interaction.user.username} | Fake: ${lockedRarity}`);
         
-        // PHASE 1: Hunt Beginning (6 frames, 3 seconds)
-        for (let frame = 0; frame < 6; frame++) {
-            const embed = createHuntBeginning(frame);
-            await interaction.editReply({ embeds: [embed] });
-            await new Promise(resolve => setTimeout(resolve, 500));
-        }
-        
-        // PHASE 2: Energy Detection (8 frames, 3 seconds)
-        for (let frame = 0; frame < 8; frame++) {
-            const embed = createEnergyDetection(frame);
-            await interaction.editReply({ embeds: [embed] });
-            await new Promise(resolve => setTimeout(resolve, 375));
-        }
-        
-        // PHASE 3: Rarity Lock-On (12 frames, 4 seconds)
+        // PHASE 1: Initial Charging (12 frames, 3 seconds) - text changes every 3 frames
         for (let frame = 0; frame < 12; frame++) {
+            const embed = createInitialCharging(frame);
+            await interaction.editReply({ embeds: [embed] });
+            await new Promise(resolve => setTimeout(resolve, 250));
+        }
+        
+        // PHASE 2: Power Building (15 frames, 3 seconds) - text changes every 3 frames  
+        for (let frame = 0; frame < 15; frame++) {
+            const embed = createPowerBuilding(frame);
+            await interaction.editReply({ embeds: [embed] });
+            await new Promise(resolve => setTimeout(resolve, 200));
+        }
+        
+        // PHASE 3: Rarity Lock-On (18 frames, 3.5 seconds) - text changes every 2 frames
+        for (let frame = 0; frame < 18; frame++) {
             const embed = createRarityLockOn(frame, lockedRarity);
             await interaction.editReply({ embeds: [embed] });
-            await new Promise(resolve => setTimeout(resolve, 333));
+            await new Promise(resolve => setTimeout(resolve, 195));
         }
         
-        // PHASE 4: Final Approach (6 frames, 3 seconds)
-        for (let frame = 0; frame < 6; frame++) {
-            const embed = createFinalApproach(frame);
+        // PHASE 4: Final Charging (12 frames, 2.5 seconds) - text changes every 2 frames
+        for (let frame = 0; frame < 12; frame++) {
+            const embed = createFinalCharging(frame);
             await interaction.editReply({ embeds: [embed] });
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await new Promise(resolve => setTimeout(resolve, 210));
         }
         
         // PHASE 5: Devil Fruit Materialization (6 frames, 5 seconds)
@@ -443,16 +410,14 @@ async function createUltimateCinematicExperience(interaction) {
             components: finale.components 
         });
         
-        console.log(`🎊 NATURAL COMPLETE: ${devilFruit.name} (${rarity}) for ${interaction.user.username}!`);
+        console.log(`🎊 FAST BLINK COMPLETE: ${devilFruit.name} (${rarity}) for ${interaction.user.username}!`);
         
     } catch (error) {
-        console.error('🚨 Natural Animation Error:', error);
+        console.error('🚨 Fast Blink Error:', error);
         
         const errorEmbed = new EmbedBuilder()
-            .setTitle('⚠️ Hunt Error!')
-            .setDescription(`
-Hunt failed! Please try again!
-            `)
+            .setTitle('⚠️ Charging Error!')
+            .setDescription(`Charging system failed! Please try again!`)
             .setColor('#E74C3C');
             
         await interaction.editReply({ embeds: [errorEmbed], components: [] });
