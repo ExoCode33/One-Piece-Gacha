@@ -22,7 +22,61 @@ async function createUltimateCinematicExperience(interaction) {
         
         // PHASE 3: Energy Gathering (10 frames, ~8 seconds)
         for (let frame = 0; frame < 10; frame++) {
-            const embed =const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+            const embed = createEnergyGathering(frame);
+            await interaction.editReply({ embeds: [embed] });
+            await new Promise(resolve => setTimeout(resolve, CinematicMasterpiece.timing.gathering));
+        }
+        
+        // PHASE 4: The Great Storm (12 frames, ~7 seconds)
+        for (let frame = 0; frame < 12; frame++) {
+            const embed = createGreatStorm(frame);
+            await interaction.editReply({ embeds: [embed] });
+            await new Promise(resolve => setTimeout(resolve, CinematicMasterpiece.timing.storm));
+        }
+        
+        // PHASE 5: Dimensional Rift (8 frames, ~8 seconds)
+        for (let frame = 0; frame < 8; frame++) {
+            const embed = createDimensionalRift(frame);
+            await interaction.editReply({ embeds: [embed] });
+            await new Promise(resolve => setTimeout(resolve, CinematicMasterpiece.timing.rift));
+        }
+        
+        // PHASE 6: The Great Revelation (dynamic duration based on rarity)
+        await createGreatRevelation(interaction, rarity);
+        
+        // PHASE 7: Devil Fruit Materialization (8 frames, ~10 seconds)
+        await createDevilFruitMaterialization(interaction, devilFruit, rarity);
+        
+        // PHASE 8: Ultimate Finale (permanent display)
+        const finale = createUltimateFinale(devilFruit, rarity, interaction);
+        await interaction.editReply({ 
+            embeds: [finale.embed], 
+            components: finale.components 
+        });
+        
+        // Log the epic result
+        console.log(`🎊 EPIC SUCCESS: ${devilFruit.name} (${rarity}, ${devilFruit.powerLevel} power) discovered by ${interaction.user.username}!`);
+        
+    } catch (error) {
+        console.error('🚨 Ultimate Cinematic Error:', error);
+        
+        const errorEmbed = new EmbedBuilder()
+            .setTitle('⚠️ The Cosmic Forces Were Too Powerful!')
+            .setDescription(`
+The dimensional rift became unstable during the Devil Fruit hunt!
+
+**Error:** \`${error.message}\`
+
+*The Grand Line's power was too intense to contain. Please try again, brave treasure hunter!*
+
+🌊 *Even the greatest legends face cosmic storms...*
+            `)
+            .setColor('#E74C3C')
+            .setFooter({ text: 'The adventure continues beyond any single setback!' });
+            
+        await interaction.editReply({ embeds: [errorEmbed], components: [] });
+    }
+}const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { DevilFruitDatabase } = require('../data/devilfruit');
 
 // ═══════════════════════════════════════════════════════════════════
