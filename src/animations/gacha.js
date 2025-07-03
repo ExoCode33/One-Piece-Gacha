@@ -78,7 +78,7 @@ const ProfessionalGachaEngine = {
     },
 
     // Randomized fake-out system with multiple scenarios
-    createRandomFakeOut(targetRarity, frame) {
+    generateFakeOut(targetRarity, frame) {
         // Don't fake out common/uncommon - not exciting enough
         if (['common', 'uncommon'].includes(targetRarity)) {
             return null;
@@ -214,14 +214,14 @@ ${energyIndicator}
         .setFooter({ text: `⚡ Power Surge | Status: AMPLIFYING!` });
 }
 
-// PHASE 3: Fake-Out Phase (6 frames, 1.5 seconds) - Professional suspense
+// PHASE 3: Randomized Fake-Out Phase (6 frames, 1.5 seconds) - Dynamic suspense
 function createFakeOutPhase(frame, actualRarity) {
     const percentage = 55 + Math.floor((frame / 5) * 20); // 55-75%
-    const fakeOut = ProfessionalGachaEngine.createFakeOut(actualRarity, frame);
+    const fakeOut = ProfessionalGachaEngine.generateFakeOut(actualRarity, frame);
     
     if (!fakeOut) {
         // No fake-out, show generic messages
-        const chargingBar = ProfessionalGachaEngine.createRainbowChargingBar(percentage, frame);
+        const energyIndicator = ProfessionalGachaEngine.createEnergyIndicator(percentage, frame);
         const particles = ProfessionalGachaEngine.createEpicParticles(frame + 12, 'cosmic');
         
         return new EmbedBuilder()
@@ -230,54 +230,64 @@ function createFakeOutPhase(frame, actualRarity) {
             .setDescription(`
 ${particles}
 
-${chargingBar}
+${energyIndicator}
 
 *🎯 Devil Fruit signature crystallizing...*
 
 💫 Quantum State: **STABILIZING**
 🌌 Reality Matrix: **ALIGNING**
         `)
-            .setFooter({ text: `🌟 Critical Phase | ${percentage}% Complete | Signal: CRITICAL!` });
+            .setFooter({ text: `🌟 Critical Phase | Status: CRITICAL!` });
     }
     
-    // Show fake-out for dramatic effect
-    const chargingBar = ProfessionalGachaEngine.createRainbowChargingBar(percentage, frame, fakeOut.rarity);
+    // Show randomized fake-out sequence
+    const energyIndicator = ProfessionalGachaEngine.createEnergyIndicator(percentage, frame);
     const particles = ProfessionalGachaEngine.createEpicParticles(frame + 15, fakeOut.rarity);
     
-    if (frame < 4) {
+    if (fakeOut.isBuilding || frame < 4) {
         // Show fake confirmation
         return new EmbedBuilder()
             .setColor(fakeOut.color)
-            .setTitle(`${fakeOut.emoji} **${fakeOut.rarity.toUpperCase()} SIGNATURE DETECTED** ${fakeOut.emoji}`)
+            .setTitle(`${fakeOut.emoji} **${fakeOut.rarity.toUpperCase()} DETECTED** ${fakeOut.emoji}`)
             .setDescription(`
 ${particles}
 
-${chargingBar}
+${energyIndicator}
 
 *${fakeOut.message}*
 
 ${fakeOut.emoji} Classification: **${fakeOut.rarity.toUpperCase()}**
-⚡ Confidence Level: **99.7%**
+⚡ Confidence: **EXTREMELY HIGH**
 🎯 Lock Status: **CONFIRMED**
             `)
-            .setFooter({ text: `${fakeOut.emoji} ${fakeOut.rarity.toUpperCase()} CLASS | ${percentage}% Complete | LOCKED IN!` });
+            .setFooter({ text: `${fakeOut.emoji} ${fakeOut.rarity.toUpperCase()} CLASS | LOCKED!` });
     } else {
-        // Show the fake-out twist
+        // Show the fake-out twist with random messages
+        const twistMessages = [
+            '🌊 The Grand Line\'s currents shift unexpectedly!',
+            '⚡ Wait... energy readings are fluctuating!',
+            '🌀 Reality itself seems to be bending!',
+            '💫 The ocean\'s mysteries run deeper...',
+            '🔮 Ancient forces interfere with the readings!'
+        ];
+        
+        const twistMessage = twistMessages[Math.floor(Math.random() * twistMessages.length)];
+        
         return new EmbedBuilder()
             .setColor('#FF6347')
-            .setTitle('🌊 **WAIT... THE CURRENTS ARE SHIFTING!** 🌊')
+            .setTitle('🌊 **UNEXPECTED PHENOMENON!** 🌊')
             .setDescription(`
 🌀💫🌀💫🌀💫🌀💫🌀💫🌀💫
 
-⚠️ [████████████████████░░░░░] 80%
+⚠️ Energy Level: **FLUCTUATING** (${percentage}%)
 
-*🌊 The Grand Line's currents are changing direction...*
-*⚡ Energy signatures recalibrating...*
-*🔮 Reality itself seems to be shifting...*
+*${twistMessage}*
+*🔮 Recalibrating all sensors...*
+*⚡ The truth lies deeper than expected...*
 
-🌀 Status: **READINGS FLUCTUATING**
+🌀 Status: **REALITY SHIFTING**
         `)
-        .setFooter({ text: `🌊 Reality Shift | ${percentage}% Complete | RECALIBRATING...` });
+        .setFooter({ text: `🌊 Reality Anomaly | RECALIBRATING...` });
     }
 }
 
