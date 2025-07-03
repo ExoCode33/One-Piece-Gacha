@@ -135,38 +135,40 @@ const NextGenGachaEngine = {
             filledSlots = Math.round((percentage / 100) * maxSlots);
         }
         
-        // Map embed color to square color
-        const embedColorMap = {
-            '#FF0000': '🟥', '#E74C3C': '🟥', '#C0392B': '🟥',
-            '#FF6000': '🟧', '#E67E22': '🟧', '#D35400': '🟧', '#F39C12': '🟧',
-            '#FFCC00': '🟨', '#FFD700': '🟨', '#F1C40F': '🟨', '#F4D03F': '🟨',
-            '#00FF00': '🟩', '#2ECC71': '🟩', '#27AE60': '🟩', '#58D68D': '🟩',
-            '#0080FF': '🟦', '#3498DB': '🟦', '#2980B9': '🟦', '#5DADE2': '🟦', '#0099FF': '🟦',
-            '#8000FF': '🟪', '#9B59B6': '🟪', '#8E44AD': '🟪', '#BB8FCE': '🟪'
-        };
-        
-        // Get embed color or default to blue
-        const embedSquareColor = embedColorMap[currentEmbedColor] || '🟦';
-        
         // Rainbow colors for the effect
         const rainbowColors = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪'];
         
-        // Build progress bar
+        // Build progress bar with natural rainbow flow
         let progressBar = '';
         
-        // Create the filled squares with rainbow pattern
+        // Create the filled squares with natural rainbow pattern
         for (let i = 0; i < filledSlots; i++) {
-            if (i === 0) {
-                // LEFTMOST SQUARE: Always matches embed color
-                progressBar += embedSquareColor;
-            } else {
-                // OTHER SQUARES: Rainbow flow from left to right
-                // Use (i - frame) to make rainbow flow LEFT TO RIGHT
-                const colorIndex = (i - frame + rainbowColors.length * 10) % rainbowColors.length;
-                progressBar += rainbowColors[colorIndex];
-            }
+            // NATURAL RAINBOW FLOW: Each frame, new colors appear on left, existing move right
+            // Use (frame - i) to make rainbow flow LEFT TO RIGHT
+            const colorIndex = (frame - i + rainbowColors.length * 10) % rainbowColors.length;
+            progressBar += rainbowColors[colorIndex];
             
             if (i < filledSlots - 1) progressBar += ' ';
+        }
+        
+        // DETERMINE EMBED COLOR: Should match the newest (leftmost) square
+        let embedColorForFrame = currentEmbedColor; // Default fallback
+        if (filledSlots > 0) {
+            // Get the color of the newest (leftmost) square
+            const newestSquareColorIndex = (frame + rainbowColors.length * 10) % rainbowColors.length;
+            const newestSquareColor = rainbowColors[newestSquareColorIndex];
+            
+            // Map square color back to embed hex color
+            const squareToEmbedMap = {
+                '🟥': '#FF0000',
+                '🟧': '#FF6000', 
+                '🟨': '#FFCC00',
+                '🟩': '#00FF00',
+                '🟦': '#0080FF',
+                '🟪': '#8000FF'
+            };
+            
+            embedColorForFrame = squareToEmbedMap[newestSquareColor] || currentEmbedColor;
         }
         
         // Add empty squares for normal phase
@@ -181,7 +183,10 @@ const NextGenGachaEngine = {
             }
         }
         
-        return `**${energyLevel}**\n${progressBar}`;
+        return {
+            progressBar: `**${energyLevel}**\n${progressBar}`,
+            embedColor: embedColorForFrame
+        };
     },
 
     // Create rarity reveal bar for final phase
