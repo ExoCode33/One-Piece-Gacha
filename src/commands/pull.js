@@ -2,27 +2,6 @@ const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, Butt
 
 // Try to import the real animation, fall back to mock if not available
 let createUltimateCinematicExperience;
-let usingMockAnimation = false;
-
-try {
-    const animationModule = require('../animations/gacha');
-    createUltimateCinematicExperience = animationModule.createUltimateCinematicExperience;
-    console.log('✅ Real animation system loaded successfully!');
-} catch (error) {
-    console.log('⚠️ Animation file not found, using mock animation');
-    console.log('📁 Expected file: src/animations/gacha.js');
-    console.log('❌ Error:', error.message);
-    usingMockAnimation = true;
-    
-    // Mock animation function
-    createUltimateCinematicExperience = async function(interaction) {
-        const mockResult = {
-            devilFruit: {
-                id: 'mock1',
-                name: 'Gomuconst { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-
-// Try to import the real animation, fall back to mock if not available
-let createUltimateCinematicExperience;
 try {
     createUltimateCinematicExperience = require('../animations/gacha').createUltimateCinematicExperience;
 } catch (error) {
