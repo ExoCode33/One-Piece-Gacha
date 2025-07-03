@@ -151,8 +151,7 @@ ${particles}
 
         // PROGRESSION PHASE: 12 frames of rightward movement (unless common)
         console.log('🌊 Starting progression phase...');
-        const progressFrames = NextGenGachaEngine.calculateProgressFrames(targetRarity);
-        const stopFrame = NextGenGachaEngine.calculateStopFrame(targetRarity);
+        const progressFrames = NextGenGachaEngine.getProgressFrames(targetRarity);
         
         if (targetRarity === 'common') {
             // COMMON: Immediate white-out from center
@@ -250,35 +249,82 @@ ${particles}
                 }
             }
             
-            // BLINKING PHASE: 3 blinks between rainbow and solid color
-            console.log('✨ Starting blinking phase...');
-            const finalStopFrame = totalFrames + progressFrames - 1 + stopFrame;
-            
-            for (let blink = 0; blink < 6; blink++) { // 6 phases = 3 full blinks
-                try {
-                    const isBlinkOn = blink % 2 === 0; // Even = solid color, Odd = rainbow
-                    const indicators = IndicatorsSystem.getChangingIndicators(totalFrames + progressFrames + blink, targetRarity, targetFruit.type);
-                    const particles = ParticlesSystem.createOnePieceParticles(totalFrames + progressFrames + blink + 3, 'energy', targetRarity);
-                    
-                    // Get rarity color for embed
-                    const rarityEmbedColors = {
-                        uncommon: '#00FF00',
-                        rare: '#0080FF', 
-                        legendary: '#FFCC00',
-                        mythical: '#FF0000',
-                        omnipotent: '#8000FF'
-                    };
-                    const currentColor = rarityEmbedColors[targetRarity] || '#0080FF';
-                    
-                    const progressBar = NextGenGachaEngine.createBlinkingRarityBar(
-                        targetRarity,
-                        finalStopFrame,
-                        isBlinkOn
-                    );
+            // SPECIAL OMNIPOTENT HANDLING
+            if (targetRarity === 'omnipotent') {
+                console.log('🌌 Starting OMNIPOTENT grid sequence...');
+                
+                for (let gridFrame = 0; gridFrame < 8; gridFrame++) {
+                    try {
+                        const indicators = IndicatorsSystem.getChangingIndicators(totalFrames + progressFrames + gridFrame, targetRarity, targetFruit.type);
+                        const particles = ParticlesSystem.createOnePieceParticles(totalFrames + progressFrames + gridFrame + 3, 'energy', targetRarity);
+                        
+                        const currentColor = '#9B59B6'; // Purple for omnipotent
+                        
+                        const progressBar = NextGenGachaEngine.createBlinkingRarityBar(
+                            targetRarity,
+                            totalFrames + progressFrames + gridFrame,
+                            false // Always show the grid pattern
+                        );
 
-                    const blinkEmbed = new EmbedBuilder()
-                        .setTitle('⚡ **POWER CRYSTALLIZING** ⚡')
-                        .setDescription(`
+                        const omnipotentEmbed = new EmbedBuilder()
+                            .setTitle('🌌 **OMNIPOTENT TRANSCENDENCE** 🌌')
+                            .setDescription(`
+**Reality itself bends to your will...**
+
+**🔮 AURA STATUS:** ${indicators.aura}
+**✨ BLESSING LEVEL:** ${indicators.blessing}  
+**🌊 POWER TYPE:** ${indicators.type}
+
+${progressBar}
+
+${particles}
+                            `)
+                            .setColor(currentColor)
+                            .setFooter({ text: `OMNIPOTENT manifestation... ${gridFrame + 1}/8` });
+
+                        const timeoutDuration = 3500;
+                        const updatePromise = huntMessage.edit({ embeds: [omnipotentEmbed] });
+                        const timeoutPromise = new Promise((_, reject) => 
+                            setTimeout(() => reject(new Error('Discord API timeout')), timeoutDuration)
+                        );
+                        
+                        await Promise.race([updatePromise, timeoutPromise]);
+                        await new Promise(resolve => setTimeout(resolve, 700));
+                        
+                    } catch (error) {
+                        console.error(`Omnipotent grid frame ${gridFrame} error:`, error.message);
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    }
+                }
+            } else {
+                // REGULAR BLINKING for other rarities
+                console.log('✨ Starting blinking phase...');
+                const finalStopFrame = NextGenGachaEngine.calculateFinalFrame(totalFrames - 1, targetRarity);
+            
+                for (let blink = 0; blink < 6; blink++) { // 6 phases = 3 full blinks
+                    try {
+                        const isBlinkOn = blink % 2 === 0; // Even = solid color, Odd = rainbow
+                        const indicators = IndicatorsSystem.getChangingIndicators(totalFrames + progressFrames + blink, targetRarity, targetFruit.type);
+                        const particles = ParticlesSystem.createOnePieceParticles(totalFrames + progressFrames + blink + 3, 'energy', targetRarity);
+                        
+                        // Get rarity color for embed
+                        const rarityEmbedColors = {
+                            uncommon: '#00FF00',
+                            rare: '#0080FF', 
+                            legendary: '#FFCC00',
+                            mythical: '#FF0000'
+                        };
+                        const currentColor = rarityEmbedColors[targetRarity] || '#0080FF';
+                        
+                        const progressBar = NextGenGachaEngine.createBlinkingRarityBar(
+                            targetRarity,
+                            finalStopFrame,
+                            isBlinkOn
+                        );
+
+                        const blinkEmbed = new EmbedBuilder()
+                            .setTitle('⚡ **POWER CRYSTALLIZING** ⚡')
+                            .setDescription(`
 **The rarity manifests itself...**
 
 **🔮 AURA STATUS:** ${indicators.aura}
@@ -288,22 +334,23 @@ ${particles}
 ${progressBar}
 
 ${particles}
-                        `)
-                        .setColor(currentColor)
-                        .setFooter({ text: `Crystallizing ${targetRarity.toUpperCase()} power... ${Math.floor((blink + 1) / 2)}/3` });
+                            `)
+                            .setColor(currentColor)
+                            .setFooter({ text: `Crystallizing ${targetRarity.toUpperCase()} power... ${Math.floor((blink + 1) / 2)}/3` });
 
-                    const timeoutDuration = 3500;
-                    const updatePromise = huntMessage.edit({ embeds: [blinkEmbed] });
-                    const timeoutPromise = new Promise((_, reject) => 
-                        setTimeout(() => reject(new Error('Discord API timeout')), timeoutDuration)
-                    );
-                    
-                    await Promise.race([updatePromise, timeoutPromise]);
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                    
-                } catch (error) {
-                    console.error(`Blink frame ${blink} error:`, error.message);
-                    await new Promise(resolve => setTimeout(resolve, 300));
+                        const timeoutDuration = 3500;
+                        const updatePromise = huntMessage.edit({ embeds: [blinkEmbed] });
+                        const timeoutPromise = new Promise((_, reject) => 
+                            setTimeout(() => reject(new Error('Discord API timeout')), timeoutDuration)
+                        );
+                        
+                        await Promise.race([updatePromise, timeoutPromise]);
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                        
+                    } catch (error) {
+                        console.error(`Blink frame ${blink} error:`, error.message);
+                        await new Promise(resolve => setTimeout(resolve, 300));
+                    }
                 }
             }
         }
