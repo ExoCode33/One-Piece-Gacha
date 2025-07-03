@@ -53,7 +53,7 @@ const NextGenGachaEngine = {
         return this.hyperSpectrumColors[combinedIndex];
     },
 
-    // PROFESSIONAL PARTICLE SYSTEMS with rarity-specific effects
+    // PROFESSIONAL PARTICLE SYSTEMS with controlled length
     createCinematicParticles(intensity, type = 'energy', rarity = 'common') {
         const particleSystems = {
             energy: {
@@ -84,14 +84,15 @@ const NextGenGachaEngine = {
         
         const particles = particleSystems[type]?.[rarity] || particleSystems.energy.common;
         
-        // Intensity-based particle count with rarity multipliers
-        const rarityMultipliers = { common: 1, uncommon: 1.2, rare: 1.5, legendary: 2, mythical: 2.5, omnipotent: 3 };
-        const baseCount = Math.min(intensity + 6, 20);
-        const count = Math.floor(baseCount * (rarityMultipliers[rarity] || 1));
+        // CONTROLLED LENGTH - max 15 emojis to prevent line wrapping
+        const maxCount = 15;
+        const rarityMultipliers = { common: 0.6, uncommon: 0.7, rare: 0.8, legendary: 0.9, mythical: 1.0, omnipotent: 1.0 };
+        const baseCount = Math.min(intensity + 6, maxCount);
+        const count = Math.floor(baseCount * (rarityMultipliers[rarity] || 0.6));
         
-        // Create particle pattern
+        // Create controlled particle pattern
         let particleString = '';
-        for (let i = 0; i < count; i++) {
+        for (let i = 0; i < Math.min(count, maxCount); i++) {
             particleString += particles[i % particles.length];
         }
         
@@ -461,46 +462,37 @@ ${energyComplete}
         .setFooter({ text: `🎭 Ultimate Revelation | Status: TRANSCENDENT!` });
 }
 
-// PHASE 6: Progressive Devil Fruit Disclosure (12 frames, 6 seconds)
-function createProgressiveDisclosure(frame, devilFruit, rarity, user) {
+// PHASE 6: Slow Typewriter Revelation (10 frames, 5 seconds)
+function createSlowTypewriterReveal(frame, devilFruit, rarity, user) {
     const config = DevilFruitDatabase.getRarityConfig(rarity);
-    const particles = NextGenGachaEngine.createCinematicParticles(35, 'celebration', rarity);
+    const particles = NextGenGachaEngine.createCinematicParticles(20, 'celebration', rarity);
     
-    // Near-miss effect for dramatic tension
-    const nearMiss = NextGenGachaEngine.createNearMissEffect(rarity, frame);
-    
-    const disclosureStages = [
-        "🍈 A mystical Devil Fruit emerges from the cosmic void...",
-        "🌀 The fruit's ethereal essence begins to solidify...",
-        "✨ Ancient power radiates from its core...",
-        nearMiss ? `💫 ${nearMiss.message}` : `💫 ${devilFruit.name.substring(0, 25)}... materializes!`,
-        `🍈 **${devilFruit.name}** - A discovery of incredible magnitude!`,
-        `📋 **Type Classification:** ${devilFruit.type}`,
-        `👤 **Legendary Wielder:** ${devilFruit.user || 'Unknown Master'}`,
-        `⚡ **Mystical Power:** ${devilFruit.power}`,
-        `💎 **True Classification:** ${config.name.toUpperCase()} CLASS`,
-        `🌟 **Power Level:** ${devilFruit.powerLevel || 'Transcendent'}`,
-        `${config.emoji} **ULTIMATE REVELATION ACHIEVED!** ${config.emoji}`,
-        `👑 **THE ${config.name.toUpperCase()} DEVIL FRUIT IS YOURS!** 👑`
+    // Typewriter effect - slowly reveal information
+    const revealStages = [
+        "🍈 A Devil Fruit emerges...",
+        "🍈 A Devil Fruit emerges...\n\n**Name:** ...",
+        `🍈 A Devil Fruit emerges...\n\n**Name:** ${devilFruit.name}`,
+        `🍈 A Devil Fruit emerges...\n\n**Name:** ${devilFruit.name}\n**Type:** ...`,
+        `🍈 A Devil Fruit emerges...\n\n**Name:** ${devilFruit.name}\n**Type:** ${devilFruit.type}`,
+        `🍈 A Devil Fruit emerges...\n\n**Name:** ${devilFruit.name}\n**Type:** ${devilFruit.type}\n**User:** ...`,
+        `🍈 A Devil Fruit emerges...\n\n**Name:** ${devilFruit.name}\n**Type:** ${devilFruit.type}\n**User:** ${devilFruit.user || 'Unknown'}`,
+        `🍈 A Devil Fruit emerges...\n\n**Name:** ${devilFruit.name}\n**Type:** ${devilFruit.type}\n**User:** ${devilFruit.user || 'Unknown'}\n**Power:** ...`,
+        `🍈 A Devil Fruit emerges...\n\n**Name:** ${devilFruit.name}\n**Type:** ${devilFruit.type}\n**User:** ${devilFruit.user || 'Unknown'}\n**Power:** ${devilFruit.power}`,
+        `🍈 A Devil Fruit emerges...\n\n**Name:** ${devilFruit.name}\n**Type:** ${devilFruit.type}\n**User:** ${devilFruit.user || 'Unknown'}\n**Power:** ${devilFruit.power}\n**Class:** ${config.name.toUpperCase()}`
     ];
     
-    const currentReveal = disclosureStages[frame] || disclosureStages[disclosureStages.length - 1];
-    const completionStatus = `🌟 Revelation Progress: **STAGE ${frame + 1}/12** (TRANSCENDENT)`;
+    const currentReveal = revealStages[frame] || revealStages[revealStages.length - 1];
     const color = NextGenGachaEngine.getHyperSpectrumColor(frame * 15 + 120, 7, user?.id?.slice(-2) || 0);
     
     return new EmbedBuilder()
         .setColor(color)
-        .setTitle(`${config.emoji} **PROGRESSIVE DEVIL FRUIT REVELATION** ${config.emoji}`)
+        .setTitle(`${config.emoji} **DEVIL FRUIT REVELATION** ${config.emoji}`)
         .setDescription(`
 ${particles}
 
-${completionStatus}
-
-*${currentReveal}*
-
-${frame >= 10 ? `\n${config.emoji}════════════════════════════════════════════${config.emoji}` : ''}
+${currentReveal}
         `)
-        .setFooter({ text: `${config.emoji} Progressive Revelation | Stage ${frame + 1}/12 | ${config.name} Class Discovery` });
+        .setFooter({ text: `${config.emoji} Revealing... | ${config.name} Class` });
 }
 
 // PHASE 7: Epic Professional Finale
@@ -543,20 +535,18 @@ function createEpicProfessionalFinale(devilFruit, rarity, user) {
             .setColor(config.color)
             .setTitle(`${config.emoji} **ULTIMATE DEVIL FRUIT MASTERY ACHIEVED!** ${config.emoji}`)
             .setDescription(`
-${NextGenGachaEngine.createCinematicParticles(40, 'celebration', rarity)}
+${NextGenGachaEngine.createCinematicParticles(20, 'celebration', rarity)}
 
 ${ultimateMessages[rarity]}${specialMessage}
 
 **🍈 Devil Fruit:** ${devilFruit.name}
 **📋 Type:** ${devilFruit.type}
-**👤 Legendary User:** ${devilFruit.user || 'Unknown Master'}
-**⚡ Mystical Power:** ${devilFruit.power}
-**💎 Classification:** ${config.name} Class
-**🌟 Power Level:** ${devilFruit.powerLevel || 'Transcendent'}
+**👤 User:** ${devilFruit.user || 'Unknown'}
+**⚡ Power:** ${devilFruit.power}
+**💎 Class:** ${config.name}
+**🌟 Level:** ${devilFruit.powerLevel || 'Mysterious'}
 
-*${devilFruit.description || 'A mystical Devil Fruit harboring transcendent potential, waiting to unlock its ultimate power through your epic journey across the Grand Line and beyond...'}*
-
-${config.emoji}══════════════════════════════════════════════════════════════════${config.emoji}
+*${devilFruit.description || 'A mysterious Devil Fruit with incredible potential...'}*
             `)
             .setFooter({ text: `${config.emoji} Congratulations, Master! You've achieved ${config.name} class mastery! May the Grand Line guide your legendary adventures! ${config.emoji}` })],
         components
@@ -608,11 +598,11 @@ async function createUltimateCinematicExperience(interaction) {
             await new Promise(resolve => setTimeout(resolve, 250)); // Climactic revelation
         }
         
-        // PHASE 6: Progressive Devil Fruit Disclosure (12 frames, 6 seconds)
-        for (let frame = 0; frame < 12; frame++) {
-            const embed = createProgressiveDisclosure(frame, devilFruit, rarity, user);
+        // PHASE 6: Slow Typewriter Revelation (10 frames, 5 seconds)
+        for (let frame = 0; frame < 10; frame++) {
+            const embed = createSlowTypewriterReveal(frame, devilFruit, rarity, user);
             await interaction.editReply({ embeds: [embed] });
-            await new Promise(resolve => setTimeout(resolve, 500)); // Savoring the ultimate reveal
+            await new Promise(resolve => setTimeout(resolve, 500)); // Slower for typewriter effect
         }
         
         // PHASE 7: Epic Professional Finale (permanent display)
