@@ -81,9 +81,9 @@ The seas whisper of legendary treasures...
                     const indicators = IndicatorsSystem.getChangingIndicators(frame, targetRarity, targetFruit.type);
                     const particles = ParticlesSystem.createOnePieceParticles(frame + 3, 'energy', targetRarity);
                     
-                    // Fast color cycling - changes every frame
-                    const fastColors = ['#FF0000', '#FF6000', '#FFCC00', '#00FF00', '#0080FF', '#8000FF', '#FF00FF', '#E74C3C', '#F39C12', '#9B59B6', '#2ECC71', '#3498DB'];
-                    const currentColor = fastColors[frame % fastColors.length];
+                    // RAINBOW EMBED COLORS - Matches the newest square color
+                    const rainbowEmbedColors = ['#FF0000', '#FF6000', '#FFCC00', '#00FF00', '#0080FF', '#8000FF'];
+                    const currentColor = rainbowEmbedColors[frame % rainbowEmbedColors.length];
                     
                     // Create moving rainbow progress bar
                     const progressBar = NextGenGachaEngine.createDynamicEnergyStatus(
@@ -165,9 +165,9 @@ ${particles}
                 const indicators = IndicatorsSystem.getChangingIndicators(totalFrames + suspenseFrame, targetRarity, targetFruit.type);
                 const particles = ParticlesSystem.createOnePieceParticles(totalFrames + suspenseFrame + 3, 'energy', targetRarity);
                 
-                // Continue fast color cycling for suspense
-                const fastColors = ['#FF0000', '#FF6000', '#FFCC00', '#00FF00', '#0080FF', '#8000FF', '#FF00FF', '#E74C3C', '#F39C12', '#9B59B6', '#2ECC71', '#3498DB'];
-                const currentColor = fastColors[(totalFrames + suspenseFrame) % fastColors.length];
+                // Continue rainbow embed colors for suspense
+                const rainbowEmbedColors = ['#FF0000', '#FF6000', '#FFCC00', '#00FF00', '#0080FF', '#8000FF'];
+                const currentColor = rainbowEmbedColors[(totalFrames + suspenseFrame) % rainbowEmbedColors.length];
                 
                 // Create moving rainbow progress bar with suspense effect
                 const progressBar = NextGenGachaEngine.createDynamicEnergyStatus(
