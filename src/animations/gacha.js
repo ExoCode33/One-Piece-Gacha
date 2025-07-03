@@ -46,16 +46,50 @@ The seas whisper of legendary treasures...
             { title: '🎆 **MOMENT OF TRUTH** 🎆', desc: 'The Grand Line bestows its gift...', color: '#2ECC71' }
         ];
 
-        // Animate search frames
-        for (let frame = 0; frame < searchFrames.length; frame++) {
-            const frameData = searchFrames[frame];
+        // Extended animation with square-by-square progression
+        const totalSquares = 20;
+        const totalFrames = 24; // More frames for suspense
+        
+        for (let frame = 0; frame < totalFrames; frame++) {
+            // Calculate which search frame we're in
+            const searchFrameIndex = Math.floor((frame / totalFrames) * searchFrames.length);
+            const frameData = searchFrames[Math.min(searchFrameIndex, searchFrames.length - 1)];
+            
+            // Progressive square filling (slower at the end for suspense)
+            let squaresFilled;
+            if (frame < totalFrames * 0.7) {
+                // First 70% - normal progression
+                squaresFilled = Math.floor((frame / (totalFrames * 0.7)) * (totalSquares * 0.8));
+            } else {
+                // Last 30% - slower progression for suspense
+                const remainingFrames = totalFrames - (totalFrames * 0.7);
+                const currentRemainingFrame = frame - (totalFrames * 0.7);
+                const remainingSquares = totalSquares - (totalSquares * 0.8);
+                squaresFilled = Math.floor(totalSquares * 0.8) + Math.floor((currentRemainingFrame / remainingFrames) * remainingSquares);
+            }
+            
+            const progressPercentage = (squaresFilled / totalSquares) * 100;
+            
             const indicators = IndicatorsSystem.getChangingIndicators(frame, targetRarity, targetFruit.type);
             const particles = ParticlesSystem.createOnePieceParticles(frame + 3, 'energy', targetRarity);
+            
+            // More dramatic color switching based on progression
+            let currentColor = frameData.color;
+            if (progressPercentage > 85) {
+                // Final moments - rapid color switching
+                const finalColors = ['#FF0000', '#FF6000', '#FFCC00', '#00FF00', '#0080FF', '#8000FF'];
+                currentColor = finalColors[frame % finalColors.length];
+            } else if (progressPercentage > 70) {
+                // Building tension - moderate color switching
+                const tensionColors = ['#E74C3C', '#F39C12', '#F1C40F', '#9B59B6'];
+                currentColor = tensionColors[Math.floor(frame / 2) % tensionColors.length];
+            }
+            
             const progressBar = NextGenGachaEngine.createDynamicEnergyStatus(
-                ((frame + 1) / searchFrames.length) * 100,
+                progressPercentage,
                 frame,
                 'charging',
-                frameData.color
+                currentColor
             );
 
             const searchEmbed = new EmbedBuilder()
@@ -71,11 +105,20 @@ ${progressBar}
 
 ${particles}
                 `)
-                .setColor(frameData.color)
-                .setFooter({ text: `Hunt Progress: ${Math.round(((frame + 1) / searchFrames.length) * 100)}%` });
+                .setColor(currentColor)
+                .setFooter({ text: `Hunt Progress: ${Math.round(progressPercentage)}% | Squares: ${squaresFilled}/${totalSquares}` });
 
             await huntMessage.edit({ embeds: [searchEmbed] });
-            await new Promise(resolve => setTimeout(resolve, 800)); // 0.8 second per frame
+            
+            // Dynamic timing - slower as we approach the end
+            let frameDelay = 600; // Base delay
+            if (progressPercentage > 85) {
+                frameDelay = 1200; // Much slower for final suspense
+            } else if (progressPercentage > 70) {
+                frameDelay = 900; // Moderate slowdown
+            }
+            
+            await new Promise(resolve => setTimeout(resolve, frameDelay));
         }
 
         // PHASE 4: Final reveal with full animation
