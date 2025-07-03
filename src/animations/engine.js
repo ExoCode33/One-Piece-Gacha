@@ -107,7 +107,7 @@ const NextGenGachaEngine = {
         return this.hyperSpectrumColors[combinedIndex];
     },
 
-    // PROGRESSION BAR SYSTEM - Clean spacing, embed color matching, fast consistent speed
+    // PROGRESSION BAR SYSTEM - Moving rainbow effect that actually moves
     createDynamicEnergyStatus(percentage, frame, phase = 'charging', currentEmbedColor = '#0099FF') {
         const phaseDescriptors = {
             scanning: ['AWAKENING', 'STIRRING', 'CALLING', 'REACHING', 'SUMMONING'],
@@ -117,109 +117,34 @@ const NextGenGachaEngine = {
         };
         
         const descriptors = phaseDescriptors[phase] || phaseDescriptors.charging;
+        const descriptorIndex = Math.floor(percentage / 15);
+        const energyLevel = descriptors[Math.min(descriptorIndex, descriptors.length - 1)];
         
-        // More dramatic descriptor selection based on percentage
-        let descriptorIndex;
-        if (percentage > 90) {
-            descriptorIndex = Math.min(descriptors.length - 1, 6);
-        } else if (percentage > 75) {
-            descriptorIndex = Math.min(descriptors.length - 1, 5);
-        } else if (percentage > 50) {
-            descriptorIndex = Math.min(descriptors.length - 1, 4);
-        } else if (percentage > 25) {
-            descriptorIndex = Math.min(descriptors.length - 1, 3);
-        } else {
-            descriptorIndex = Math.floor(percentage / 15);
-        }
-        
-        const energyLevel = descriptors[descriptorIndex];
-        
-        // CONSISTENT WIDTH - Always 20 squares with proper spacing
+        // CONSISTENT WIDTH - Always 20 squares
         const maxSlots = 20;
         const filledSlots = Math.floor((percentage / 100) * maxSlots);
-        const emptySlots = maxSlots - filledSlots;
         
-        // Map embed color to square color - EXACT matching
-        const colorMap = {
-            // Red family
-            '#FF0000': '🟥', '#E74C3C': '🟥', '#C0392B': '🟥',
-            
-            // Orange family  
-            '#FF6000': '🟧', '#E67E22': '🟧', '#D35400': '🟧', '#F39C12': '🟧',
-            
-            // Yellow family
-            '#FFCC00': '🟨', '#FFD700': '🟨', '#F1C40F': '🟨', '#F4D03F': '🟨',
-            
-            // Green family
-            '#00FF00': '🟩', '#2ECC71': '🟩', '#27AE60': '🟩', '#58D68D': '🟩',
-            
-            // Blue family
-            '#0080FF': '🟦', '#3498DB': '🟦', '#2980B9': '🟦', '#5DADE2': '🟦', '#0099FF': '🟦',
-            
-            // Purple family
-            '#8000FF': '🟪', '#9B59B6': '🟪', '#8E44AD': '🟪', '#BB8FCE': '🟪'
-        };
+        // Rainbow colors that cycle through
+        const colors = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪'];
         
-        // Get base color from embed with exact matching
-        let baseSquareColor = colorMap[currentEmbedColor];
-        
-        // If no exact match, find closest color family
-        if (!baseSquareColor) {
-            if (currentEmbedColor.startsWith('#FF') && currentEmbedColor.includes('00')) {
-                baseSquareColor = '🟥'; // Red family
-            } else if (currentEmbedColor.startsWith('#FF') && parseInt(currentEmbedColor.slice(1, 3), 16) > parseInt(currentEmbedColor.slice(3, 5), 16)) {
-                baseSquareColor = '🟧'; // Orange family
-            } else if (currentEmbedColor.includes('FF') && currentEmbedColor.includes('CC')) {
-                baseSquareColor = '🟨'; // Yellow family
-            } else if (currentEmbedColor.startsWith('#00') || currentEmbedColor.includes('2E')) {
-                baseSquareColor = '🟩'; // Green family
-            } else if (currentEmbedColor.includes('80') || currentEmbedColor.includes('34')) {
-                baseSquareColor = '🟦'; // Blue family
-            } else {
-                baseSquareColor = '🟪'; // Purple family
-            }
-        }
-        
-        // Rapid color switching - changes 2-3 times per square
-        const rapidColors = {
-            '🟥': ['🟥', '🟧', '🟨'], // Red variations
-            '🟧': ['🟧', '🟨', '🟥'], // Orange variations  
-            '🟨': ['🟨', '🟧', '🟩'], // Yellow variations
-            '🟩': ['🟩', '🟦', '🟨'], // Green variations
-            '🟦': ['🟦', '🟪', '🟩'], // Blue variations
-            '🟪': ['🟪', '🟥', '🟦']  // Purple variations
-        };
-        
-        const colorVariations = rapidColors[baseSquareColor] || ['🟦', '🟩', '🟨'];
-        
-        // Build progress bar with SAME spacing as final result
+        // Build progress bar with moving rainbow
         let progressBar = '';
         
-        // Filled squares with proper spacing
+        // Filled squares with rainbow that shifts every frame
         for (let i = 0; i < filledSlots; i++) {
-            // Rapid color switching - changes every few frames
-            const colorIndex = Math.floor(frame / 2) % colorVariations.length; // Changes every 2 frames
-            progressBar += colorVariations[colorIndex];
-            
-            // Add space after each square except the last one
-            if (i < filledSlots - 1) {
-                progressBar += ' ';
-            }
+            // Rainbow shifts: frame 0 starts with red, frame 1 starts with orange, etc.
+            const colorIndex = (i + frame) % colors.length;
+            progressBar += colors[colorIndex];
+            if (i < filledSlots - 1) progressBar += ' ';
         }
         
-        // Empty squares with proper spacing
+        // Empty squares
+        const emptySlots = maxSlots - filledSlots;
         if (emptySlots > 0) {
-            // Add space between filled and empty if there are filled squares
-            if (filledSlots > 0) {
-                progressBar += ' ';
-            }
-            
+            if (filledSlots > 0) progressBar += ' ';
             for (let i = 0; i < emptySlots; i++) {
                 progressBar += '⬜';
-                // Add space after each square except the last one
-                if (i < emptySlots - 1) {
-                    progressBar += ' ';
-                }
+                if (i < emptySlots - 1) progressBar += ' ';
             }
         }
         
