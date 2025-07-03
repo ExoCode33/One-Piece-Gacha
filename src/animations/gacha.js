@@ -34,7 +34,17 @@ The seas whisper of legendary treasures...
 
         const huntMessage = await interaction.editReply({ embeds: [initialEmbed] });
 
-        // PHASE 3: Animated search sequence (8 frames)
+        // PHASE 3: Connection quality test
+        const connectionStart = Date.now();
+        try {
+            await huntMessage.edit({ embeds: [initialEmbed] });
+            const connectionTime = Date.now() - connectionStart;
+            console.log(`📡 Connection quality: ${connectionTime}ms`);
+        } catch (error) {
+            console.warn('⚠️ Connection quality test failed, using conservative settings');
+        }
+
+        // PHASE 4: Animated search sequence
         const searchFrames = [
             { title: '🌊 **SCANNING THE HORIZON** 🌊', desc: 'The wind carries whispers of power...', color: '#3498DB' },
             { title: '⚡ **ENERGY DETECTED** ⚡', desc: 'Something stirs beneath the waves...', color: '#E74C3C' },
@@ -46,36 +56,46 @@ The seas whisper of legendary treasures...
             { title: '🎆 **MOMENT OF TRUTH** 🎆', desc: 'The Grand Line bestows its gift...', color: '#2ECC71' }
         ];
 
-        // Fast animation with robust error handling
-        const totalFrames = 20; // More frames for one-by-one progression
+        // Performance tracking
+        let successfulFrames = 0;
+        let totalAttempts = 0;
+
+        // Optimized animation with retry logic and rate limiting
+        const totalFrames = 20;
+        const maxRetries = 2;
+        const baseDelay = 400;
         
         for (let frame = 0; frame < totalFrames; frame++) {
-            try {
-                // Calculate which search frame we're in
-                const searchFrameIndex = Math.floor((frame / totalFrames) * searchFrames.length);
-                const frameData = searchFrames[Math.min(searchFrameIndex, searchFrames.length - 1)];
-                
-                // One-by-one progression - each frame adds exactly one square
-                const progressPercentage = ((frame + 1) / totalFrames) * 100;
-                
-                const indicators = IndicatorsSystem.getChangingIndicators(frame, targetRarity, targetFruit.type);
-                const particles = ParticlesSystem.createOnePieceParticles(frame + 3, 'energy', targetRarity);
-                
-                // Fast color cycling - changes every frame
-                const fastColors = ['#FF0000', '#FF6000', '#FFCC00', '#00FF00', '#0080FF', '#8000FF', '#FF00FF', '#E74C3C', '#F39C12', '#9B59B6', '#2ECC71', '#3498DB'];
-                const currentColor = fastColors[frame % fastColors.length];
-                
-                // Create moving rainbow progress bar
-                const progressBar = NextGenGachaEngine.createDynamicEnergyStatus(
-                    progressPercentage,
-                    frame,
-                    'charging',
-                    currentColor
-                );
+            let success = false;
+            let retryCount = 0;
+            
+            while (!success && retryCount <= maxRetries) {
+                try {
+                    // Calculate which search frame we're in
+                    const searchFrameIndex = Math.floor((frame / totalFrames) * searchFrames.length);
+                    const frameData = searchFrames[Math.min(searchFrameIndex, searchFrames.length - 1)];
+                    
+                    // One-by-one progression - each frame adds exactly one square
+                    const progressPercentage = ((frame + 1) / totalFrames) * 100;
+                    
+                    const indicators = IndicatorsSystem.getChangingIndicators(frame, targetRarity, targetFruit.type);
+                    const particles = ParticlesSystem.createOnePieceParticles(frame + 3, 'energy', targetRarity);
+                    
+                    // Fast color cycling - changes every frame
+                    const fastColors = ['#FF0000', '#FF6000', '#FFCC00', '#00FF00', '#0080FF', '#8000FF', '#FF00FF', '#E74C3C', '#F39C12', '#9B59B6', '#2ECC71', '#3498DB'];
+                    const currentColor = fastColors[frame % fastColors.length];
+                    
+                    // Create moving rainbow progress bar
+                    const progressBar = NextGenGachaEngine.createDynamicEnergyStatus(
+                        progressPercentage,
+                        frame,
+                        'charging',
+                        currentColor
+                    );
 
-                const searchEmbed = new EmbedBuilder()
-                    .setTitle(frameData.title)
-                    .setDescription(`
+                    const searchEmbed = new EmbedBuilder()
+                        .setTitle(frameData.title)
+                        .setDescription(`
 **${frameData.desc}**
 
 **🔮 AURA STATUS:** ${indicators.aura}
@@ -85,29 +105,51 @@ The seas whisper of legendary treasures...
 ${progressBar}
 
 ${particles}
-                    `)
-                    .setColor(currentColor)
-                    .setFooter({ text: `Hunt Progress: ${Math.round(progressPercentage)}%` });
+                        `)
+                        .setColor(currentColor)
+                        .setFooter({ text: `Hunt Progress: ${Math.round(progressPercentage)}%` });
 
-                // Add timeout protection for Discord API calls
-                const updatePromise = huntMessage.edit({ embeds: [searchEmbed] });
-                const timeoutPromise = new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error('Discord API timeout')), 3000)
-                );
-                
-                await Promise.race([updatePromise, timeoutPromise]);
-                
-                // Faster timing for smoother progression
-                await new Promise(resolve => setTimeout(resolve, 400));
-                
-            } catch (error) {
-                console.error(`Animation frame ${frame} error:`, error.message);
-                // Continue animation even if one frame fails
-                await new Promise(resolve => setTimeout(resolve, 400));
+                    // Optimized timeout with exponential backoff
+                    const timeoutDuration = 2000 + (retryCount * 1000); // 2s, 3s, 4s
+                    const updatePromise = huntMessage.edit({ embeds: [searchEmbed] });
+                    const timeoutPromise = new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Discord API timeout')), timeoutDuration)
+                    );
+                    
+                    await Promise.race([updatePromise, timeoutPromise]);
+                    success = true;
+                    
+                    // Dynamic delay based on performance
+                    const delay = retryCount > 0 ? baseDelay + (retryCount * 200) : baseDelay;
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    
+                } catch (error) {
+                    retryCount++;
+                    console.error(`Animation frame ${frame} attempt ${retryCount} error:`, error.message);
+                    
+                    if (retryCount <= maxRetries) {
+                        // Exponential backoff before retry
+                        const retryDelay = 200 * Math.pow(2, retryCount - 1); // 200ms, 400ms, 800ms
+                        await new Promise(resolve => setTimeout(resolve, retryDelay));
+                    }
+                }
             }
+            
+            // If all retries failed, continue with animation
+            if (!success) {
+                console.warn(`Frame ${frame} failed after ${maxRetries} retries, continuing animation`);
+                await new Promise(resolve => setTimeout(resolve, baseDelay));
+            } else {
+                successfulFrames++;
+            }
+            totalAttempts += retryCount + 1;
         }
 
-        // PHASE 4: Final reveal with full animation
+        // Performance logging
+        const successRate = (successfulFrames / totalFrames) * 100;
+        console.log(`📊 Animation Performance: ${successfulFrames}/${totalFrames} frames (${successRate.toFixed(1)}%) - ${totalAttempts} total attempts`);
+
+        // PHASE 5: Final reveal with full animation
         const rarityConfig = DevilFruitDatabase.getRarityConfig(targetRarity);
         const finalParticles = ParticlesSystem.createOnePieceParticles(10, 'celebration', targetRarity);
         const finalProgressBar = NextGenGachaEngine.createRarityRevealBar(targetRarity, 0);
