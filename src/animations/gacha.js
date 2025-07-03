@@ -433,18 +433,12 @@ ${ProfessionalGachaEngine.createEpicParticles(35, rarity)}
 
 ${rarityMessages[rarity]}
 
-╔══════════════════════════════════════════════╗
-║               🍈 DEVIL FRUIT DATA 🍈              ║
-╠══════════════════════════════════════════════╣
-║                                              ║
-║  **🍈 Name:** ${devilFruit.name.padEnd(25)}    ║
-║  **📋 Type:** ${devilFruit.type.padEnd(25)}    ║
-║  **👤 User:** ${(devilFruit.user || 'Unknown').padEnd(25)}    ║
-║  **⚡ Power:** ${devilFruit.power.substring(0,22).padEnd(25)} ║
-║  **💎 Class:** ${config.name.padEnd(25)}    ║
-║  **🌟 Level:** ${(devilFruit.powerLevel || 'Mysterious').toString().padEnd(25)} ║
-║                                              ║
-╚══════════════════════════════════════════════╝
+**🍈 Name:** ${devilFruit.name}
+**📋 Type:** ${devilFruit.type}
+**👤 User:** ${devilFruit.user || 'Unknown'}
+**⚡ Power:** ${devilFruit.power}
+**💎 Class:** ${config.name}
+**🌟 Level:** ${devilFruit.powerLevel || 'Mysterious'}
 
 *${devilFruit.description || 'A mysterious Devil Fruit harboring incredible potential, waiting to unlock its true power through your journey across the Grand Line...'}*
 
