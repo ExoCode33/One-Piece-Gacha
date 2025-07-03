@@ -53,36 +53,44 @@ const NextGenGachaEngine = {
         return this.hyperSpectrumColors[combinedIndex];
     },
 
-    // PROFESSIONAL PARTICLE SYSTEMS with controlled length
-    createCinematicParticles(intensity, type = 'energy', rarity = 'common') {
-        const particleSystems = {
+    // ONE PIECE THEMED PARTICLE SYSTEMS
+    createOnePieceParticles(intensity, type = 'energy', rarity = 'common') {
+        const onePieceParticleSystems = {
             energy: {
-                common: ['⚡', '✨', '💫'],
-                uncommon: ['⚡', '✨', '💫', '🔥'],
-                rare: ['⚡', '✨', '💫', '🔥', '⭐'],
-                legendary: ['⚡', '✨', '💫', '🔥', '⭐', '🌟', '💎'],
-                mythical: ['⚡', '✨', '💫', '🔥', '⭐', '🌟', '💎', '🔮'],
-                omnipotent: ['⚡', '✨', '💫', '🔥', '⭐', '🌟', '💎', '🔮', '🌌']
+                common: ['⚓', '🌊', '💨'],
+                uncommon: ['⚓', '🌊', '💨', '⚡'],
+                rare: ['⚓', '🌊', '💨', '⚡', '🔥'],
+                legendary: ['⚓', '🌊', '💨', '⚡', '🔥', '⭐', '💎'],
+                mythical: ['⚓', '🌊', '💨', '⚡', '🔥', '⭐', '💎', '👑'],
+                omnipotent: ['⚓', '🌊', '💨', '⚡', '🔥', '⭐', '💎', '👑', '🏴‍☠️']
             },
-            cosmic: {
-                common: ['🌌', '✨', '💫'],
-                uncommon: ['🌌', '✨', '💫', '⭐'],
-                rare: ['🌌', '✨', '💫', '⭐', '🌟'],
-                legendary: ['🌌', '✨', '💫', '⭐', '🌟', '💎'],
-                mythical: ['🌌', '✨', '💫', '⭐', '🌟', '💎', '🔮'],
-                omnipotent: ['🌌', '✨', '💫', '⭐', '🌟', '💎', '🔮', '💥', '🌠']
+            ocean: {
+                common: ['🌊', '💧', '🌀'],
+                uncommon: ['🌊', '💧', '🌀', '⚓'],
+                rare: ['🌊', '💧', '🌀', '⚓', '🏴‍☠️'],
+                legendary: ['🌊', '💧', '🌀', '⚓', '🏴‍☠️', '⭐'],
+                mythical: ['🌊', '💧', '🌀', '⚓', '🏴‍☠️', '⭐', '👑'],
+                omnipotent: ['🌊', '💧', '🌀', '⚓', '🏴‍☠️', '⭐', '👑', '💎', '🔥']
+            },
+            grandline: {
+                common: ['🏴‍☠️', '⚓'],
+                uncommon: ['🏴‍☠️', '⚓', '🌊'],
+                rare: ['🏴‍☠️', '⚓', '🌊', '💎'],
+                legendary: ['🏴‍☠️', '⚓', '🌊', '💎', '👑', '⭐'],
+                mythical: ['🏴‍☠️', '⚓', '🌊', '💎', '👑', '⭐', '🔥'],
+                omnipotent: ['🏴‍☠️', '⚓', '🌊', '💎', '👑', '⭐', '🔥', '⚡', '🌀']
             },
             celebration: {
-                common: ['🎉', '✨'],
-                uncommon: ['🎉', '✨', '🎊'],
-                rare: ['🎉', '✨', '🎊', '🌟'],
-                legendary: ['🎉', '✨', '🎊', '🌟', '💎', '🏆'],
-                mythical: ['🎉', '✨', '🎊', '🌟', '💎', '🏆', '👑'],
-                omnipotent: ['🎉', '✨', '🎊', '🌟', '💎', '🏆', '👑', '🌌', '💥']
+                common: ['🎉', '⚓'],
+                uncommon: ['🎉', '⚓', '🌊'],
+                rare: ['🎉', '⚓', '🌊', '🏴‍☠️'],
+                legendary: ['🎉', '⚓', '🌊', '🏴‍☠️', '💎', '👑'],
+                mythical: ['🎉', '⚓', '🌊', '🏴‍☠️', '💎', '👑', '⭐'],
+                omnipotent: ['🎉', '⚓', '🌊', '🏴‍☠️', '💎', '👑', '⭐', '🔥', '⚡']
             }
         };
         
-        const particles = particleSystems[type]?.[rarity] || particleSystems.energy.common;
+        const particles = onePieceParticleSystems[type]?.[rarity] || onePieceParticleSystems.energy.common;
         
         // CONTROLLED LENGTH - max 15 emojis to prevent line wrapping
         const maxCount = 15;
@@ -90,7 +98,7 @@ const NextGenGachaEngine = {
         const baseCount = Math.min(intensity + 6, maxCount);
         const count = Math.floor(baseCount * (rarityMultipliers[rarity] || 0.6));
         
-        // Create controlled particle pattern
+        // Create controlled One Piece particle pattern
         let particleString = '';
         for (let i = 0; i < Math.min(count, maxCount); i++) {
             particleString += particles[i % particles.length];
@@ -243,7 +251,7 @@ const NextGenGachaEngine = {
 function createMysticalInitialization(frame, user) {
     const percentage = Math.floor((frame / 7) * 15); // 0-15%
     const energyStatus = NextGenGachaEngine.createDynamicEnergyStatus(percentage, frame, 'scanning');
-    const particles = NextGenGachaEngine.createCinematicParticles(frame + 4, 'energy', 'common');
+    const particles = NextGenGachaEngine.createOnePieceParticles(frame + 4, 'ocean', 'common');
     
     const mysticalMessages = [
         "🔍 Initiating mystical scan of the Grand Line...",
@@ -276,7 +284,7 @@ ${energyStatus}
 function createEnergyAmplification(frame, user) {
     const percentage = 15 + Math.floor((frame / 9) * 30); // 15-45%
     const energyStatus = NextGenGachaEngine.createDynamicEnergyStatus(percentage, frame, 'charging');
-    const particles = NextGenGachaEngine.createCinematicParticles(frame + 10, 'energy', 'uncommon');
+    const particles = NextGenGachaEngine.createOnePieceParticles(frame + 10, 'energy', 'uncommon');
     
     const amplificationMessages = [
         "💥 MASSIVE ENERGY SURGE ERUPTING!",
@@ -393,7 +401,7 @@ ${fakeOut.emoji} **Classification:** ${fakeOut.rarity.toUpperCase()}
 function createQuantumMaterialization(frame, user) {
     const percentage = 70 + Math.floor((frame / 7) * 25); // 70-95%
     const energyStatus = NextGenGachaEngine.createDynamicEnergyStatus(percentage, frame, 'materializing');
-    const particles = NextGenGachaEngine.createCinematicParticles(frame + 22, 'cosmic', 'legendary');
+    const particles = NextGenGachaEngine.createOnePieceParticles(frame + 22, 'grandline', 'legendary');
     
     const materializationMessages = [
         "✨ Quantum materialization sequence initiating...",
@@ -427,7 +435,7 @@ ${energyStatus}
 // PHASE 5: Ultimate Revelation (10 frames, 2.5 seconds)
 function createUltimateRevelation(frame, user) {
     const percentage = 95 + Math.floor((frame / 9) * 5); // 95-100%
-    const particles = NextGenGachaEngine.createCinematicParticles(30, 'cosmic', 'omnipotent');
+    const particles = NextGenGachaEngine.createOnePieceParticles(15, 'grandline', 'omnipotent');
     
     const revelationMessages = [
         "🎭 The Grand Line reveals its ultimate secret...",
@@ -460,12 +468,27 @@ ${energyComplete}
 👑 **PREPARE FOR THE REVEAL!** 👑
         `)
         .setFooter({ text: `🎭 Ultimate Revelation | Status: TRANSCENDENT!` });
+} SEQUENCE** 🎭')
+        .setDescription(`
+${particles}
+
+${energyComplete}
+
+*${message}*
+
+🎊 **MATERIALIZATION COMPLETE!** 🎊
+👑 **PREPARE FOR THE REVEAL!** 👑
+        `)
+        .setFooter({ text: `🎭 Ultimate Revelation | Status: TRANSCENDENT!` });
 }
 
-// PHASE 6: Slow Typewriter Revelation (10 frames, 5 seconds)
+// PHASE 6: Slow Typewriter Revelation (10 frames, 5 seconds) - COLORS FROZEN
 function createSlowTypewriterReveal(frame, devilFruit, rarity, user) {
     const config = DevilFruitDatabase.getRarityConfig(rarity);
-    const particles = NextGenGachaEngine.createCinematicParticles(20, 'celebration', rarity);
+    const particles = NextGenGachaEngine.createOnePieceParticles(12, 'celebration', rarity);
+    
+    // FREEZE COLOR - use the rarity's specific color throughout reveal
+    const frozenColor = config.color;
     
     // Typewriter effect - slowly reveal information
     const revealStages = [
@@ -482,10 +505,9 @@ function createSlowTypewriterReveal(frame, devilFruit, rarity, user) {
     ];
     
     const currentReveal = revealStages[frame] || revealStages[revealStages.length - 1];
-    const color = NextGenGachaEngine.getHyperSpectrumColor(frame * 15 + 120, 7, user?.id?.slice(-2) || 0);
     
     return new EmbedBuilder()
-        .setColor(color)
+        .setColor(frozenColor) // FROZEN COLOR - no more cycling
         .setTitle(`${config.emoji} **DEVIL FRUIT REVELATION** ${config.emoji}`)
         .setDescription(`
 ${particles}
@@ -535,7 +557,7 @@ function createEpicProfessionalFinale(devilFruit, rarity, user) {
             .setColor(config.color)
             .setTitle(`${config.emoji} **ULTIMATE DEVIL FRUIT MASTERY ACHIEVED!** ${config.emoji}`)
             .setDescription(`
-${NextGenGachaEngine.createCinematicParticles(20, 'celebration', rarity)}
+${NextGenGachaEngine.createOnePieceParticles(12, 'celebration', rarity)}
 
 ${ultimateMessages[rarity]}${specialMessage}
 
