@@ -107,7 +107,7 @@ const NextGenGachaEngine = {
         return this.hyperSpectrumColors[combinedIndex];
     },
 
-    // PROGRESSION BAR SYSTEM - Enhanced with rapid color blinking and clean spacing
+    // PROGRESSION BAR SYSTEM - ONLY basic colored squares with chaotic random colors
     createDynamicEnergyStatus(percentage, frame, phase = 'charging', currentEmbedColor = '#0099FF') {
         const phaseDescriptors = {
             scanning: ['AWAKENING', 'STIRRING', 'CALLING', 'REACHING', 'SUMMONING'],
@@ -121,7 +121,7 @@ const NextGenGachaEngine = {
         // More dramatic descriptor selection based on percentage
         let descriptorIndex;
         if (percentage > 90) {
-            descriptorIndex = Math.min(descriptors.length - 1, 6); // Highest intensity
+            descriptorIndex = Math.min(descriptors.length - 1, 6);
         } else if (percentage > 75) {
             descriptorIndex = Math.min(descriptors.length - 1, 5);
         } else if (percentage > 50) {
@@ -139,67 +139,31 @@ const NextGenGachaEngine = {
         const filledSlots = Math.floor((percentage / 100) * maxSlots);
         const emptySlots = maxSlots - filledSlots;
         
-        // Rapid color blinking system - different colors every frame
-        const rapidBlinkColors = [
-            '🟥', '🟧', '🟨', '🟩', '🟦', '🟪', 
-            '🔴', '🟠', '🟡', '🟢', '🔵', '🟣'
-        ];
+        // ONLY basic colored squares
+        const basicColors = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪'];
         
-        // Enhanced color mapping with more dramatic colors
-        const colorMap = {
-            '#FF0000': '🟥', '#FF1212': '🟥', '#FF2424': '🟥', '#FF3636': '🟥', '#FF4848': '🟥', '#E74C3C': '🟥',
-            '#FF6000': '🟧', '#FF7212': '🟧', '#FF8424': '🟧', '#FF9636': '🟧', '#FFA848': '🟧', '#F39C12': '🟧', '#E67E22': '🟧',
-            '#FFCC00': '🟨', '#FFD700': '🟨', '#FFDE12': '🟨', '#FFE418': '🟨', '#FFEA1E': '🟨', '#FFF024': '🟨', '#F1C40F': '🟨',
-            '#00FF00': '🟩', '#06FF06': '🟩', '#12FF12': '🟩', '#18FF18': '🟩', '#2ECC71': '🟩', '#24FF24': '🟩',
-            '#0080FF': '🟦', '#0686FF': '🟦', '#0C8CFF': '🟦', '#1292FF': '🟦', '#3498DB': '🟦', '#24A4FF': '🟦', '#0099FF': '🟦',
-            '#00FFFF': '🟦', '#06F9FF': '🟦', '#0CF3FF': '🟦', '#12EDFF': '🟦',
-            '#8000FF': '🟪', '#8606FF': '🟪', '#9212FF': '🟪', '#9B59B6': '🟪', '#B030FF': '🟪', '#C242FF': '🟪', '#8E44AD': '🟪',
-            '#FF00FF': '🟪', '#FF06F9': '🟪', '#FF0080': '🟪', '#FF0686': '🟪'
+        // Chaotic random color selection
+        const getRandomColor = (seed1, seed2, seed3) => {
+            const chaos = (seed1 * 7 + seed2 * 13 + seed3 * 17 + Date.now()) % 1000;
+            const colorIndex = (chaos * 3 + seed1 * 5 + seed2 * 11) % basicColors.length;
+            return basicColors[colorIndex];
         };
         
-        let squareColor = colorMap[currentEmbedColor] || '🟦';
-        
-        // Rapid blinking for high percentages - different color every frame
-        if (percentage > 70) {
-            squareColor = rapidBlinkColors[frame % rapidBlinkColors.length];
-        }
-        
-        // Build progress bar with clean spacing
+        // Build progress bar with ONLY basic colored squares
         let progressBar = '';
         
-        // Filled squares
+        // Filled squares - completely random basic colors
         for (let i = 0; i < filledSlots; i++) {
-            if (percentage > 85) {
-                // Each square gets different color for rapid blinking effect
-                const colorIndex = (frame + i) % rapidBlinkColors.length;
-                progressBar += rapidBlinkColors[colorIndex];
-            } else {
-                progressBar += squareColor;
-            }
+            const randomColor = getRandomColor(frame, i, percentage);
+            progressBar += randomColor;
         }
         
-        // Empty squares (no spaces between filled and empty)
+        // Empty squares - ONLY white squares
         for (let i = 0; i < emptySlots; i++) {
-            if (percentage > 80 && i === 0) {
-                // First empty square shows building energy
-                const energySquares = ['⚡', '🌟', '💫', '✨'];
-                progressBar += energySquares[frame % energySquares.length];
-            } else {
-                progressBar += '⬜';
-            }
+            progressBar += '⬜';
         }
         
-        // Add intensity indicator
-        let intensityIndicator = '';
-        if (percentage > 95) {
-            intensityIndicator = '🔥🔥🔥 **CRITICAL** 🔥🔥🔥';
-        } else if (percentage > 85) {
-            intensityIndicator = '⚡⚡ **INTENSE** ⚡⚡';
-        } else if (percentage > 70) {
-            intensityIndicator = '🌟 **BUILDING** 🌟';
-        }
-        
-        return `**${energyLevel}**\n${progressBar}\n${intensityIndicator}`;
+        return `**${energyLevel}**\n${progressBar}`;
     },
 
     // Create rarity reveal bar for final phase
