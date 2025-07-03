@@ -2,7 +2,7 @@ const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, Butt
 const { createUltimateCinematicExperience } = require('../animations/gacha');
 const { DevilFruitDatabase } = require('../data/devilfruit');
 
-// User session management (simple in-memory for now)
+// User cooldowns and statistics tracking
 const userCooldowns = new Map();
 const userStats = new Map();
 
@@ -15,17 +15,20 @@ module.exports = {
                 .setDescription('Type of hunt to perform')
                 .setRequired(false)
                 .addChoices(
-                    { name: '🍈 Single Hunt', value: 'single' },
-                    { name: '🌊 Multi Hunt (10x)', value: 'multi' },
-                    { name: '🌟 Legendary Hunt', value: 'premium' }
+                    { name: 'Single Hunt', value: 'single' },
+                    { name: 'Multi Hunt (10x)', value: 'multi' },
+                    { name: 'Premium Hunt', value: 'premium' }
                 )),
-    
+
     async execute(interaction) {
-        const userId = interaction.user.id;
-        const pullType = interaction.options.getString('type') || 'single';
-        
         try {
-            // Initialize user stats if needed
+            const huntType = interaction.options.getString('type') || 'single';
+            const userId = interaction.user.id;
+            const username = interaction.user.username;
+
+            console.log(`🎮 ${username} used /pull with type: ${huntType}`);
+
+            // Initialize user stats if not exists
             if (!userStats.has(userId)) {
                 userStats.set(userId, {
                     totalHunts: 0,
@@ -38,80 +41,69 @@ module.exports = {
                         mythical: 0,
                         omnipotent: 0
                     },
-                    typeCount: {
-                        'Paramecia': 0,
-                        'Logia': 0,
-                        'Zoan': 0,
-                        'Ancient Zoan': 0,
-                        'Mythical Zoan': 0,
-                        'Special Paramecia': 0
-                    },
+                    typeCount: {},
                     lastHunt: null,
-                    joinedDate: new Date().toISOString()
+                    favoriteRarity: 'common'
                 });
             }
 
-            // Check cooldown
-            if (userCooldowns.has(userId)) {
-                const cooldownEnd = userCooldowns.get(userId);
-                const now = Date.now();
-                
-                if (now < cooldownEnd) {
-                    const timeLeft = Math.ceil((cooldownEnd - now) / 1000);
-                    
-                    const userStatData = userStats.get(userId);
-                    const rarityText = Object.entries(userStatData.rarityCount || {})
-                        .map(([rarity, count]) => {
-                            const config = DevilFruitDatabase.getRarityConfig(rarity);
-                            return `${config.emoji} ${config.name}: ${count}`;
-                        }).join('\n');
-                    
-                    const cooldownEmbed = new EmbedBuilder()
-                        .setTitle('⏰ The Devil Fruit Tree Is Resting...')
-                        .setDescription(`
+            // Check cooldowns
+            const now = Date.now();
+            const cooldownTimes = {
+                single: 5000,    // 5 seconds
+                multi: 30000,    // 30 seconds
+                premium: 60000   // 1 minute
+            };
+
+            const cooldownTime = cooldownTimes[huntType];
+            const userCooldown = userCooldowns.get(userId);
+
+            if (userCooldown && (now - userCooldown) < cooldownTime) {
+                const timeLeft = Math.ceil((cooldownTime - (now - userCooldown)) / 1000);
+                const cooldownEmbed = new EmbedBuilder()
+                    .setTitle('⏰ The Devil Fruit Tree Is Resting...')
+                    .setDescription(`
 🍈 The Grand Line needs time to grow new Devil Fruits...
 
-⏱️ Time Remaining: ${timeLeft} seconds
+**⏱️ Time Remaining:** ${timeLeft} seconds
+**🌊 Hunt Type:** ${huntType.charAt(0).toUpperCase() + huntType.slice(1)}
 
-🔮 Use this moment to prepare your spirit for the next legendary hunt!
+*The ocean's mysteries require patience, Captain!*
+                    `)
+                    .setColor('#FF6347')
+                    .setFooter({ text: '🏴‍☠️ Please wait before hunting again!' });
 
-📊 Your Devil Fruit Statistics:
-• Total Hunts: ${userStatData.totalHunts}
-• Fruits Found: ${userStatData.fruitsObtained.size}
-• Last Hunt: ${userStatData.lastHunt || 'Never'}
-
-🍈 Rarity Collection:
-${rarityText || 'No fruits collected yet!'}
-                        `)
-                        .setColor('#3498DB')
-                        .setFooter({ text: 'Patience brings the greatest Devil Fruits from the sea!' });
-                    
-                    return interaction.reply({ embeds: [cooldownEmbed], ephemeral: true });
-                }
+                return await interaction.reply({ embeds: [cooldownEmbed], ephemeral: true });
             }
 
-            // Set cooldown based on hunt type
-            const cooldownTimes = {
-                single: 5000,    // 5 seconds for single hunt
-                multi: 30000,    // 30 seconds for multi hunt  
-                premium: 60000   // 1 minute for legendary hunt
-            };
-            
-            userCooldowns.set(userId, Date.now() + cooldownTimes[pullType]);
+            // Set cooldown
+            userCooldowns.set(userId, now);
 
-            // CRITICAL: Defer reply immediately to prevent timeout
-            await interaction.deferReply();
-            
-            console.log(`🎮 ${interaction.user.username} initiated ${pullType} Devil Fruit hunt`);
-            
-            if (pullType === 'multi') {
-                await handleMultiHunt(interaction, userStats.get(userId));
-            } else if (pullType === 'premium') {
-                await handleLegendaryHunt(interaction, userStats.get(userId));
-            } else {
-                await handleSingleHunt(interaction, userStats.get(userId));
+            // Handle different hunt types
+            switch (huntType) {
+                case 'single':
+                    console.log(`🎮 ${username} initiated single Devil Fruit hunt`);
+                    await interaction.deferReply();
+                    await handleSingleHunt(interaction, userStats.get(userId));
+                    break;
+
+                case 'multi':
+                    console.log(`🎮 ${username} initiated multi Devil Fruit hunt`);
+                    await interaction.deferReply();
+                    await handleMultiHunt(interaction, userStats.get(userId));
+                    break;
+
+                case 'premium':
+                    console.log(`🎮 ${username} initiated premium Devil Fruit hunt`);
+                    await interaction.deferReply();
+                    await handlePremiumHunt(interaction, userStats.get(userId));
+                    break;
+
+                default:
+                    await interaction.deferReply();
+                    await handleSingleHunt(interaction, userStats.get(userId));
             }
-            
+
         } catch (error) {
             console.error('🚨 Pull Command Error:', error);
             
@@ -120,39 +112,47 @@ ${rarityText || 'No fruits collected yet!'}
                 .setDescription(`
 The Devil Fruit tree's power was too chaotic to harvest safely!
 
-Error Code: ${error.message}
+**Error:** System malfunction detected
+**🍈 Status:** Hunt temporarily unavailable
 
-🍈 The Grand Line's mystical energy sometimes overwhelms even the strongest hunters...
-
-🏴‍☠️ Please try again, brave treasure hunter! The adventure never truly ends!
+*Please try again in a moment, brave Captain!*
                 `)
-                .setColor('#E74C3C')
-                .setFooter({ text: 'Even the Pirate King faced setbacks on his Devil Fruit journey!' });
-            
-            try {
-                if (interaction.deferred && !interaction.replied) {
-                    await interaction.editReply({ embeds: [errorEmbed] });
-                } else if (!interaction.replied) {
-                    await interaction.reply({ embeds: [errorEmbed], ephemeral: true });
-                }
-            } catch (replyError) {
-                console.error('Failed to send error message:', replyError);
+                .setColor('#FF0000')
+                .setFooter({ text: 'Error Code: CHAOTIC_ENERGY | Contact support if this persists' });
+
+            if (interaction.deferred) {
+                await interaction.editReply({ embeds: [errorEmbed] });
+            } else {
+                await interaction.reply({ embeds: [errorEmbed], ephemeral: true });
             }
         }
-    },
+    }
 };
 
 // Handle single hunt with ultimate cinematic experience
-async function handleSingleHunt(interaction, userStats) {
+async function handleSingleHunt(interaction, userStat) {
     try {
         // Update user stats
-        userStats.totalHunts++;
-        userStats.lastHunt = new Date().toLocaleString();
+        userStat.totalHunts++;
+        userStat.lastHunt = new Date().toLocaleString();
         
         // Run the ultimate cinematic animation
-        await createUltimateCinematicExperience(interaction);
+        const result = await createUltimateCinematicExperience(interaction);
         
-        console.log(`✅ Single hunt completed for ${interaction.user.username}`);
+        if (result) {
+            // Update statistics
+            const { devilFruit, rarity } = result;
+            userStat.rarityCount[rarity]++;
+            userStat.fruitsObtained.add(devilFruit.name);
+            
+            // Track fruit types
+            if (!userStat.typeCount[devilFruit.type]) {
+                userStat.typeCount[devilFruit.type] = 0;
+            }
+            userStat.typeCount[devilFruit.type]++;
+            
+            console.log(`✅ Single hunt completed for ${interaction.user.username}`);
+        }
         
     } catch (error) {
         console.error('Single hunt error:', error);
@@ -160,99 +160,58 @@ async function handleSingleHunt(interaction, userStats) {
     }
 }
 
-// Handle multi hunt (10 Devil Fruits at once)
-async function handleMultiHunt(interaction, userStats) {
+// Handle multi hunt (10x pulls)
+async function handleMultiHunt(interaction, userStat) {
     try {
-        console.log(`🎲 Multi-hunt initiated for ${interaction.user.username}`);
+        userStat.totalHunts += 10;
+        userStat.lastHunt = new Date().toLocaleString();
         
-        // Generate 10 hunts
         const results = [];
+        const rarityCount = { common: 0, uncommon: 0, rare: 0, legendary: 0, mythical: 0, omnipotent: 0 };
+        
+        // Perform 10 pulls
         for (let i = 0; i < 10; i++) {
             const rarity = DevilFruitDatabase.calculateDropRarity();
             const devilFruit = DevilFruitDatabase.getRandomDevilFruit(rarity);
-            results.push({ devilFruit, rarity });
             
-            // Update user stats
-            userStats.fruitsObtained.add(devilFruit.id);
-            userStats.rarityCount[rarity]++;
-            userStats.typeCount[devilFruit.type]++;
+            results.push({ devilFruit, rarity });
+            rarityCount[rarity]++;
+            userStat.rarityCount[rarity]++;
+            userStat.fruitsObtained.add(devilFruit.name);
+            
+            if (!userStat.typeCount[devilFruit.type]) {
+                userStat.typeCount[devilFruit.type] = 0;
+            }
+            userStat.typeCount[devilFruit.type]++;
         }
         
-        userStats.totalHunts += 10;
-        userStats.lastHunt = new Date().toLocaleString();
-        
-        // Analyze results
-        const rarityCount = {};
-        const typeCount = {};
-        let bestFind = null;
-        let totalPowerLevel = 0;
-        
-        results.forEach(result => {
-            const rarity = result.rarity;
-            const type = result.devilFruit.type;
-            rarityCount[rarity] = (rarityCount[rarity] || 0) + 1;
-            typeCount[type] = (typeCount[type] || 0) + 1;
-            totalPowerLevel += result.devilFruit.powerLevel;
-            
-            if (!bestFind || getRarityValue(rarity) > getRarityValue(bestFind.rarity)) {
-                bestFind = result;
-            }
-        });
-        
-        const averagePower = Math.floor(totalPowerLevel / 10);
-        
-        // Create summary display
-        const rarityDisplay = Object.entries(rarityCount)
-            .map(([rarity, count]) => {
-                const config = DevilFruitDatabase.getRarityConfig(rarity);
-                return `${config.emoji} ${config.name}: ${count}`;
-            })
-            .join('\n');
-            
-        const typeDisplay = Object.entries(typeCount)
-            .map(([type, count]) => `📋 ${type}: ${count}`)
-            .join('\n');
-        
-        const bestConfig = DevilFruitDatabase.getRarityConfig(bestFind.rarity);
-        
-        const multiEmbed = new EmbedBuilder()
-            .setTitle('🍈 LEGENDARY DEVIL FRUIT HARVEST! 🍈')
+        // Create summary embed
+        const summaryEmbed = new EmbedBuilder()
+            .setTitle('🏴‍☠️ **MULTI HUNT RESULTS** 🏴‍☠️')
             .setDescription(`
-🌟 ${interaction.user.username}'s Epic Multi-Hunt Results! 🌟
+⚓🌊⚓🌊⚓🌊⚓🌊⚓🌊⚓
 
-BEST FIND: ${bestFind.devilFruit.name}
-Rarity: ${bestConfig.name}
-Type: ${bestFind.devilFruit.type}
-Power: ${bestFind.devilFruit.powerLevel.toLocaleString()}
+**🍈 Total Devil Fruits:** 10
+**⭐ Best Find:** ${getBestRarity(results)}
 
-📊 Harvest Summary:
-${rarityDisplay}
+**📊 Rarity Breakdown:**
+${Object.entries(rarityCount)
+    .filter(([_, count]) => count > 0)
+    .map(([rarity, count]) => {
+        const config = DevilFruitDatabase.getRarityConfig(rarity);
+        return `${config.emoji} **${config.name}:** ${count}`;
+    }).join('\n')}
 
-🍈 Type Breakdown:
-${typeDisplay}
-
-⚡ Total Power Level: ${totalPowerLevel.toLocaleString()}
-📈 Average Power: ${averagePower.toLocaleString()}
-🎯 Unique Fruits: ${new Set(results.map(r => r.devilFruit.id)).size}/10
-
-${bestConfig.stars.repeat(5)}
-
-Your Devil Fruit collection grows stronger with these legendary additions!
+**🎊 Notable Discoveries:**
+${results.slice(0, 3).map(r => `🍈 ${r.devilFruit.name} (${r.rarity})`).join('\n')}
             `)
-            .setColor(bestConfig.color)
-            .setFooter({ 
-                text: `🍈 10 new Devil Fruits discovered! | Total hunts: ${userStats.totalHunts}`,
-                iconURL: interaction.user.displayAvatarURL()
-            })
-            .setTimestamp();
+            .setColor('#FFD700')
+            .setFooter({ text: '🏴‍☠️ Multi Hunt Complete | Great haul, Captain!' });
         
         const components = createMultiHuntComponents();
-        await interaction.editReply({ 
-            embeds: [multiEmbed], 
-            components: components 
-        });
+        await interaction.editReply({ embeds: [summaryEmbed], components });
         
-        console.log(`✅ Multi-hunt completed for ${interaction.user.username}: Best = ${bestFind.devilFruit.name} (${bestFind.rarity})`);
+        console.log(`✅ Multi hunt completed for ${interaction.user.username}`);
         
     } catch (error) {
         console.error('Multi hunt error:', error);
@@ -260,190 +219,66 @@ Your Devil Fruit collection grows stronger with these legendary additions!
     }
 }
 
-// Handle legendary hunt (enhanced rates)
-async function handleLegendaryHunt(interaction, userStats) {
+// Handle premium hunt (enhanced rates)
+async function handlePremiumHunt(interaction, userStat) {
     try {
-        const typeText = Object.entries(userStats.typeCount || {})
-            .map(([type, count]) => `📋 ${type}: ${count}`)
-            .join('\n');
-            
-        const legendaryEmbed = new EmbedBuilder()
-            .setTitle('🌟 Legendary Devil Fruit Hunt 🌟')
-            .setDescription(`
-🍈 Legendary hunts are being prepared in the depths of the Grand Line!
-
-🔮 Coming Soon - Legendary Features:
-• 🎯 Guaranteed Rare or Higher
-• 🌌 Exclusive Legendary Devil Fruits
-• ✨ Enhanced Mystical Animations
-• 🎁 Bonus Awakening Insights
-• 🏆 Legendary-Only Achievements
-
-🏴‍☠️ The greatest Devil Fruits require the most legendary preparation!
-
-Your Current Collection:
-• Total Hunts: ${userStats.totalHunts}
-• Collection Size: ${userStats.fruitsObtained.size}
-• Legendary+ Count: ${userStats.rarityCount.legendary + userStats.rarityCount.mythical + userStats.rarityCount.omnipotent}
-
-🍈 Your Devil Fruit Types:
-${typeText || 'No Devil Fruits collected yet!'}
-            `)
-            .setColor('#9B59B6')
-            .setFooter({ text: 'The most legendary Devil Fruits await in the mythical realm...' });
+        userStat.totalHunts++;
+        userStat.lastHunt = new Date().toLocaleString();
         
-        await interaction.editReply({ embeds: [legendaryEmbed] });
+        // Enhanced rates for premium hunt
+        const premiumRarity = DevilFruitDatabase.calculateDropRarity(true); // Assume enhanced rates
+        const devilFruit = DevilFruitDatabase.getRandomDevilFruit(premiumRarity);
         
-        console.log(`ℹ️ Legendary hunt preview shown to ${interaction.user.username}`);
+        userStat.rarityCount[premiumRarity]++;
+        userStat.fruitsObtained.add(devilFruit.name);
+        
+        if (!userStat.typeCount[devilFruit.type]) {
+            userStat.typeCount[devilFruit.type] = 0;
+        }
+        userStat.typeCount[devilFruit.type]++;
+        
+        // Run enhanced animation for premium hunt
+        await createUltimateCinematicExperience(interaction);
+        
+        console.log(`✅ Premium hunt completed for ${interaction.user.username}`);
         
     } catch (error) {
-        console.error('Legendary hunt error:', error);
+        console.error('Premium hunt error:', error);
         throw error;
     }
 }
 
 // Helper functions
+function getBestRarity(results) {
+    const rarityOrder = ['common', 'uncommon', 'rare', 'legendary', 'mythical', 'omnipotent'];
+    let bestRarity = 'common';
+    
+    for (const result of results) {
+        if (rarityOrder.indexOf(result.rarity) > rarityOrder.indexOf(bestRarity)) {
+            bestRarity = result.rarity;
+        }
+    }
+    
+    const config = DevilFruitDatabase.getRarityConfig(bestRarity);
+    return `${config.emoji} ${config.name}`;
+}
+
 function createMultiHuntComponents() {
     return [
         new ActionRowBuilder()
             .addComponents(
                 new ButtonBuilder()
                     .setCustomId('view_all_hunts')
-                    .setLabel('📋 Detailed Results')
-                    .setStyle(ButtonStyle.Secondary)
-                    .setEmoji('📊'),
+                    .setLabel('📋 View All Results')
+                    .setStyle(ButtonStyle.Secondary),
                 new ButtonBuilder()
-                    .setCustomId('pull_again')
-                    .setLabel('🔄 Hunt Again')
-                    .setStyle(ButtonStyle.Primary)
-                    .setEmoji('🍈'),
+                    .setCustomId('hunt_again')
+                    .setLabel('🍈 Hunt Again!')
+                    .setStyle(ButtonStyle.Primary),
                 new ButtonBuilder()
                     .setCustomId('view_collection')
                     .setLabel('📚 My Collection')
-                    .setStyle(ButtonStyle.Success)
-                    .setEmoji('🍈')
+                    .setStyle(ButtonStyle.Secondary)
             )
     ];
 }
-
-function getRarityValue(rarity) {
-    const values = {
-        common: 1,
-        uncommon: 2,
-        rare: 3,
-        legendary: 4,
-        mythical: 5,
-        omnipotent: 6
-    };
-    return values[rarity] || 0;
-}
-
-// Enhanced button interaction handler
-async function handleButtonInteractions(interaction) {
-    if (!interaction.isButton()) return;
-    
-    const userId = interaction.user.id;
-    const userStat = userStats.get(userId);
-    
-    try {
-        switch (interaction.customId) {
-            case 'pull_again':
-                // Check cooldown
-                if (userCooldowns.has(userId)) {
-                    const cooldownEnd = userCooldowns.get(userId);
-                    if (Date.now() < cooldownEnd) {
-                        const timeLeft = Math.ceil((cooldownEnd - Date.now()) / 1000);
-                        await interaction.reply({ 
-                            content: `⏰ The cosmic forces need ${timeLeft} more seconds to recharge!`, 
-                            ephemeral: true 
-                        });
-                        return;
-                    }
-                }
-                
-                // Set new cooldown and run single hunt
-                userCooldowns.set(userId, Date.now() + 5000);
-                await interaction.deferReply();
-                await handleSingleHunt(interaction, userStat || {
-                    totalHunts: 0,
-                    fruitsObtained: new Set(),
-                    rarityCount: { common: 0, uncommon: 0, rare: 0, legendary: 0, mythical: 0, omnipotent: 0 },
-                    typeCount: { 'Paramecia': 0, 'Logia': 0, 'Zoan': 0, 'Ancient Zoan': 0, 'Mythical Zoan': 0, 'Special Paramecia': 0 },
-                    lastHunt: null
-                });
-                break;
-                
-            case 'view_collection':
-            case 'view_crew':
-                const rarityText = userStat ? Object.entries(userStat.rarityCount)
-                    .map(([rarity, count]) => {
-                        const config = DevilFruitDatabase.getRarityConfig(rarity);
-                        return `${config.emoji} ${config.name}: ${count}`;
-                    }).join('\n') : 'No hunts yet!';
-                    
-                const typeText = userStat ? Object.entries(userStat.typeCount || {})
-                    .map(([type, count]) => `📋 ${type}: ${count}`)
-                    .join('\n') : 'No Devil Fruits yet!';
-                
-                const collectionEmbed = new EmbedBuilder()
-                    .setTitle('📚 Your Legendary Devil Fruit Collection')
-                    .setDescription(`
-🍈 Captain ${interaction.user.username}'s Treasure Vault
-
-📊 Collection Statistics:
-• Total Hunts: ${userStat?.totalHunts || 0}
-• Unique Fruits: ${userStat?.fruitsObtained?.size || 0}
-• Collection Rate: ${userStat ? Math.floor((userStat.fruitsObtained.size / DevilFruitDatabase.getDevilFruitCount()) * 100) : 0}%
-
-🌟 Rarity Breakdown:
-${rarityText}
-
-🍈 Type Collection:
-${typeText}
-
-⚡ Total Power Level: ${userStat ? 
-    Object.entries(userStat.rarityCount)
-        .reduce((total, [rarity, count]) => {
-            const config = DevilFruitDatabase.getRarityConfig(rarity);
-            return total + (config.baseValue * count);
-        }, 0).toLocaleString() : 0}
-
-🚀 Your Devil Fruit collection system is evolving! Soon you'll see detailed fruit cards and awakening management!
-                    `)
-                    .setColor('#3498DB')
-                    .setFooter({ text: 'Every great pirate needs legendary Devil Fruits!' });
-                
-                await interaction.reply({ embeds: [collectionEmbed], ephemeral: true });
-                break;
-                
-            case 'fruit_details':
-            case 'character_details':
-                await interaction.reply({ 
-                    content: '📊 Detailed Devil Fruit analysis system coming soon! This will show complete awakening info, power breakdowns, and type advantages!', 
-                    ephemeral: true 
-                });
-                break;
-                
-            case 'view_all_hunts':
-            case 'view_all_pulls':
-                await interaction.reply({ 
-                    content: '📋 Detailed hunt history and Devil Fruit analytics dashboard coming soon!', 
-                    ephemeral: true 
-                });
-                break;
-        }
-    } catch (error) {
-        console.error('Button interaction error:', error);
-        try {
-            await interaction.reply({ 
-                content: '❌ Something went wrong with that action! The Devil Fruit tree is unstable!', 
-                ephemeral: true 
-            });
-        } catch (replyError) {
-            console.error('Failed to send button error message:', replyError);
-        }
-    }
-}
-
-// Export button handler
-module.exports.handleButtonInteractions = handleButtonInteractions;
