@@ -221,29 +221,6 @@ const NextGenGachaEngine = {
             isBuilding: stageIndex < scenario.sequence.length - 1,
             scenario: scenario.type
         };
-    },
-
-    // NEAR-MISS PSYCHOLOGY implementation
-    createNearMissEffect(actualRarity, frame) {
-        // 30% chance of near-miss for rare+ results
-        if (['rare', 'legendary', 'mythical', 'omnipotent'].includes(actualRarity) && Math.random() < 0.3) {
-            const higherRarities = {
-                rare: 'legendary',
-                legendary: 'mythical',
-                mythical: 'omnipotent',
-                omnipotent: 'omnipotent' // Can't go higher
-            };
-            
-            const nearMissRarity = higherRarities[actualRarity];
-            const nearMissConfig = DevilFruitDatabase.getRarityConfig(nearMissRarity);
-            
-            return {
-                rarity: nearMissRarity,
-                config: nearMissConfig,
-                message: `Almost ${nearMissRarity}... so close!`
-            };
-        }
-        return null;
     }
 };
 
@@ -323,7 +300,7 @@ function createAdvancedFakeOut(frame, actualRarity, user) {
     if (!fakeOut) {
         // No fake-out, show critical energy buildup
         const energyStatus = NextGenGachaEngine.createDynamicEnergyStatus(percentage, frame, 'critical');
-        const particles = NextGenGachaEngine.createCinematicParticles(frame + 15, 'cosmic', 'rare');
+        const particles = NextGenGachaEngine.createOnePieceParticles(frame + 15, 'grandline', 'rare');
         const color = NextGenGachaEngine.getHyperSpectrumColor(frame * 7 + 40, 3, user?.id?.slice(-2) || 0);
         
         return new EmbedBuilder()
@@ -345,7 +322,7 @@ ${energyStatus}
     
     // Show advanced fake-out sequence
     const energyStatus = NextGenGachaEngine.createDynamicEnergyStatus(percentage, frame, 'critical');
-    const particles = NextGenGachaEngine.createCinematicParticles(frame + 18, 'cosmic', fakeOut.rarity);
+    const particles = NextGenGachaEngine.createOnePieceParticles(frame + 18, 'grandline', fakeOut.rarity);
     
     if (fakeOut.isBuilding || frame < 6) {
         // Show convincing fake confirmation
@@ -457,18 +434,6 @@ function createUltimateRevelation(frame, user) {
     return new EmbedBuilder()
         .setColor(color)
         .setTitle('🎭 **ULTIMATE REVELATION SEQUENCE** 🎭')
-        .setDescription(`
-${particles}
-
-${energyComplete}
-
-*${message}*
-
-🎊 **MATERIALIZATION COMPLETE!** 🎊
-👑 **PREPARE FOR THE REVEAL!** 👑
-        `)
-        .setFooter({ text: `🎭 Ultimate Revelation | Status: TRANSCENDENT!` });
-} SEQUENCE** 🎭')
         .setDescription(`
 ${particles}
 
