@@ -9,10 +9,19 @@ async function registerCommands() {
         new SlashCommandBuilder()
             .setName('pull')
             .setDescription('Pull a One Piece character from the gacha!')
+            .addStringOption(option =>
+                option.setName('type')
+                    .setDescription('Choose your hunt type')
+                    .setRequired(false)
+                    .addChoices(
+                        { name: '🍈 Single Hunt (5s cooldown)', value: 'single' },
+                        { name: '🍈x10 Multi Hunt (30s cooldown)', value: 'multi' },
+                        { name: '💎 Premium Hunt (60s cooldown, better rates)', value: 'premium' }
+                    ))
             .toJSON(),
         new SlashCommandBuilder()
-            .setName('admin')
-            .setDescription('Admin commands for bot management')
+            .setName('gacha-admin')
+            .setDescription('Devil Fruit Gacha admin commands for debugging and testing')
             .addSubcommand(subcommand =>
                 subcommand
                     .setName('debug')
@@ -22,8 +31,8 @@ async function registerCommands() {
                             .setDescription('Debug mode setting')
                             .setRequired(true)
                             .addChoices(
-                                { name: 'Enable Debug Mode', value: 'on' },
-                                { name: 'Disable Debug Mode', value: 'off' },
+                                { name: 'Enable Debug Mode', value: 'enable' },
+                                { name: 'Disable Debug Mode', value: 'disable' },
                                 { name: 'Status', value: 'status' }
                             ))
                     .addStringOption(option =>
@@ -51,6 +60,7 @@ async function registerCommands() {
             { body: commands }
         );
         console.log('✅ Successfully registered slash commands!');
+        console.log('📝 Commands: /pull and /gacha-admin');
     } catch (error) {
         console.error('❌ Error registering commands:', error);
     }
