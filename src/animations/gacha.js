@@ -149,6 +149,68 @@ ${particles}
         const successRate = (successfulFrames / totalFrames) * 100;
         console.log(`📊 Animation Performance: ${successfulFrames}/${totalFrames} frames (${successRate.toFixed(1)}%) - ${totalAttempts} total attempts`);
 
+        // SUSPENSE PHASE: 6 extra frames of rainbow movement at 100%
+        console.log('🎭 Starting suspense phase...');
+        const suspenseFrames = 6;
+        
+        for (let suspenseFrame = 0; suspenseFrame < suspenseFrames; suspenseFrame++) {
+            try {
+                // Use the last search frame data for consistency
+                const frameData = searchFrames[searchFrames.length - 1];
+                
+                // Keep at 100% but continue rainbow movement
+                const progressPercentage = 100;
+                
+                // Continue changing indicators for suspense
+                const indicators = IndicatorsSystem.getChangingIndicators(totalFrames + suspenseFrame, targetRarity, targetFruit.type);
+                const particles = ParticlesSystem.createOnePieceParticles(totalFrames + suspenseFrame + 3, 'energy', targetRarity);
+                
+                // Continue fast color cycling for suspense
+                const fastColors = ['#FF0000', '#FF6000', '#FFCC00', '#00FF00', '#0080FF', '#8000FF', '#FF00FF', '#E74C3C', '#F39C12', '#9B59B6', '#2ECC71', '#3498DB'];
+                const currentColor = fastColors[(totalFrames + suspenseFrame) % fastColors.length];
+                
+                // Create moving rainbow progress bar with suspense effect
+                const progressBar = NextGenGachaEngine.createDynamicEnergyStatus(
+                    progressPercentage,
+                    totalFrames + suspenseFrame, // Continue frame count for rainbow movement
+                    'critical', // Change to critical phase for suspense
+                    currentColor
+                );
+
+                const suspenseEmbed = new EmbedBuilder()
+                    .setTitle('🎆 **MOMENT OF TRUTH** 🎆')
+                    .setDescription(`
+**The Grand Line bestows its gift...**
+
+**🔮 AURA STATUS:** ${indicators.aura}
+**✨ BLESSING LEVEL:** ${indicators.blessing}  
+**🌊 POWER TYPE:** ${indicators.type}
+
+${progressBar}
+
+${particles}
+                    `)
+                    .setColor(currentColor)
+                    .setFooter({ text: `Hunt Progress: 100% | Building Suspense...` });
+
+                // Same timeout protection for suspense frames
+                const timeoutDuration = 3500;
+                const updatePromise = huntMessage.edit({ embeds: [suspenseEmbed] });
+                const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Discord API timeout')), timeoutDuration)
+                );
+                
+                await Promise.race([updatePromise, timeoutPromise]);
+                
+                // Slightly faster timing for suspense
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+            } catch (error) {
+                console.error(`Suspense frame ${suspenseFrame} error:`, error.message);
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+        }
+
         // PHASE 5: Final reveal with full animation
         const rarityConfig = DevilFruitDatabase.getRarityConfig(targetRarity);
         const finalParticles = ParticlesSystem.createOnePieceParticles(10, 'celebration', targetRarity);
