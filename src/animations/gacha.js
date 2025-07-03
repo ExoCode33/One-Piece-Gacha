@@ -72,11 +72,12 @@ The seas whisper of legendary treasures...
                 currentColor = tensionColors[Math.floor(frame / 2) % tensionColors.length];
             }
             
+            // Create progress bar with the SAME color as the embed
             const progressBar = NextGenGachaEngine.createDynamicEnergyStatus(
                 progressPercentage,
                 frame,
                 'charging',
-                currentColor
+                currentColor // Pass the exact same color used for embed
             );
 
             const searchEmbed = new EmbedBuilder()
@@ -92,7 +93,7 @@ ${progressBar}
 
 ${particles}
                 `)
-                .setColor(currentColor)
+                .setColor(currentColor) // Embed uses this color
                 .setFooter({ text: `Hunt Progress: ${Math.round(progressPercentage)}%` });
 
             await huntMessage.edit({ embeds: [searchEmbed] });
