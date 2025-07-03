@@ -151,25 +151,7 @@ const NextGenGachaEngine = {
             if (i < filledSlots - 1) progressBar += ' ';
         }
         
-        // DETERMINE EMBED COLOR: Should match the newest (leftmost) square
-        let embedColorForFrame = currentEmbedColor; // Default fallback
-        if (filledSlots > 0) {
-            // Get the color of the newest (leftmost) square
-            const newestSquareColorIndex = (frame + rainbowColors.length * 10) % rainbowColors.length;
-            const newestSquareColor = rainbowColors[newestSquareColorIndex];
-            
-            // Map square color back to embed hex color
-            const squareToEmbedMap = {
-                '🟥': '#FF0000',
-                '🟧': '#FF6000', 
-                '🟨': '#FFCC00',
-                '🟩': '#00FF00',
-                '🟦': '#0080FF',
-                '🟪': '#8000FF'
-            };
-            
-            embedColorForFrame = squareToEmbedMap[newestSquareColor] || currentEmbedColor;
-        }
+
         
         // Add empty squares for normal phase
         if (!isSuspensePhase) {
@@ -183,10 +165,7 @@ const NextGenGachaEngine = {
             }
         }
         
-        return {
-            progressBar: `**${energyLevel}**\n${progressBar}`,
-            embedColor: embedColorForFrame
-        };
+        return `**${energyLevel}**\n${progressBar}`;
     },
 
     // Create rarity reveal bar for final phase
