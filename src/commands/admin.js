@@ -1,35 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-
-// Mock debug config until the animation files are created
-const DEBUG_CONFIG = {
-    enabled: false,
-    forcedRarity: null
-};
-
-function setDebugMode(enabled) {
-    DEBUG_CONFIG.enabled = enabled;
-    if (!enabled) {
-        DEBUG_CONFIG.forcedRarity = null;
-    }
-    console.log(`🔧 DEBUG MODE: ${enabled ? 'ENABLED' : 'DISABLED'}`);
-}
-
-function setForcedRarity(rarity) {
-    if (!DEBUG_CONFIG.enabled) {
-        console.log(`⚠️ DEBUG MODE is disabled. Enable it first.`);
-        return false;
-    }
-    
-    const validRarities = ['common', 'uncommon', 'rare', 'legendary', 'mythical', 'omnipotent'];
-    if (rarity && !validRarities.includes(rarity)) {
-        console.log(`❌ Invalid rarity: ${rarity}. Valid options: ${validRarities.join(', ')}`);
-        return false;
-    }
-    
-    DEBUG_CONFIG.forcedRarity = rarity;
-    console.log(`🎯 FORCED RARITY: ${rarity || 'OFF (random)'}`);
-    return true;
-}
+const { setDebugMode, setForcedRarity, getDebugStatus } = require('../animations/engine');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -64,95 +34,120 @@ module.exports = {
         ),
 
     async execute(interaction) {
-        const mode = interaction.options.getString('mode');
-        const rarity = interaction.options.getString('rarity');
+        const subcommand = interaction.options.getSubcommand();
+        
+        if (subcommand === 'debug') {
+            const mode = interaction.options.getString('mode');
+            const rarity = interaction.options.getString('rarity');
 
-        try {
-            if (mode === 'enable') {
-                setDebugMode(true);
-                
-                let response = '✅ **Debug Mode Enabled!**\n\nDebug mode is now active. You can now force specific rarities for testing.';
-                
-                if (rarity && rarity !== 'off') {
-                    const success = setForcedRarity(rarity);
-                    if (success) {
-                        const rarityEmojis = {
-                            common: '⬜',
-                            uncommon: '🟩', 
-                            rare: '🟦',
-                            legendary: '🟨',
-                            mythical: '🟥',
-                            omnipotent: '🌈'
-                        };
-                        response += `\n🎯 **Forced Rarity:** ${rarityEmojis[rarity]} ${rarity.toUpperCase()}`;
+            try {
+                if (mode === 'enable') {
+                    const enabled = setDebugMode(true);
+                    
+                    let response = '✅ **Debug Mode Enabled!**\n\n🔧 Debug mode is now active. You can now force specific rarities for testing animations and drops.';
+                    
+                    if (rarity && rarity !== 'off') {
+                        const success = setForcedRarity(rarity);
+                        if (success) {
+                            const rarityEmojis = {
+                                common: '⬜',
+                                uncommon: '🟩', 
+                                rare: '🟦',
+                                legendary: '🟨',
+                                mythical: '🟥',
+                                omnipotent: '🌈'
+                            };
+                            response += `\n\n🎯 **Forced Rarity:** ${rarityEmojis[rarity]} **${rarity.toUpperCase()}**`;
+                            response += `\n\n*All Devil Fruit pulls will now be ${rarity} rarity (but random fruits within that rarity). Use /pull to test the animation!*`;
+                        }
+                    } else {
+                        response += '\n\n*Use the rarity option to force specific rarities for testing, or use /pull for random drops while in debug mode.*';
                     }
-                }
-                
-                await interaction.reply({ content: response, ephemeral: true });
-                
-            } else if (mode === 'disable') {
-                setDebugMode(false);
-                await interaction.reply({ 
-                    content: '❌ **Debug Mode Disabled!**\n\nDebug mode is now off. All drops will be random.', 
-                    ephemeral: true 
-                });
-                
-            } else if (mode === 'status') {
-                const statusEmbed = new EmbedBuilder()
-                    .setTitle('🔧 **Debug Status**')
-                    .setColor(DEBUG_CONFIG.enabled ? '#00FF00' : '#FF0000')
-                    .addFields(
-                        { name: '🔧 Debug Mode', value: DEBUG_CONFIG.enabled ? '✅ Enabled' : '❌ Disabled', inline: true },
-                        { name: '🎯 Forced Rarity', value: DEBUG_CONFIG.forcedRarity ? `${DEBUG_CONFIG.forcedRarity.toUpperCase()}` : 'Random', inline: true }
-                    )
-                    .setFooter({ text: 'Admin Debug System | Use /admin debug enable to activate' });
-                
-                await interaction.reply({ embeds: [statusEmbed], ephemeral: true });
-            }
-            
-            // Handle rarity changes when debug is already enabled
-            if (rarity && mode === 'enable') {
-                // Already handled above
-            } else if (rarity) {
-                if (!DEBUG_CONFIG.enabled) {
+                    
+                    await interaction.reply({ content: response, ephemeral: true });
+                    
+                } else if (mode === 'disable') {
+                    setDebugMode(false);
                     await interaction.reply({ 
-                        content: '⚠️ **Debug mode must be enabled first!**\n\nUse `/admin debug enable` to activate debug mode.', 
+                        content: '❌ **Debug Mode Disabled!**\n\n🎲 Debug mode is now off. All Devil Fruit drops will be completely random with normal rarity chances.', 
                         ephemeral: true 
                     });
-                    return;
+                    
+                } else if (mode === 'status') {
+                    const status = getDebugStatus();
+                    const statusEmbed = new EmbedBuilder()
+                        .setTitle('🔧 **Debug Status Report**')
+                        .setColor(status.enabled ? '#00FF00' : '#FF0000')
+                        .addFields(
+                            { 
+                                name: '🔧 Debug Mode', 
+                                value: status.enabled ? '✅ **ENABLED**' : '❌ **DISABLED**', 
+                                inline: true 
+                            },
+                            { 
+                                name: '🎯 Forced Rarity', 
+                                value: status.forcedRarity ? `🎯 **${status.forcedRarity.toUpperCase()}**` : '🎲 **RANDOM**', 
+                                inline: true 
+                            },
+                            { 
+                                name: '📊 Current Behavior', 
+                                value: status.enabled 
+                                    ? (status.forcedRarity 
+                                        ? `All pulls will be **${status.forcedRarity}** rarity` 
+                                        : 'All pulls are random but debug logging is active')
+                                    : 'Normal random drops with standard rarity chances',
+                                inline: false 
+                            }
+                        )
+                        .setFooter({ text: 'Admin Debug System | Use /admin debug enable to activate testing mode' });
+                    
+                    await interaction.reply({ embeds: [statusEmbed], ephemeral: true });
                 }
                 
-                if (rarity === 'off') {
-                    setForcedRarity(null);
-                    await interaction.reply({ 
-                        content: '🎲 **Forced rarity disabled!**\n\nDrops are now random while debug mode remains active.', 
-                        ephemeral: true 
-                    });
-                } else {
-                    const success = setForcedRarity(rarity);
-                    if (success) {
-                        const rarityEmojis = {
-                            common: '⬜',
-                            uncommon: '🟩',
-                            rare: '🟦', 
-                            legendary: '🟨',
-                            mythical: '🟥',
-                            omnipotent: '🌈'
-                        };
+                // Handle rarity changes when debug is already enabled
+                if (rarity && mode !== 'enable') {
+                    const status = getDebugStatus();
+                    
+                    if (!status.enabled) {
                         await interaction.reply({ 
-                            content: `🎯 **Forced rarity set!**\n\nAll drops will now be: ${rarityEmojis[rarity]} **${rarity.toUpperCase()}**`, 
+                            content: '⚠️ **Debug mode must be enabled first!**\n\nUse `/admin debug enable` to activate debug mode before setting rarities.', 
                             ephemeral: true 
                         });
+                        return;
+                    }
+                    
+                    if (rarity === 'off') {
+                        setForcedRarity(null);
+                        await interaction.reply({ 
+                            content: '🎲 **Forced rarity disabled!**\n\nDrops are now random while debug mode remains active. Debug logging will continue.', 
+                            ephemeral: true 
+                        });
+                    } else {
+                        const success = setForcedRarity(rarity);
+                        if (success) {
+                            const rarityEmojis = {
+                                common: '⬜',
+                                uncommon: '🟩',
+                                rare: '🟦', 
+                                legendary: '🟨',
+                                mythical: '🟥',
+                                omnipotent: '🌈'
+                            };
+                            await interaction.reply({ 
+                                content: `🎯 **Forced rarity set!**\n\nAll Devil Fruit pulls will now be: ${rarityEmojis[rarity]} **${rarity.toUpperCase()}**\n\n*Use /pull to test the animation with ${rarity} rarity fruits!*`, 
+                                ephemeral: true 
+                            });
+                        }
                     }
                 }
+                
+            } catch (error) {
+                console.error('🚨 Admin Command Error:', error);
+                await interaction.reply({ 
+                    content: '❌ **Admin command failed!**\n\nAn error occurred while processing the admin command. Please try again.', 
+                    ephemeral: true 
+                });
             }
-            
-        } catch (error) {
-            console.error('🚨 Admin Command Error:', error);
-            await interaction.reply({ 
-                content: '❌ **Admin command failed!**\n\nAn error occurred while processing the admin command.', 
-                ephemeral: true 
-            });
         }
     }
 };
