@@ -1,5 +1,35 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { setDebugMode, setForcedRarity, DEBUG_CONFIG } = require('../animations/gacha');
+
+// Mock debug config until the animation files are created
+const DEBUG_CONFIG = {
+    enabled: false,
+    forcedRarity: null
+};
+
+function setDebugMode(enabled) {
+    DEBUG_CONFIG.enabled = enabled;
+    if (!enabled) {
+        DEBUG_CONFIG.forcedRarity = null;
+    }
+    console.log(`🔧 DEBUG MODE: ${enabled ? 'ENABLED' : 'DISABLED'}`);
+}
+
+function setForcedRarity(rarity) {
+    if (!DEBUG_CONFIG.enabled) {
+        console.log(`⚠️ DEBUG MODE is disabled. Enable it first.`);
+        return false;
+    }
+    
+    const validRarities = ['common', 'uncommon', 'rare', 'legendary', 'mythical', 'omnipotent'];
+    if (rarity && !validRarities.includes(rarity)) {
+        console.log(`❌ Invalid rarity: ${rarity}. Valid options: ${validRarities.join(', ')}`);
+        return false;
+    }
+    
+    DEBUG_CONFIG.forcedRarity = rarity;
+    console.log(`🎯 FORCED RARITY: ${rarity || 'OFF (random)'}`);
+    return true;
+}
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -78,11 +108,12 @@ module.exports = {
                     .setFooter({ text: 'Admin Debug System | Use /admin debug enable to activate' });
                 
                 await interaction.reply({ embeds: [statusEmbed], ephemeral: true });
-                
             }
             
             // Handle rarity changes when debug is already enabled
-            if (rarity) {
+            if (rarity && mode === 'enable') {
+                // Already handled above
+            } else if (rarity) {
                 if (!DEBUG_CONFIG.enabled) {
                     await interaction.reply({ 
                         content: '⚠️ **Debug mode must be enabled first!**\n\nUse `/admin debug enable` to activate debug mode.', 
