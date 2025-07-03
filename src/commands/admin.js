@@ -79,39 +79,39 @@ module.exports = {
                 
                 await interaction.reply({ embeds: [statusEmbed], ephemeral: true });
                 
-            } else {
-                // Handle rarity changes when debug is already enabled
-                if (rarity) {
-                    if (!DEBUG_CONFIG.enabled) {
+            }
+            
+            // Handle rarity changes when debug is already enabled
+            if (rarity) {
+                if (!DEBUG_CONFIG.enabled) {
+                    await interaction.reply({ 
+                        content: '⚠️ **Debug mode must be enabled first!**\n\nUse `/admin debug enable` to activate debug mode.', 
+                        ephemeral: true 
+                    });
+                    return;
+                }
+                
+                if (rarity === 'off') {
+                    setForcedRarity(null);
+                    await interaction.reply({ 
+                        content: '🎲 **Forced rarity disabled!**\n\nDrops are now random while debug mode remains active.', 
+                        ephemeral: true 
+                    });
+                } else {
+                    const success = setForcedRarity(rarity);
+                    if (success) {
+                        const rarityEmojis = {
+                            common: '⬜',
+                            uncommon: '🟩',
+                            rare: '🟦', 
+                            legendary: '🟨',
+                            mythical: '🟥',
+                            omnipotent: '🌈'
+                        };
                         await interaction.reply({ 
-                            content: '⚠️ **Debug mode must be enabled first!**\n\nUse `/admin debug enable` to activate debug mode.', 
+                            content: `🎯 **Forced rarity set!**\n\nAll drops will now be: ${rarityEmojis[rarity]} **${rarity.toUpperCase()}**`, 
                             ephemeral: true 
                         });
-                        return;
-                    }
-                    
-                    if (rarity === 'off') {
-                        setForcedRarity(null);
-                        await interaction.reply({ 
-                            content: '🎲 **Forced rarity disabled!**\n\nDrops are now random while debug mode remains active.', 
-                            ephemeral: true 
-                        });
-                    } else {
-                        const success = setForcedRarity(rarity);
-                        if (success) {
-                            const rarityEmojis = {
-                                common: '⬜',
-                                uncommon: '🟩',
-                                rare: '🟦', 
-                                legendary: '🟨',
-                                mythical: '🟥',
-                                omnipotent: '🌈'
-                            };
-                            await interaction.reply({ 
-                                content: `🎯 **Forced rarity set!**\n\nAll drops will now be: ${rarityEmojis[rarity]} **${rarity.toUpperCase()}**`, 
-                                ephemeral: true 
-                            });
-                        }
                     }
                 }
             }
@@ -123,5 +123,5 @@ module.exports = {
                 ephemeral: true 
             });
         }
-    },
+    }
 };
