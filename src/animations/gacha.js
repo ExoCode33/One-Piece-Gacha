@@ -59,61 +59,95 @@ const ProfessionalGachaEngine = {
         return particles.slice(0, count).join('');
     },
 
-    // Professional charging bar with rainbow effects
-    createRainbowChargingBar(percentage, frame, rarity = 'common') {
-        const barLength = 25;
-        const filled = Math.floor((percentage / 100) * barLength);
-        const empty = barLength - filled;
-        
-        // Rainbow effect for high rarities
-        const isHighRarity = ['legendary', 'mythical', 'omnipotent'].includes(rarity);
-        const chargeChar = isHighRarity ? '█' : '█';
-        
-        let filledBar = '';
-        for (let i = 0; i < filled; i++) {
-            if (isHighRarity && percentage > 70) {
-                // Rainbow charging effect
-                filledBar += '█';
-            } else {
-                filledBar += chargeChar;
-            }
-        }
-        
-        const emptyBar = '░'.repeat(empty);
-        
-        // Dynamic sparkles based on percentage and rarity
+    // Clean energy indicator without ugly bars
+    createEnergyIndicator(percentage, frame) {
+        // Dynamic sparkles based on percentage
         let sparkle = '🔋';
         if (percentage > 90) sparkle = '✨';
         else if (percentage > 70) sparkle = '⚡';
         else if (percentage > 50) sparkle = '💫';
         
-        return `${sparkle} [${filledBar}${emptyBar}] ${percentage}%`;
+        // Energy level descriptors
+        let energyLevel = 'LOW';
+        if (percentage > 80) energyLevel = 'MAXIMUM';
+        else if (percentage > 60) energyLevel = 'HIGH';
+        else if (percentage > 40) energyLevel = 'RISING';
+        else if (percentage > 20) energyLevel = 'BUILDING';
+        
+        return `${sparkle} Energy Level: **${energyLevel}** (${percentage}%)`;
     },
 
-    // Fake-out system for professional suspense
-    createFakeOut(targetRarity, frame) {
-        const fakeRarities = ['legendary', 'mythical', 'omnipotent'];
-        const fakeRarity = fakeRarities[Math.floor(Math.random() * fakeRarities.length)];
+    // Randomized fake-out system with multiple scenarios
+    createRandomFakeOut(targetRarity, frame) {
+        // Don't fake out common/uncommon - not exciting enough
+        if (['common', 'uncommon'].includes(targetRarity)) {
+            return null;
+        }
         
-        if (targetRarity === fakeRarity) {
-            // Don't fake out if they're actually getting this rarity
+        // Multiple fake-out scenarios
+        const fakeOutScenarios = [
+            {
+                type: 'rarity_escalation',
+                sequence: ['rare', 'legendary', 'mythical'],
+                messages: [
+                    'Rare class signature detected!',
+                    'Wait... this is LEGENDARY level!',
+                    'Actually... MYTHICAL power confirmed!'
+                ]
+            },
+            {
+                type: 'power_surge',
+                sequence: ['legendary', 'omnipotent'],
+                messages: [
+                    'LEGENDARY class energy locked!',
+                    'INCREDIBLE! OMNIPOTENT power detected!'
+                ]
+            },
+            {
+                type: 'triple_fake',
+                sequence: ['mythical', 'legendary', 'omnipotent'],
+                messages: [
+                    'MYTHICAL signature confirmed!',
+                    'No wait... LEGENDARY class!',
+                    'ULTIMATE! OMNIPOTENT level detected!'
+                ]
+            },
+            {
+                type: 'reverse_fake',
+                sequence: ['omnipotent', 'mythical'],
+                messages: [
+                    'OMNIPOTENT! Reality-breaking power!',
+                    'Recalibrating... MYTHICAL class!'
+                ]
+            },
+            {
+                type: 'build_up',
+                sequence: ['rare', 'legendary'],
+                messages: [
+                    'Rare class detected...',
+                    'EXPLOSION! LEGENDARY power surge!'
+                ]
+            }
+        ];
+        
+        // Random scenario selection
+        const scenario = fakeOutScenarios[Math.floor(Math.random() * fakeOutScenarios.length)];
+        const stageIndex = Math.min(frame, scenario.sequence.length - 1);
+        const fakeRarity = scenario.sequence[stageIndex];
+        
+        // Don't fake the actual rarity they're getting
+        if (fakeRarity === targetRarity && frame === scenario.sequence.length - 1) {
             return null;
         }
         
         const fakeConfig = DevilFruitDatabase.getRarityConfig(fakeRarity);
         
-        const fakeMessages = [
-            `🌟 INCREDIBLE! ${fakeRarity.toUpperCase()} energy detected!`,
-            `💥 ${fakeRarity.toUpperCase()} class signature confirmed!`,
-            `✨ This is definitely ${fakeRarity.toUpperCase()} level power!`,
-            `🔥 ${fakeRarity.toUpperCase()} rarity locked in!`
-        ];
-        
         return {
             color: fakeConfig.color,
             emoji: fakeConfig.emoji,
-            message: fakeMessages[frame % fakeMessages.length],
-            rarity: fakeRarity
+            message: scenario.messages[stageIndex] || `${fakeRarity.toUpperCase()} class confirmed!`,
+            rarity: fakeRarity,
+            isBuilding: stageIndex < scenario.sequence.length - 1
         };
     }
 };
@@ -121,7 +155,7 @@ const ProfessionalGachaEngine = {
 // PHASE 1: Energy Detection (6 frames, 1.5 seconds) - Building anticipation
 function createEnergyDetection(frame) {
     const percentage = Math.floor((frame / 5) * 20); // 0-20%
-    const chargingBar = ProfessionalGachaEngine.createRainbowChargingBar(percentage, frame);
+    const energyIndicator = ProfessionalGachaEngine.createEnergyIndicator(percentage, frame);
     const particles = ProfessionalGachaEngine.createEpicParticles(frame + 3, 'energy');
     
     const messages = [
@@ -138,20 +172,20 @@ function createEnergyDetection(frame) {
         .setDescription(`
 ${particles}
 
-${chargingBar}
+${energyIndicator}
 
 *${message}*
 
 🌊 Signal Strength: **BUILDING**
 📊 Resonance: **STABILIZING**
         `)
-        .setFooter({ text: `🔋 Scanning Phase | ${percentage}% Complete | Signal: DETECTING...` });
+        .setFooter({ text: `🔋 Scanning Phase | Detection: ACTIVE` });
 }
 
 // PHASE 2: Power Surge (8 frames, 2 seconds) - Ramping excitement
 function createPowerSurge(frame) {
     const percentage = 20 + Math.floor((frame / 7) * 35); // 20-55%
-    const chargingBar = ProfessionalGachaEngine.createRainbowChargingBar(percentage, frame);
+    const energyIndicator = ProfessionalGachaEngine.createEnergyIndicator(percentage, frame);
     const particles = ProfessionalGachaEngine.createEpicParticles(frame + 8, 'rainbow');
     
     const messages = [
@@ -169,7 +203,7 @@ function createPowerSurge(frame) {
         .setDescription(`
 ${particles}
 
-${chargingBar}
+${energyIndicator}
 
 *${message}*
 
@@ -177,7 +211,7 @@ ${chargingBar}
 🌟 Power Core: **CHARGING**
 🔥 Resonance Field: **EXPANDING**
         `)
-        .setFooter({ text: `⚡ Power Surge | ${percentage}% Complete | Signal: AMPLIFYING!` });
+        .setFooter({ text: `⚡ Power Surge | Status: AMPLIFYING!` });
 }
 
 // PHASE 3: Fake-Out Phase (6 frames, 1.5 seconds) - Professional suspense
@@ -250,7 +284,7 @@ ${fakeOut.emoji} Classification: **${fakeOut.rarity.toUpperCase()}**
 // PHASE 4: Final Charging (6 frames, 1.5 seconds) - Ultimate buildup
 function createFinalCharging(frame) {
     const percentage = 75 + Math.floor((frame / 5) * 20); // 75-95%
-    const chargingBar = ProfessionalGachaEngine.createRainbowChargingBar(percentage, frame);
+    const energyIndicator = ProfessionalGachaEngine.createEnergyIndicator(percentage, frame);
     const particles = ProfessionalGachaEngine.createEpicParticles(frame + 18, 'legendary');
     
     const messages = [
@@ -268,7 +302,7 @@ function createFinalCharging(frame) {
         .setDescription(`
 ${particles}
 
-${chargingBar}
+${energyIndicator}
 
 *${message}*
 
@@ -276,7 +310,7 @@ ${chargingBar}
 🌟 Form Stability: **OPTIMAL**
 ✨ Manifestation: **IMMINENT**
         `)
-        .setFooter({ text: `✨ Final Phase | ${percentage}% Complete | MATERIALIZING...` });
+        .setFooter({ text: `✨ Final Phase | Status: MATERIALIZING...` });
 }
 
 // PHASE 5: The Great Reveal (6 frames, 1.5 seconds) - Climactic moment
@@ -295,19 +329,22 @@ function createGreatReveal(frame) {
     
     const message = revealMessages[frame] || revealMessages[revealMessages.length - 1];
     
+    // Clean energy completion indicator
+    const energyComplete = `✨ Energy Level: **COMPLETE** (${percentage}%)`;
+    
     return new EmbedBuilder()
         .setColor(ProfessionalGachaEngine.getRainbowColor(frame * 12 + 60, 6))
         .setTitle('🎭 **THE GREAT REVELATION** 🎭')
         .setDescription(`
 ${particles}
 
-✨ [████████████████████████████] 100% ✨
+${energyComplete}
 
 *${message}*
 
 🎊 **MATERIALIZATION COMPLETE!** 🎊
         `)
-        .setFooter({ text: `🎭 Great Revelation | 100% Complete | REVEALED!` });
+        .setFooter({ text: `🎭 Great Revelation | Status: REVEALED!` });
 }
 
 // PHASE 6: Devil Fruit Revelation (8 frames, 4 seconds) - Progressive disclosure
@@ -328,13 +365,16 @@ function createDevilFruitRevelation(frame, devilFruit, rarity) {
     
     const currentReveal = revealStages[frame] || revealStages[revealStages.length - 1];
     
+    // Clean completion indicator
+    const completionStatus = `🌟 Revelation: **STAGE ${frame + 1}/8** (COMPLETE)`;
+    
     return new EmbedBuilder()
         .setColor(ProfessionalGachaEngine.getRainbowColor(frame * 15 + 80, 7))
         .setTitle(`${config.emoji} **DEVIL FRUIT REVELATION** ${config.emoji}`)
         .setDescription(`
 ${particles}
 
-🌟 [████████████████████████████] 100% 🌟
+${completionStatus}
 
 *${currentReveal}*
 
