@@ -63,7 +63,7 @@ The seas whisper of legendary treasures...
         // Slower animation to prevent freezing
         const totalFrames = 20;
         const maxRetries = 2;
-        const baseDelay = 900; // Increased from 700ms to 900ms
+        const baseDelay = 900;
         
         for (let frame = 0; frame < totalFrames; frame++) {
             let success = false;
@@ -85,9 +85,9 @@ The seas whisper of legendary treasures...
                     const rainbowEmbedColors = ['#FF0000', '#FF6000', '#FFCC00', '#00FF00', '#0080FF', '#8000FF'];
                     const currentColor = rainbowEmbedColors[frame % rainbowEmbedColors.length];
                     
-                    // Create moving rainbow progress bar
+                    // Create full rainbow progress bar (always full)
                     const progressBar = NextGenGachaEngine.createDynamicEnergyStatus(
-                        progressPercentage,
+                        100, // Always 100% - full rainbow
                         frame,
                         'charging',
                         currentColor
@@ -107,7 +107,7 @@ ${progressBar}
 ${particles}
                         `)
                         .setColor(currentColor)
-                        .setFooter({ text: `Hunt Progress: ${Math.round(progressPercentage)}%` });
+                        .setFooter({ text: `Hunt Progress: 100%` });
 
                     // Longer timeout with more breathing room
                     const timeoutDuration = 3500 + (retryCount * 1000); // 3.5s, 4.5s, 5.5s
@@ -149,39 +149,31 @@ ${particles}
         const successRate = (successfulFrames / totalFrames) * 100;
         console.log(`📊 Animation Performance: ${successfulFrames}/${totalFrames} frames (${successRate.toFixed(1)}%) - ${totalAttempts} total attempts`);
 
-        // SUSPENSE PHASE: Dynamic frames based on target rarity
-        console.log('🎭 Starting suspense phase...');
-        const suspenseFrames = NextGenGachaEngine.calculateSuspenseFrames(totalFrames - 1, targetRarity);
-        console.log(`🎯 Suspense frames needed to reach ${targetRarity}: ${suspenseFrames}`);
+        // PROGRESSION PHASE: 12 frames of rightward movement (unless common)
+        console.log('🌊 Starting progression phase...');
+        const progressFrames = NextGenGachaEngine.calculateProgressFrames(targetRarity);
+        const stopFrame = NextGenGachaEngine.calculateStopFrame(targetRarity);
         
-        for (let suspenseFrame = 0; suspenseFrame < suspenseFrames; suspenseFrame++) {
-            try {
-                // Use the last search frame data for consistency
-                const frameData = searchFrames[searchFrames.length - 1];
-                
-                // Keep at 100% but continue rainbow movement
-                const progressPercentage = 100;
-                
-                // Continue changing indicators for suspense
-                const indicators = IndicatorsSystem.getChangingIndicators(totalFrames + suspenseFrame, targetRarity, targetFruit.type);
-                const particles = ParticlesSystem.createOnePieceParticles(totalFrames + suspenseFrame + 3, 'energy', targetRarity);
-                
-                // Continue rainbow embed colors for suspense
-                const rainbowEmbedColors = ['#FF0000', '#FF6000', '#FFCC00', '#00FF00', '#0080FF', '#8000FF'];
-                const currentColor = rainbowEmbedColors[(totalFrames + suspenseFrame) % rainbowEmbedColors.length];
-                
-                // Create moving rainbow progress bar with suspense effect
-                const progressBar = NextGenGachaEngine.createDynamicEnergyStatus(
-                    progressPercentage,
-                    totalFrames + suspenseFrame, // Continue frame count for rainbow movement
-                    'critical', // Change to critical phase for suspense
-                    currentColor
-                );
+        if (targetRarity === 'common') {
+            // COMMON: Immediate white-out from center
+            console.log('⬜ Common rarity: Starting white-out effect...');
+            
+            for (let whiteFrame = 0; whiteFrame <= 10; whiteFrame++) {
+                try {
+                    const indicators = IndicatorsSystem.getChangingIndicators(totalFrames + whiteFrame, targetRarity, targetFruit.type);
+                    const particles = ParticlesSystem.createOnePieceParticles(totalFrames + whiteFrame + 3, 'energy', targetRarity);
+                    
+                    const currentColor = '#95A5A6'; // Gray for common
+                    
+                    const progressBar = NextGenGachaEngine.createCommonWhiteOut(
+                        totalFrames - 1, // Stopped rainbow frame
+                        whiteFrame
+                    );
 
-                const suspenseEmbed = new EmbedBuilder()
-                    .setTitle('🎆 **MOMENT OF TRUTH** 🎆')
-                    .setDescription(`
-**The Grand Line bestows its gift...**
+                    const whiteOutEmbed = new EmbedBuilder()
+                        .setTitle('⬜ **POWER FADING** ⬜')
+                        .setDescription(`
+**The energies disperse into the ordinary...**
 
 **🔮 AURA STATUS:** ${indicators.aura}
 **✨ BLESSING LEVEL:** ${indicators.blessing}  
@@ -190,25 +182,129 @@ ${particles}
 ${progressBar}
 
 ${particles}
-                    `)
-                    .setColor(currentColor)
-                    .setFooter({ text: `Hunt Progress: 100% | Building Suspense...` });
+                        `)
+                        .setColor(currentColor)
+                        .setFooter({ text: `Common Rarity | White-out Progress: ${Math.round((whiteFrame / 10) * 100)}%` });
 
-                // Same timeout protection for suspense frames
-                const timeoutDuration = 3500;
-                const updatePromise = huntMessage.edit({ embeds: [suspenseEmbed] });
-                const timeoutPromise = new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error('Discord API timeout')), timeoutDuration)
-                );
-                
-                await Promise.race([updatePromise, timeoutPromise]);
-                
-                // Slightly slower timing for suspense to prevent freezing
-                await new Promise(resolve => setTimeout(resolve, 800));
-                
-            } catch (error) {
-                console.error(`Suspense frame ${suspenseFrame} error:`, error.message);
-                await new Promise(resolve => setTimeout(resolve, 500));
+                    const timeoutDuration = 3500;
+                    const updatePromise = huntMessage.edit({ embeds: [whiteOutEmbed] });
+                    const timeoutPromise = new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Discord API timeout')), timeoutDuration)
+                    );
+                    
+                    await Promise.race([updatePromise, timeoutPromise]);
+                    await new Promise(resolve => setTimeout(resolve, 400));
+                    
+                } catch (error) {
+                    console.error(`White-out frame ${whiteFrame} error:`, error.message);
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                }
+            }
+        } else {
+            // NON-COMMON: 12 frames progression then blinking
+            console.log(`🌈 ${targetRarity} rarity: Progressing ${progressFrames} frames to reach target color...`);
+            
+            for (let progFrame = 0; progFrame < progressFrames; progFrame++) {
+                try {
+                    const indicators = IndicatorsSystem.getChangingIndicators(totalFrames + progFrame, targetRarity, targetFruit.type);
+                    const particles = ParticlesSystem.createOnePieceParticles(totalFrames + progFrame + 3, 'energy', targetRarity);
+                    
+                    const rainbowEmbedColors = ['#FF0000', '#FF6000', '#FFCC00', '#00FF00', '#0080FF', '#8000FF'];
+                    const currentColor = rainbowEmbedColors[(totalFrames + progFrame) % rainbowEmbedColors.length];
+                    
+                    const progressBar = NextGenGachaEngine.createDynamicEnergyStatus(
+                        100,
+                        totalFrames + progFrame,
+                        'critical',
+                        currentColor
+                    );
+
+                    const progressEmbed = new EmbedBuilder()
+                        .setTitle('🎆 **ENERGIES CONVERGING** 🎆')
+                        .setDescription(`
+**The rainbow flows toward destiny...**
+
+**🔮 AURA STATUS:** ${indicators.aura}
+**✨ BLESSING LEVEL:** ${indicators.blessing}  
+**🌊 POWER TYPE:** ${indicators.type}
+
+${progressBar}
+
+${particles}
+                        `)
+                        .setColor(currentColor)
+                        .setFooter({ text: `Progression Phase: ${progFrame + 1}/${progressFrames}` });
+
+                    const timeoutDuration = 3500;
+                    const updatePromise = huntMessage.edit({ embeds: [progressEmbed] });
+                    const timeoutPromise = new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Discord API timeout')), timeoutDuration)
+                    );
+                    
+                    await Promise.race([updatePromise, timeoutPromise]);
+                    await new Promise(resolve => setTimeout(resolve, 600));
+                    
+                } catch (error) {
+                    console.error(`Progression frame ${progFrame} error:`, error.message);
+                    await new Promise(resolve => setTimeout(resolve, 400));
+                }
+            }
+            
+            // BLINKING PHASE: 3 blinks between rainbow and solid color
+            console.log('✨ Starting blinking phase...');
+            const finalStopFrame = totalFrames + progressFrames - 1 + stopFrame;
+            
+            for (let blink = 0; blink < 6; blink++) { // 6 phases = 3 full blinks
+                try {
+                    const isBlinkOn = blink % 2 === 0; // Even = solid color, Odd = rainbow
+                    const indicators = IndicatorsSystem.getChangingIndicators(totalFrames + progressFrames + blink, targetRarity, targetFruit.type);
+                    const particles = ParticlesSystem.createOnePieceParticles(totalFrames + progressFrames + blink + 3, 'energy', targetRarity);
+                    
+                    // Get rarity color for embed
+                    const rarityEmbedColors = {
+                        uncommon: '#00FF00',
+                        rare: '#0080FF', 
+                        legendary: '#FFCC00',
+                        mythical: '#FF0000',
+                        omnipotent: '#8000FF'
+                    };
+                    const currentColor = rarityEmbedColors[targetRarity] || '#0080FF';
+                    
+                    const progressBar = NextGenGachaEngine.createBlinkingRarityBar(
+                        targetRarity,
+                        finalStopFrame,
+                        isBlinkOn
+                    );
+
+                    const blinkEmbed = new EmbedBuilder()
+                        .setTitle('⚡ **POWER CRYSTALLIZING** ⚡')
+                        .setDescription(`
+**The rarity manifests itself...**
+
+**🔮 AURA STATUS:** ${indicators.aura}
+**✨ BLESSING LEVEL:** ${indicators.blessing}  
+**🌊 POWER TYPE:** ${indicators.type}
+
+${progressBar}
+
+${particles}
+                        `)
+                        .setColor(currentColor)
+                        .setFooter({ text: `Crystallizing ${targetRarity.toUpperCase()} power... ${Math.floor((blink + 1) / 2)}/3` });
+
+                    const timeoutDuration = 3500;
+                    const updatePromise = huntMessage.edit({ embeds: [blinkEmbed] });
+                    const timeoutPromise = new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Discord API timeout')), timeoutDuration)
+                    );
+                    
+                    await Promise.race([updatePromise, timeoutPromise]);
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                } catch (error) {
+                    console.error(`Blink frame ${blink} error:`, error.message);
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                }
             }
         }
 
