@@ -9,6 +9,36 @@ async function registerCommands() {
         new SlashCommandBuilder()
             .setName('pull')
             .setDescription('Pull a One Piece character from the gacha!')
+            .toJSON(),
+        new SlashCommandBuilder()
+            .setName('admin')
+            .setDescription('Admin commands for bot management')
+            .addSubcommand(subcommand =>
+                subcommand
+                    .setName('debug')
+                    .setDescription('Debug mode and rarity testing controls')
+                    .addStringOption(option =>
+                        option.setName('mode')
+                            .setDescription('Debug mode setting')
+                            .setRequired(true)
+                            .addChoices(
+                                { name: 'Enable Debug Mode', value: 'on' },
+                                { name: 'Disable Debug Mode', value: 'off' },
+                                { name: 'Status', value: 'status' }
+                            ))
+                    .addStringOption(option =>
+                        option.setName('rarity')
+                            .setDescription('Force specific rarity (requires debug mode enabled)')
+                            .setRequired(false)
+                            .addChoices(
+                                { name: '⬜ Common', value: 'common' },
+                                { name: '🟩 Uncommon', value: 'uncommon' },
+                                { name: '🟦 Rare', value: 'rare' },
+                                { name: '🟨 Legendary', value: 'legendary' },
+                                { name: '🟥 Mythical', value: 'mythical' },
+                                { name: '🌈 Omnipotent', value: 'omnipotent' },
+                                { name: '🎲 Random (Off)', value: 'off' }
+                            )))
             .toJSON()
     ];
 
