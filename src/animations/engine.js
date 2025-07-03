@@ -161,8 +161,8 @@ const NextGenGachaEngine = {
                     // Newest square (leftmost) always matches embed color
                     progressBar += embedSquareColor;
                 } else {
-                    // Continue rainbow movement - older colors get pushed right and eventually disappear
-                    const colorIndex = (i - 1 + frame) % rainbowColors.length;
+                    // Continue rainbow movement - avoid duplicate colors
+                    const colorIndex = (i - 1 + frame + 1) % rainbowColors.length; // +1 to prevent duplicate
                     progressBar += rainbowColors[colorIndex];
                 }
                 
