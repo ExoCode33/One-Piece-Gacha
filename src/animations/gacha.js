@@ -53,6 +53,87 @@ const NextGenGachaEngine = {
         return this.hyperSpectrumColors[combinedIndex];
     },
 
+    // PROGRESSIVE RARITY HINTS without spoiling
+    getAuraLevel(rarity) {
+        const auraLevels = {
+            common: 'STIRRING',
+            uncommon: 'BUILDING', 
+            rare: 'INTENSIFYING',
+            legendary: 'BLAZING',
+            mythical: 'TRANSCENDENT',
+            omnipotent: 'REALITY-BREAKING'
+        };
+        return auraLevels[rarity] || 'STIRRING';
+    },
+
+    getBlessingLevel(rarity) {
+        const blessingLevels = {
+            common: 'GENTLE',
+            uncommon: 'NOTABLE',
+            rare: 'POWERFUL', 
+            legendary: 'DIVINE',
+            mythical: 'WORLD-SHAKING',
+            omnipotent: 'UNIVERSE-ALTERING'
+        };
+        return blessingLevels[rarity] || 'GENTLE';
+    },
+
+    getResonanceLevel(rarity) {
+        const resonanceLevels = {
+            common: 'STABLE',
+            uncommon: 'STRONG',
+            rare: 'OVERWHELMING',
+            legendary: 'LEGENDARY',
+            mythical: 'MYTHICAL',
+            omnipotent: 'OMNIPOTENT'
+        };
+        return resonanceLevels[rarity] || 'STABLE';
+    },
+
+    getTypeHint(type) {
+        const typeHints = {
+            'Paramecia': 'BODY MANIPULATION',
+            'Zoan': 'BEAST TRANSFORMATION', 
+            'Logia': 'ELEMENTAL FORCE',
+            'Ancient Zoan': 'PREHISTORIC POWER',
+            'Mythical Zoan': 'LEGENDARY CREATURE',
+            'Special Paramecia': 'UNIQUE MANIFESTATION'
+        };
+        return typeHints[type] || 'MYSTERIOUS POWER';
+    },
+
+    // RAPID CHANGING INDICATORS that gradually lock in
+    getChangingIndicators(frame, finalRarity, finalType) {
+        const allRarities = ['common', 'uncommon', 'rare', 'legendary', 'mythical', 'omnipotent'];
+        const allTypes = ['Paramecia', 'Zoan', 'Logia', 'Ancient Zoan', 'Mythical Zoan'];
+        
+        // Early frames: random values, later frames: lock to final values
+        const lockFrames = {
+            aura: frame >= 6,    // Locks after 6 frames
+            blessing: frame >= 7, // Locks after 7 frames  
+            resonance: frame >= 8, // Locks after 8 frames
+            type: frame >= 5      // Type locks earliest
+        };
+        
+        return {
+            aura: lockFrames.aura ? 
+                this.getAuraLevel(finalRarity) : 
+                this.getAuraLevel(allRarities[frame % allRarities.length]),
+            
+            blessing: lockFrames.blessing ? 
+                this.getBlessingLevel(finalRarity) : 
+                this.getBlessingLevel(allRarities[(frame + 2) % allRarities.length]),
+            
+            resonance: lockFrames.resonance ? 
+                this.getResonanceLevel(finalRarity) : 
+                this.getResonanceLevel(allRarities[(frame + 4) % allRarities.length]),
+            
+            type: lockFrames.type ? 
+                this.getTypeHint(finalType) : 
+                this.getTypeHint(allTypes[frame % allTypes.length])
+        };
+    },
+
     // ONE PIECE THEMED PARTICLE SYSTEMS
     createOnePieceParticles(intensity, type = 'energy', rarity = 'common') {
         const onePieceParticleSystems = {
@@ -274,6 +355,9 @@ function createEnergyAmplification(frame, user, rarity, devilFruit) {
     const message = amplificationMessages[Math.floor(frame / 2)] || amplificationMessages[0];
     const color = NextGenGachaEngine.getHyperSpectrumColor(frame * 5 + 20, 2, user?.id?.slice(-2) || 0);
     
+    // Get changing indicators that gradually lock in
+    const indicators = NextGenGachaEngine.getChangingIndicators(frame, rarity, devilFruit.type);
+    
     return new EmbedBuilder()
         .setColor(color)
         .setTitle('💥 **ENERGY AMPLIFICATION PROTOCOL** 💥')
@@ -284,10 +368,10 @@ ${energyStatus}
 
 *${message}*
 
-⚡ **Devil Fruit Aura:** ${NextGenGachaEngine.getAuraLevel(rarity)}
-🔥 **Sea's Blessing:** ${NextGenGachaEngine.getBlessingLevel(rarity)}
-🌟 **Fruit Resonance:** ${NextGenGachaEngine.getResonanceLevel(rarity)}
-💫 **Type Signature:** ${NextGenGachaEngine.getTypeHint(devilFruit.type)}
+⚡ **Devil Fruit Aura:** ${indicators.aura}
+🔥 **Sea's Blessing:** ${indicators.blessing}
+🌟 **Fruit Resonance:** ${indicators.resonance}
+💫 **Type Signature:** ${indicators.type}
         `)
         .setFooter({ text: `💥 Phase: Energy Amplification | Power surge detected!` });
 }
