@@ -221,7 +221,7 @@ const NextGenGachaEngine = {
         return particleString;
     },
 
-    // DYNAMIC PROGRESSION BARS - Syncs with embed color + rarity reveal
+    // FIXED DYNAMIC PROGRESSION BARS - Consistent width + prettier spacing
     createDynamicEnergyStatus(percentage, frame, phase = 'charging', currentEmbedColor = '#0099FF', rarity = null) {
         // Phase-specific energy descriptors
         const phaseDescriptors = {
@@ -236,41 +236,41 @@ const NextGenGachaEngine = {
         const descriptorIndex = Math.min(Math.floor(percentage / 20), descriptors.length - 1);
         const energyLevel = descriptors[descriptorIndex];
         
-        // Create progression bar
-        const maxSlots = 16;
+        // Create progression bar with CONSISTENT WIDTH
+        const maxSlots = 20; // Fixed 20 slots for consistent width
         const filledSlots = Math.floor((percentage / 100) * maxSlots);
         const emptySlots = maxSlots - filledSlots;
         
         let progressBar = '';
-        let indicatorSquare;
         
         // At 95%+ show rarity colors, otherwise sync with embed
         if (percentage >= 95 && rarity) {
             // RARITY COLOR REVEAL - Matches database rarity colors!
             const rarityColors = {
-                common: { square: '⬜', indicator: '⬜' },      // #95A5A6 (gray) → white
-                uncommon: { square: '🟩', indicator: '🟩' },   // #2ECC71 (green) → green  
-                rare: { square: '🟦', indicator: '🟦' },       // #3498DB (blue) → blue
-                legendary: { square: '🟨', indicator: '🟨' },  // #F39C12 (orange/gold) → yellow
-                mythical: { square: '🟥', indicator: '🟥' },   // #E74C3C (red) → red
-                omnipotent: { square: '🌈', indicator: '🟪' }  // #9B59B6 (purple) → rainbow!
+                common: '⬜',      // #95A5A6 (gray) → white
+                uncommon: '🟩',   // #2ECC71 (green) → green  
+                rare: '🟦',       // #3498DB (blue) → blue
+                legendary: '🟨',  // #F39C12 (orange/gold) → yellow
+                mythical: '🟥',   // #E74C3C (red) → red
+                omnipotent: '🌈'  // #9B59B6 (purple) → rainbow!
             };
             
-            const rarityConfig = rarityColors[rarity] || rarityColors.common;
-            indicatorSquare = rarityConfig.indicator;
+            const squareColor = rarityColors[rarity] || rarityColors.common;
             
             // Special rainbow effect for omnipotent
             if (rarity === 'omnipotent') {
                 const rainbowSquares = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪'];
                 for (let i = 0; i < filledSlots; i++) {
-                    // Create cycling rainbow effect
+                    // Create cycling rainbow effect with spacing
                     const colorIndex = (i + frame) % rainbowSquares.length;
                     progressBar += rainbowSquares[colorIndex];
+                    if (i < filledSlots - 1) progressBar += ' '; // Add space between squares
                 }
             } else {
-                // Normal rarity color
+                // Normal rarity color with spacing
                 for (let i = 0; i < filledSlots; i++) {
-                    progressBar += rarityConfig.square;
+                    progressBar += squareColor;
+                    if (i < filledSlots - 1) progressBar += ' '; // Add space between squares
                 }
             }
         } else {
@@ -303,20 +303,25 @@ const NextGenGachaEngine = {
             
             // Find closest match or default to blue
             const squareColor = colorMap[currentEmbedColor] || '🟦';
-            indicatorSquare = squareColor;
             
-            // Fill with matched color
+            // Fill with matched color and spacing
             for (let i = 0; i < filledSlots; i++) {
                 progressBar += squareColor;
+                if (i < filledSlots - 1) progressBar += ' '; // Add space between squares
             }
         }
         
-        // Add empty squares
-        for (let i = 0; i < emptySlots; i++) {
-            progressBar += '⬜';
+        // Add empty squares with spacing
+        if (emptySlots > 0) {
+            if (filledSlots > 0) progressBar += ' '; // Space before empty squares
+            for (let i = 0; i < emptySlots; i++) {
+                progressBar += '⬜';
+                if (i < emptySlots - 1) progressBar += ' '; // Add space between empty squares
+            }
         }
         
-        return `${indicatorSquare} **${energyLevel}**\n${progressBar}`;
+        // NO COLOR SQUARE ABOVE - just clean text and bar
+        return `**${energyLevel}**\n${progressBar}`;
     },
 
     // ADVANCED FAKE-OUT SYSTEM with near-miss psychology
@@ -490,9 +495,9 @@ function createAdvancedFakeOut(frame, actualRarity, user, devilFruit) {
     
     if (!fakeOut) {
         // No fake-out, show critical energy buildup with changing indicators
+        const color = NextGenGachaEngine.getHyperSpectrumColor(frame * 7 + 40, 3, user?.id?.slice(-2) || 0);
         const energyStatus = NextGenGachaEngine.createDynamicEnergyStatus(percentage, frame, 'critical', color, actualRarity);
         const particles = NextGenGachaEngine.createOnePieceParticles(frame + 15, 'grandline', 'rare');
-        const color = NextGenGachaEngine.getHyperSpectrumColor(frame * 7 + 40, 3, user?.id?.slice(-2) || 0);
         
         // Get changing indicators
         const indicators = NextGenGachaEngine.getChangingIndicators(frame, actualRarity, devilFruit.type);
@@ -556,8 +561,8 @@ ${fakeOut.emoji} **Classification:** ${fakeOut.rarity.toUpperCase()}
             .setDescription(`
 🌀💫🌌✨🌠💥🔮⚡🌀💫🌌✨
 
-🟥 **REALITY SHIFTING**
-🟥🟨🟧🟩🟦🟪🟥🟨🟧🟩🟦🟪🟥🟨🟧🟩
+**REALITY SHIFTING**
+🟥 🟨 🟧 🟩 🟦 🟪 🟥 🟨 🟧 🟩 🟦 🟪 🟥 🟨 🟧 🟩 🟦 🟪 🟥 🟨
 
 *${shiftMessage}*
 *🔮 Recalibrating dimensional frequencies...*
@@ -819,7 +824,7 @@ async function createUltimateCinematicExperience(interaction) {
 
 module.exports = {
     createUltimateCinematicExperience,
-    // Export debug functions for /testing command
+    // Export debug functions for /admin command
     setDebugMode,
     setForcedRarity,
     DEBUG_CONFIG
