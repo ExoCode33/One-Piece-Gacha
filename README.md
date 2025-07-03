@@ -30,8 +30,8 @@ Hunt for Devil Fruits in the Grand Line!
 - `multi`: 10x hunt with 30s cooldown (coming soon)
 - `premium`: Premium hunt with better rates (coming soon)
 
-### `/admin debug <mode> [rarity]`
-Admin controls for testing and debugging
+### `/gacha-admin debug <mode> [rarity]`
+Devil Fruit Gacha admin controls for testing and debugging
 - `mode`: enable/disable/status
 - `rarity`: Force specific rarity (common/uncommon/rare/legendary/mythical/omnipotent/off)
 
@@ -83,8 +83,8 @@ One-Piece-Gacha-main/
 Enable debug mode to test animations and specific rarities:
 
 ```
-/admin debug enable
-/admin debug enable rarity:legendary
+/gacha-admin debug enable
+/gacha-admin debug enable rarity:legendary
 ```
 
 This will:
