@@ -149,9 +149,10 @@ ${particles}
         const successRate = (successfulFrames / totalFrames) * 100;
         console.log(`📊 Animation Performance: ${successfulFrames}/${totalFrames} frames (${successRate.toFixed(1)}%) - ${totalAttempts} total attempts`);
 
-        // SUSPENSE PHASE: 6 extra frames of rainbow movement at 100%
+        // SUSPENSE PHASE: Dynamic frames based on target rarity
         console.log('🎭 Starting suspense phase...');
-        const suspenseFrames = 6;
+        const suspenseFrames = NextGenGachaEngine.calculateSuspenseFrames(totalFrames - 1, targetRarity);
+        console.log(`🎯 Suspense frames needed to reach ${targetRarity}: ${suspenseFrames}`);
         
         for (let suspenseFrame = 0; suspenseFrame < suspenseFrames; suspenseFrame++) {
             try {
