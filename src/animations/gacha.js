@@ -2,6 +2,56 @@ const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('
 const { DevilFruitDatabase } = require('../data/devilfruit');
 
 // ═══════════════════════════════════════════════════════════════════
+//                     DEBUG SYSTEM FOR TESTING
+// ═══════════════════════════════════════════════════════════════════
+const DEBUG_CONFIG = {
+    enabled: false,
+    forcedRarity: null, // null, 'common', 'uncommon', 'rare', 'legendary', 'mythical', 'omnipotent'
+    logMessages: false
+};
+
+// Debug functions
+function setDebugMode(enabled) {
+    DEBUG_CONFIG.enabled = enabled;
+    if (!enabled) {
+        DEBUG_CONFIG.forcedRarity = null;
+    }
+    console.log(`🔧 DEBUG MODE: ${enabled ? 'ENABLED' : 'DISABLED'}`);
+}
+
+function setForcedRarity(rarity) {
+    if (!DEBUG_CONFIG.enabled) {
+        console.log(`⚠️ DEBUG MODE is disabled. Enable it first.`);
+        return false;
+    }
+    
+    const validRarities = ['common', 'uncommon', 'rare', 'legendary', 'mythical', 'omnipotent'];
+    if (rarity && !validRarities.includes(rarity)) {
+        console.log(`❌ Invalid rarity: ${rarity}. Valid options: ${validRarities.join(', ')}`);
+        return false;
+    }
+    
+    DEBUG_CONFIG.forcedRarity = rarity;
+    console.log(`🎯 FORCED RARITY: ${rarity || 'OFF (random)'}`);
+    return true;
+}
+
+function debugLog(message) {
+    if (DEBUG_CONFIG.enabled && DEBUG_CONFIG.logMessages) {
+        console.log(`🔧 [DEBUG] ${message}`);
+    }
+}
+
+// Override rarity calculation for testing
+function getTestRarity() {
+    if (DEBUG_CONFIG.enabled && DEBUG_CONFIG.forcedRarity) {
+        debugLog(`Forcing rarity to: ${DEBUG_CONFIG.forcedRarity}`);
+        return DEBUG_CONFIG.forcedRarity;
+    }
+    return DevilFruitDatabase.calculateDropRarity();
+}
+
+// ═══════════════════════════════════════════════════════════════════
 //                 NEXT-GENERATION PROFESSIONAL GACHA SYSTEM
 // ═══════════════════════════════════════════════════════════════════
 
@@ -171,8 +221,8 @@ const NextGenGachaEngine = {
         return particleString;
     },
 
-    // DYNAMIC ENERGY INDICATORS with psychological optimization
-    createDynamicEnergyStatus(percentage, frame, phase = 'charging') {
+    // DYNAMIC PROGRESSION BARS - Syncs with embed color + rarity reveal
+    createDynamicEnergyStatus(percentage, frame, phase = 'charging', currentEmbedColor = '#0099FF', rarity = null) {
         // Phase-specific energy descriptors
         const phaseDescriptors = {
             scanning: ['AWAKENING', 'STIRRING', 'CALLING', 'REACHING', 'SUMMONING'],
@@ -181,20 +231,92 @@ const NextGenGachaEngine = {
             materializing: ['FORMING', 'BLESSING', 'CHOOSING', 'BESTOWING', 'GRANTING']
         };
         
-        // Dynamic sparkle selection based on percentage and phase
-        let sparkle = '🔋';
-        if (percentage > 95) sparkle = '🌟';
-        else if (percentage > 85) sparkle = '✨';
-        else if (percentage > 70) sparkle = '⚡';
-        else if (percentage > 50) sparkle = '💫';
-        else if (percentage > 25) sparkle = '🔥';
-        
         // Select descriptor based on percentage within phase
         const descriptors = phaseDescriptors[phase] || phaseDescriptors.charging;
         const descriptorIndex = Math.min(Math.floor(percentage / 20), descriptors.length - 1);
         const energyLevel = descriptors[descriptorIndex];
         
-        return `${sparkle} Sea's Power: **${energyLevel}** (${percentage}%)`;
+        // Create progression bar
+        const maxSlots = 16;
+        const filledSlots = Math.floor((percentage / 100) * maxSlots);
+        const emptySlots = maxSlots - filledSlots;
+        
+        let progressBar = '';
+        let indicatorSquare;
+        
+        // At 95%+ show rarity colors, otherwise sync with embed
+        if (percentage >= 95 && rarity) {
+            // RARITY COLOR REVEAL - Matches database rarity colors!
+            const rarityColors = {
+                common: { square: '⬜', indicator: '⬜' },      // #95A5A6 (gray) → white
+                uncommon: { square: '🟩', indicator: '🟩' },   // #2ECC71 (green) → green  
+                rare: { square: '🟦', indicator: '🟦' },       // #3498DB (blue) → blue
+                legendary: { square: '🟨', indicator: '🟨' },  // #F39C12 (orange/gold) → yellow
+                mythical: { square: '🟥', indicator: '🟥' },   // #E74C3C (red) → red
+                omnipotent: { square: '🌈', indicator: '🟪' }  // #9B59B6 (purple) → rainbow!
+            };
+            
+            const rarityConfig = rarityColors[rarity] || rarityColors.common;
+            indicatorSquare = rarityConfig.indicator;
+            
+            // Special rainbow effect for omnipotent
+            if (rarity === 'omnipotent') {
+                const rainbowSquares = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪'];
+                for (let i = 0; i < filledSlots; i++) {
+                    // Create cycling rainbow effect
+                    const colorIndex = (i + frame) % rainbowSquares.length;
+                    progressBar += rainbowSquares[colorIndex];
+                }
+            } else {
+                // Normal rarity color
+                for (let i = 0; i < filledSlots; i++) {
+                    progressBar += rarityConfig.square;
+                }
+            }
+        } else {
+            // SYNC WITH EMBED COLOR (before 95%)
+            // Convert hex embed color to closest square emoji
+            const colorMap = {
+                // Red spectrum
+                '#FF0000': '🟥', '#FF1212': '🟥', '#FF2424': '🟥', '#FF3636': '🟥',
+                '#FF4848': '🟥', '#FF5A5A': '🟥', '#E74C3C': '🟥',
+                // Orange spectrum  
+                '#FF6000': '🟧', '#FF7212': '🟧', '#FF8424': '🟧', '#FF9636': '🟧',
+                '#FFA848': '🟧', '#F39C12': '🟧',
+                // Yellow spectrum
+                '#FFCC00': '🟨', '#FFD700': '🟨', '#FFDE12': '🟨', '#FFE418': '🟨',
+                '#FFEA1E': '🟨', '#FFF024': '🟨',
+                // Green spectrum
+                '#00FF00': '🟩', '#06FF06': '🟩', '#12FF12': '🟩', '#18FF18': '🟩',
+                '#2ECC71': '🟩', '#24FF24': '🟩',
+                // Blue spectrum  
+                '#0080FF': '🟦', '#0686FF': '🟦', '#0C8CFF': '🟦', '#1292FF': '🟦',
+                '#3498DB': '🟦', '#24A4FF': '🟦',
+                // Cyan spectrum
+                '#00FFFF': '🟦', '#06F9FF': '🟦', '#0CF3FF': '🟦', '#12EDFF': '🟦',
+                // Purple spectrum
+                '#8000FF': '🟪', '#8606FF': '🟪', '#9212FF': '🟪', '#9B59B6': '🟪',
+                '#B030FF': '🟪', '#C242FF': '🟪',
+                // Pink spectrum
+                '#FF00FF': '🟪', '#FF06F9': '🟪', '#FF0080': '🟪', '#FF0686': '🟪'
+            };
+            
+            // Find closest match or default to blue
+            const squareColor = colorMap[currentEmbedColor] || '🟦';
+            indicatorSquare = squareColor;
+            
+            // Fill with matched color
+            for (let i = 0; i < filledSlots; i++) {
+                progressBar += squareColor;
+            }
+        }
+        
+        // Add empty squares
+        for (let i = 0; i < emptySlots; i++) {
+            progressBar += '⬜';
+        }
+        
+        return `${indicatorSquare} **${energyLevel}**\n${progressBar}`;
     },
 
     // ADVANCED FAKE-OUT SYSTEM with near-miss psychology
@@ -291,14 +413,14 @@ const NextGenGachaEngine = {
 // PHASE 1: Mystical Initialization (8 frames, 2 seconds)
 function createMysticalInitialization(frame, user, rarity, devilFruit) {
     const percentage = Math.floor((frame / 7) * 15); // 0-15%
-    const energyStatus = NextGenGachaEngine.createDynamicEnergyStatus(percentage, frame, 'scanning');
+    const energyStatus = NextGenGachaEngine.createDynamicEnergyStatus(percentage, frame, 'scanning', color, rarity);
     const particles = NextGenGachaEngine.createOnePieceParticles(frame + 4, 'ocean', 'common');
     
     const mysticalMessages = [
-        "🔍 Initiating mystical scan of the Grand Line...",
-        "🌊 Ancient energies stir beneath the ocean's surface...",
-        "⚡ Devil Fruit resonance detected in the ethereal realm...",
-        "🔮 Cosmic forces align for manifestation..."
+        "🔍 Scanning the Grand Line for Devil Fruits...",
+        "🌊 The ocean's power stirs beneath the waves...",
+        "⚡ A Devil Fruit's presence grows stronger...",
+        "🔮 The sea's will guides us to treasure..."
     ];
     
     const message = mysticalMessages[Math.floor(frame / 2)] || mysticalMessages[0];
@@ -309,7 +431,7 @@ function createMysticalInitialization(frame, user, rarity, devilFruit) {
     
     return new EmbedBuilder()
         .setColor(color)
-        .setTitle('🔮 **MYSTICAL DEVIL FRUIT SCAN INITIATED** 🔮')
+        .setTitle('🔮 **DEVIL FRUIT HUNT BEGINS** 🔮')
         .setDescription(`
 ${particles}
 
@@ -321,21 +443,21 @@ ${energyStatus}
 🔥 **Sea's Blessing:** ${indicators.blessing}
 💫 **Type Signature:** ${indicators.type}
         `)
-        .setFooter({ text: `🔮 Phase: Mystical Initialization | Scanning ancient powers...` });
+        .setFooter({ text: `🔮 Phase: Devil Fruit Hunt | Searching the Grand Line...` });
 }
 
 // PHASE 2: Energy Amplification (10 frames, 2.5 seconds)
 function createEnergyAmplification(frame, user, rarity, devilFruit) {
     const percentage = 15 + Math.floor((frame / 9) * 30); // 15-45%
-    const energyStatus = NextGenGachaEngine.createDynamicEnergyStatus(percentage, frame, 'charging');
+    const energyStatus = NextGenGachaEngine.createDynamicEnergyStatus(percentage, frame, 'charging', color, rarity);
     const particles = NextGenGachaEngine.createOnePieceParticles(frame + 10, 'energy', 'uncommon');
     
     const amplificationMessages = [
-        "💥 MASSIVE ENERGY SURGE ERUPTING!",
-        "🔥 Power matrices climbing exponentially!",
-        "⚡ Devil Fruit resonance intensifying rapidly!",
-        "✨ Extraordinary energy signatures converging!",
-        "🌟 Cosmic power levels reaching critical mass!"
+        "💥 The sea's power is building rapidly!",
+        "🔥 Devil Fruit energy growing stronger!",
+        "⚡ The Grand Line responds to our call!",
+        "✨ Ocean currents swirl with hidden power!",
+        "🌟 A Devil Fruit draws near!"
     ];
     
     const message = amplificationMessages[Math.floor(frame / 2)] || amplificationMessages[0];
@@ -346,7 +468,7 @@ function createEnergyAmplification(frame, user, rarity, devilFruit) {
     
     return new EmbedBuilder()
         .setColor(color)
-        .setTitle('💥 **ENERGY AMPLIFICATION PROTOCOL** 💥')
+        .setTitle('💥 **DEVIL FRUIT POWER RISING** 💥')
         .setDescription(`
 ${particles}
 
@@ -358,7 +480,7 @@ ${energyStatus}
 🔥 **Sea's Blessing:** ${indicators.blessing}
 💫 **Type Signature:** ${indicators.type}
         `)
-        .setFooter({ text: `💥 Phase: Energy Amplification | Power surge detected!` });
+        .setFooter({ text: `💥 Phase: Power Rising | Devil Fruit energy building!` });
 }
 
 // PHASE 3: Advanced Fake-Out Sequence (8 frames, 2 seconds)
@@ -368,7 +490,7 @@ function createAdvancedFakeOut(frame, actualRarity, user, devilFruit) {
     
     if (!fakeOut) {
         // No fake-out, show critical energy buildup with changing indicators
-        const energyStatus = NextGenGachaEngine.createDynamicEnergyStatus(percentage, frame, 'critical');
+        const energyStatus = NextGenGachaEngine.createDynamicEnergyStatus(percentage, frame, 'critical', color, actualRarity);
         const particles = NextGenGachaEngine.createOnePieceParticles(frame + 15, 'grandline', 'rare');
         const color = NextGenGachaEngine.getHyperSpectrumColor(frame * 7 + 40, 3, user?.id?.slice(-2) || 0);
         
@@ -377,19 +499,19 @@ function createAdvancedFakeOut(frame, actualRarity, user, devilFruit) {
         
         return new EmbedBuilder()
             .setColor(color)
-            .setTitle('🌟 **CRITICAL ENERGY THRESHOLD** 🌟')
+            .setTitle('🌟 **DEVIL FRUIT APPROACHING** 🌟')
             .setDescription(`
 ${particles}
 
 ${energyStatus}
 
-*🎯 Devil Fruit spirit awakening from the depths...*
+        *🎯 A Devil Fruit's spirit awakens from the ocean depths...*
 
 ⚡ **Devil Fruit Aura:** ${indicators.aura}
 🔥 **Sea's Blessing:** ${indicators.blessing}
 💫 **Type Signature:** ${indicators.type}
         `)
-            .setFooter({ text: `🌟 Phase: Critical Threshold | Energy critical!` });
+            .setFooter({ text: `🌟 Phase: Devil Fruit Approaching | The sea chooses!` });
     }
     
     // Show advanced fake-out sequence
@@ -434,7 +556,8 @@ ${fakeOut.emoji} **Classification:** ${fakeOut.rarity.toUpperCase()}
             .setDescription(`
 🌀💫🌌✨🌠💥🔮⚡🌀💫🌌✨
 
-⚠️ Sea's Power: **REALITY SHIFTING** (${percentage}%)
+🟥 **REALITY SHIFTING**
+🟥🟨🟧🟩🟦🟪🟥🟨🟧🟩🟦🟪🟥🟨🟧🟩
 
 *${shiftMessage}*
 *🔮 Recalibrating dimensional frequencies...*
@@ -449,15 +572,15 @@ ${fakeOut.emoji} **Classification:** ${fakeOut.rarity.toUpperCase()}
 // PHASE 4: Quantum Materialization (8 frames, 2 seconds)
 function createQuantumMaterialization(frame, user, rarity, devilFruit) {
     const percentage = 70 + Math.floor((frame / 7) * 25); // 70-95%
-    const energyStatus = NextGenGachaEngine.createDynamicEnergyStatus(percentage, frame, 'materializing');
+    const energyStatus = NextGenGachaEngine.createDynamicEnergyStatus(percentage, frame, 'materializing', color, rarity);
     const particles = NextGenGachaEngine.createOnePieceParticles(frame + 22, 'grandline', 'legendary');
     
     const materializationMessages = [
-        "✨ Quantum materialization sequence initiating...",
-        "🍈 Devil Fruit matrix stabilizing across dimensions...",
-        "💎 Molecular structure crystallizing into reality...",
-        "🌟 Physical manifestation protocols engaging...",
-        "⭐ Final quantum coherence achieved..."
+        "✨ The Devil Fruit begins to take form...",
+        "🍈 Ocean currents shape the fruit's power...",
+        "💎 The fruit's true nature becomes clear...",
+        "🌟 A Devil Fruit emerges from the sea...",
+        "⭐ The ocean's gift is almost ready..."
     ];
     
     const message = materializationMessages[Math.floor(frame / 2)] || materializationMessages[0];
@@ -468,7 +591,7 @@ function createQuantumMaterialization(frame, user, rarity, devilFruit) {
     
     return new EmbedBuilder()
         .setColor(color)
-        .setTitle('✨ **QUANTUM MATERIALIZATION SEQUENCE** ✨')
+        .setTitle('✨ **DEVIL FRUIT FORMING** ✨')
         .setDescription(`
 ${particles}
 
@@ -480,7 +603,7 @@ ${energyStatus}
 🔥 **Sea's Blessing:** ${indicators.blessing}
 💫 **Type Signature:** ${indicators.type}
         `)
-        .setFooter({ text: `✨ Phase: Quantum Materialization | Reality crystallizing...` });
+        .setFooter({ text: `✨ Phase: Devil Fruit Forming | The sea's gift takes shape...` });
 }
 
 // PHASE 5: Ultimate Revelation (10 frames, 2.5 seconds)
@@ -489,20 +612,20 @@ function createUltimateRevelation(frame, user, rarity, devilFruit) {
     const particles = NextGenGachaEngine.createOnePieceParticles(15, 'grandline', 'omnipotent');
     
     const revelationMessages = [
-        "🎭 The Grand Line reveals its ultimate secret...",
-        "🌊 Ancient powers beyond imagination emerge...",
-        "⚡ The Devil Fruit manifests in glorious splendor...",
-        "✨ Behold! Your destiny unfolds across reality...",
-        "🍈 The ocean's greatest gift materializes...",
-        "🌟 Witness the birth of legendary power...",
-        "💫 Reality itself celebrates this moment...",
-        "🌌 Universal forces acknowledge your worthiness...",
-        "🎊 **ULTIMATE REVELATION ACHIEVED!**",
-        "👑 **THE DEVIL FRUIT IS YOURS!**"
+        "🎭 The Grand Line reveals its secret...",
+        "🌊 Ancient ocean power surfaces...",
+        "⚡ The Devil Fruit shows its true form...",
+        "✨ Behold! Your destiny emerges...",
+        "🍈 The ocean's greatest gift appears...",
+        "🌟 Witness the birth of power...",
+        "💫 The sea itself celebrates...",
+        "🌌 The Grand Line acknowledges you...",
+        "🎊 **THE DEVIL FRUIT IS REVEALED!**",
+        "👑 **YOUR POWER AWAITS!**"
     ];
     
     const message = revelationMessages[frame] || revelationMessages[revelationMessages.length - 1];
-    const energyComplete = `🌟 Sea's Power: **TRANSCENDENT** (${percentage}%)`;
+    const energyComplete = NextGenGachaEngine.createDynamicEnergyStatus(100, frame, 'critical', color, rarity);
     const color = NextGenGachaEngine.getHyperSpectrumColor(frame * 13 + 100, 6, user?.id?.slice(-2) || 0);
     
     // Get changing indicators (should be fully locked by now)
@@ -510,7 +633,7 @@ function createUltimateRevelation(frame, user, rarity, devilFruit) {
     
     return new EmbedBuilder()
         .setColor(color)
-        .setTitle('🎭 **ULTIMATE REVELATION SEQUENCE** 🎭')
+        .setTitle('🎭 **THE DEVIL FRUIT REVEALS ITSELF** 🎭')
         .setDescription(`
 ${particles}
 
@@ -522,10 +645,10 @@ ${energyComplete}
 🔥 **Sea's Blessing:** ${indicators.blessing}
 💫 **Type Signature:** ${indicators.type}
 
-🎊 **MATERIALIZATION COMPLETE!** 🎊
-👑 **PREPARE FOR THE REVEAL!** 👑
+🎊 **THE FRUIT IS READY!** 🎊
+👑 **PREPARE FOR YOUR REWARD!** 👑
         `)
-        .setFooter({ text: `🎭 Ultimate Revelation | Status: TRANSCENDENT!` });
+        .setFooter({ text: `🎭 Final Revelation | The Grand Line has chosen!` });
 }
 
 // PHASE 6: Slow Typewriter Revelation (10 frames, 5 seconds) - COLORS FROZEN
@@ -601,7 +724,7 @@ function createEpicProfessionalFinale(devilFruit, rarity, user) {
     return {
         embeds: [new EmbedBuilder()
             .setColor(config.color)
-            .setTitle(`${config.emoji} **ULTIMATE DEVIL FRUIT MASTERY ACHIEVED!** ${config.emoji}`)
+            .setTitle(`${config.emoji} **DEVIL FRUIT MASTERY ACHIEVED!** ${config.emoji}`)
             .setDescription(`
 ${NextGenGachaEngine.createOnePieceParticles(12, 'celebration', rarity)}
 
@@ -625,11 +748,11 @@ ${ultimateMessages[rarity]}${specialMessage}
 async function createUltimateCinematicExperience(interaction) {
     try {
         // Pre-determine results for consistent psychological optimization
-        const rarity = DevilFruitDatabase.calculateDropRarity();
+        const rarity = getTestRarity(); // Use debug-aware rarity calculation
         const devilFruit = DevilFruitDatabase.getRandomDevilFruit(rarity);
         const user = interaction.user;
         
-        console.log(`🎭 NEXT-GEN GACHA: ${devilFruit.name} (${rarity}) for ${user.username} (ID: ${user.id})`);
+        console.log(`🎭 NEXT-GEN GACHA: ${devilFruit.name} (${rarity}) for ${user.username} (ID: ${user.id})${DEBUG_CONFIG.enabled ? ' [DEBUG MODE]' : ''}`);
         
         // PHASE 1: Mystical Initialization (8 frames, 2 seconds)
         for (let frame = 0; frame < 8; frame++) {
@@ -695,5 +818,9 @@ async function createUltimateCinematicExperience(interaction) {
 }
 
 module.exports = {
-    createUltimateCinematicExperience
+    createUltimateCinematicExperience,
+    // Export debug functions for /testing command
+    setDebugMode,
+    setForcedRarity,
+    DEBUG_CONFIG
 };
