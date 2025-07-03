@@ -1,6 +1,58 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const { createUltimateCinematicExperience } = require('../animations/gacha');
-const { DevilFruitDatabase } = require('../data/devilfruit');
+
+// For now, mock the animation function until the files are created
+async function createUltimateCinematicExperience(interaction) {
+    // Mock response until animation files are created
+    const mockResult = {
+        devilFruit: {
+            id: 'mock1',
+            name: 'Gomu Gomu no Mi',
+            type: 'Paramecia',
+            user: 'Monkey D. Luffy',
+            power: 'Rubber Body',
+            powerLevel: 850,
+            description: 'Turns the user into a rubber human.'
+        },
+        rarity: 'legendary',
+        user: interaction.user
+    };
+
+    const embed = new EmbedBuilder()
+        .setTitle('🍈 **DEVIL FRUIT MASTERY ACHIEVED!** 🍈')
+        .setDescription(`
+🎉 **LEGENDARY CLASS DISCOVERED!**
+
+**🍈 Devil Fruit:** ${mockResult.devilFruit.name}
+**📋 Type:** ${mockResult.devilFruit.type}
+**👤 User:** ${mockResult.devilFruit.user}
+**⚡ Power:** ${mockResult.devilFruit.power}
+**💎 Class:** Legendary
+**🌟 Level:** ${mockResult.devilFruit.powerLevel}
+
+*${mockResult.devilFruit.description}*
+
+**Note:** This is a mock result until animation files are created!
+        `)
+        .setColor('#FFD700')
+        .setFooter({ text: 'Mock Devil Fruit System | Animation files needed' });
+
+    const components = [
+        new ActionRowBuilder()
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId('hunt_again')
+                    .setLabel('🍈 Hunt Again!')
+                    .setStyle(ButtonStyle.Primary),
+                new ButtonBuilder()
+                    .setCustomId('view_collection')
+                    .setLabel('📚 My Collection')
+                    .setStyle(ButtonStyle.Secondary)
+            )
+    ];
+
+    await interaction.editReply({ embeds: [embed], components });
+    return mockResult;
+}
 
 // User cooldowns and statistics
 const userCooldowns = new Map();
@@ -98,7 +150,7 @@ module.exports = {
                 console.error('Failed to send error message:', replyError);
             }
         }
-    },
+    }
 };
 
 // Single hunt with full cinematic experience
@@ -146,103 +198,16 @@ async function handleMultiHunt(interaction) {
     try {
         await interaction.deferReply();
 
-        const results = [];
-        const rarityCount = { common: 0, uncommon: 0, rare: 0, legendary: 0, mythical: 0, omnipotent: 0 };
-
-        // Show multi-hunt progress
-        const progressEmbed = new EmbedBuilder()
-            .setTitle('🍈x10 **MULTI DEVIL FRUIT HUNT INITIATED!** 🍈x10')
-            .setDescription(`
-⚓🌊⚓🌊⚓🌊⚓🌊⚓🌊
-
-🔍 **Scanning 10 locations across the Grand Line...**
-🌊 **Searching for multiple Devil Fruit signatures...**
-⚡ **Preparing mass summoning ritual...**
-
-*This may take a moment...*
-            `)
+        // Mock multi hunt
+        const mockEmbed = new EmbedBuilder()
+            .setTitle('🍈x10 **MULTI HUNT SYSTEM LOADING** 🍈x10')
+            .setDescription('🚧 Multi Hunt is currently being implemented!\n\n**Note:** Animation files need to be created first.')
             .setColor('#3498DB')
-            .setFooter({ text: '🍈x10 Multi Hunt | Searching the vast oceans...' });
-        
-        await interaction.editReply({ embeds: [progressEmbed] });
+            .setFooter({ text: 'Multi Hunt System | Under Development' });
 
-        // Generate 10 Devil Fruits
-        for (let i = 0; i < 10; i++) {
-            const rarity = DevilFruitDatabase.calculateDropRarity();
-            const devilFruit = DevilFruitDatabase.getRandomDevilFruit(rarity);
-            results.push({ devilFruit, rarity });
-            rarityCount[rarity]++;
-        }
+        await interaction.editReply({ embeds: [mockEmbed] });
 
-        // Update user stats
-        const userId = interaction.user.id;
-        const stats = userStats.get(userId);
-        if (stats) {
-            results.forEach(result => {
-                stats.rarityCount[result.rarity]++;
-                if (!stats.devilFruits[result.devilFruit.id]) {
-                    stats.devilFruits[result.devilFruit.id] = {
-                        ...result.devilFruit,
-                        obtainedAt: new Date(),
-                        timesObtained: 1
-                    };
-                } else {
-                    stats.devilFruits[result.devilFruit.id].timesObtained++;
-                }
-            });
-        }
-
-        // Create summary embed
-        const bestRarity = Object.keys(rarityCount).reverse().find(rarity => rarityCount[rarity] > 0);
-        const bestConfig = DevilFruitDatabase.getRarityConfig(bestRarity);
-        
-        let resultsText = '';
-        Object.keys(rarityCount).reverse().forEach(rarity => {
-            if (rarityCount[rarity] > 0) {
-                const config = DevilFruitDatabase.getRarityConfig(rarity);
-                resultsText += `${config.emoji} **${config.name}:** ${rarityCount[rarity]}x\n`;
-            }
-        });
-
-        const summaryEmbed = new EmbedBuilder()
-            .setTitle(`${bestConfig.emoji} **10x DEVIL FRUIT HUNT COMPLETE!** ${bestConfig.emoji}`)
-            .setDescription(`
-🌊⚓🌊⚓🌊⚓🌊⚓🌊⚓🌊⚓🌊
-
-🎊 **MULTI-HUNT RESULTS:**
-
-${resultsText}
-
-**🎯 Best Pull:** ${results.find(r => r.rarity === bestRarity).devilFruit.name}
-**📊 Total Fruits:** 10
-**⭐ Success Rate:** 100%
-
-*View your collection for detailed fruit information!*
-            `)
-            .setColor(bestConfig.color)
-            .setFooter({ text: `${bestConfig.emoji} Multi Hunt Complete | Best result: ${bestConfig.name} class!` });
-
-        const components = [
-            new ActionRowBuilder()
-                .addComponents(
-                    new ButtonBuilder()
-                        .setCustomId('hunt_again')
-                        .setLabel('🍈 Hunt Again!')
-                        .setStyle(ButtonStyle.Primary),
-                    new ButtonBuilder()
-                        .setCustomId('view_collection')
-                        .setLabel('📚 View Collection')
-                        .setStyle(ButtonStyle.Secondary),
-                    new ButtonBuilder()
-                        .setCustomId('detailed_results')
-                        .setLabel('📋 Detailed Results')
-                        .setStyle(ButtonStyle.Success)
-                )
-        ];
-
-        await interaction.editReply({ embeds: [summaryEmbed], components });
-
-        console.log(`🎊 Multi hunt complete for ${interaction.user.username}: Best = ${bestRarity}`);
+        console.log(`🎊 Multi hunt placeholder for ${interaction.user.username}`);
 
     } catch (error) {
         console.error('Multi hunt error:', error);
@@ -255,200 +220,19 @@ async function handlePremiumHunt(interaction) {
     try {
         await interaction.deferReply();
 
-        // Premium hunt has better rarity chances
-        let rarity = DevilFruitDatabase.calculateDropRarity();
-        
-        // 25% chance to boost rarity by one level
-        if (Math.random() < 0.25) {
-            const rarityLevels = ['common', 'uncommon', 'rare', 'legendary', 'mythical', 'omnipotent'];
-            const currentIndex = rarityLevels.indexOf(rarity);
-            if (currentIndex < rarityLevels.length - 1) {
-                rarity = rarityLevels[currentIndex + 1];
-            }
-        }
-
-        // Show premium hunt intro
-        const premiumIntro = new EmbedBuilder()
-            .setTitle('💎 **PREMIUM DEVIL FRUIT HUNT INITIATED!** 💎')
-            .setDescription(`
-💎⭐💎⭐💎⭐💎⭐💎⭐
-
-🌌 **Accessing legendary hunting grounds...**
-👑 **Enhanced scanning protocols activated...**
-✨ **Premium energy matrices online...**
-🎯 **Targeting rare Devil Fruit signatures...**
-
-*Premium hunts have enhanced drop rates!*
-            `)
+        // Mock premium hunt
+        const mockEmbed = new EmbedBuilder()
+            .setTitle('💎 **PREMIUM HUNT SYSTEM LOADING** 💎')
+            .setDescription('🚧 Premium Hunt is currently being implemented!\n\n**Note:** Animation files need to be created first.')
             .setColor('#FFD700')
-            .setFooter({ text: '💎 Premium Hunt | Enhanced legendary protocols active...' });
+            .setFooter({ text: 'Premium Hunt System | Under Development' });
 
-        await interaction.editReply({ embeds: [premiumIntro] });
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await interaction.editReply({ embeds: [mockEmbed] });
 
-        // Use the cinematic experience but with premium fruit
-        const devilFruit = DevilFruitDatabase.getRandomDevilFruit(rarity);
-        
-        // Override the normal animation result
-        const originalMethod = DevilFruitDatabase.calculateDropRarity;
-        DevilFruitDatabase.calculateDropRarity = () => rarity;
-        
-        const result = await createUltimateCinematicExperience(interaction);
-        
-        // Restore original method
-        DevilFruitDatabase.calculateDropRarity = originalMethod;
-
-        // Update stats
-        const userId = interaction.user.id;
-        const stats = userStats.get(userId);
-        if (stats && result) {
-            stats.rarityCount[result.rarity]++;
-            if (!stats.devilFruits[result.devilFruit.id]) {
-                stats.devilFruits[result.devilFruit.id] = {
-                    ...result.devilFruit,
-                    obtainedAt: new Date(),
-                    timesObtained: 1,
-                    isPremium: true
-                };
-            } else {
-                stats.devilFruits[result.devilFruit.id].timesObtained++;
-            }
-        }
-
-        console.log(`🎊 Premium hunt success: ${devilFruit.name} (${rarity}) for ${interaction.user.username}`);
+        console.log(`🎊 Premium hunt placeholder for ${interaction.user.username}`);
 
     } catch (error) {
         console.error('Premium hunt error:', error);
         throw error;
     }
 }
-
-// Button interaction handler
-async function handleButtonInteractions(interaction) {
-    try {
-        const { customId, user } = interaction;
-
-        switch (customId) {
-            case 'hunt_again':
-                await interaction.deferUpdate();
-                // Re-run the pull command
-                const pullCommand = require('./pull');
-                await pullCommand.execute(interaction);
-                break;
-
-            case 'view_collection':
-                await showUserCollection(interaction);
-                break;
-
-            case 'share_discovery':
-                await shareDiscovery(interaction);
-                break;
-
-            case 'detailed_results':
-                await showDetailedResults(interaction);
-                break;
-
-            default:
-                await interaction.reply({
-                    content: '❓ Unknown button action!',
-                    ephemeral: true
-                });
-        }
-
-    } catch (error) {
-        console.error('Button interaction error:', error);
-        await interaction.reply({
-            content: '❌ Button action failed!',
-            ephemeral: true
-        });
-    }
-}
-
-// Show user's Devil Fruit collection
-async function showUserCollection(interaction) {
-    const userId = interaction.user.id;
-    const stats = userStats.get(userId);
-
-    if (!stats || Object.keys(stats.devilFruits).length === 0) {
-        const emptyEmbed = new EmbedBuilder()
-            .setTitle('📚 **Your Devil Fruit Collection**')
-            .setDescription('🍈 Your collection is empty! Start hunting to collect Devil Fruits!')
-            .setColor('#95A5A6')
-            .setFooter({ text: 'Use /pull to start your Devil Fruit journey!' });
-
-        return await interaction.reply({ embeds: [emptyEmbed], ephemeral: true });
-    }
-
-    // Collection summary
-    const totalFruits = Object.keys(stats.devilFruits).length;
-    const totalHunts = stats.totalHunts;
-    
-    let rarityBreakdown = '';
-    Object.keys(stats.rarityCount).reverse().forEach(rarity => {
-        if (stats.rarityCount[rarity] > 0) {
-            const config = DevilFruitDatabase.getRarityConfig(rarity);
-            rarityBreakdown += `${config.emoji} **${config.name}:** ${stats.rarityCount[rarity]}x\n`;
-        }
-    });
-
-    const collectionEmbed = new EmbedBuilder()
-        .setTitle(`📚 **${interaction.user.username}'s Devil Fruit Collection**`)
-        .setDescription(`
-🏴‍☠️ **Collection Stats:**
-🍈 **Unique Fruits:** ${totalFruits}
-🎯 **Total Hunts:** ${totalHunts}
-📊 **Success Rate:** ${Math.round((totalFruits / totalHunts) * 100)}%
-
-**🌟 Rarity Breakdown:**
-${rarityBreakdown}
-
-*Use the buttons below to explore your collection!*
-        `)
-        .setColor('#3498DB')
-        .setFooter({ text: `Collection last updated: ${new Date().toLocaleDateString()}` });
-
-    const components = [
-        new ActionRowBuilder()
-            .addComponents(
-                new ButtonBuilder()
-                    .setCustomId('show_rare_fruits')
-                    .setLabel('💎 Rare+ Fruits')
-                    .setStyle(ButtonStyle.Primary),
-                new ButtonBuilder()
-                    .setCustomId('show_all_fruits')
-                    .setLabel('📋 All Fruits')
-                    .setStyle(ButtonStyle.Secondary),
-                new ButtonBuilder()
-                    .setCustomId('collection_stats')
-                    .setLabel('📊 Detailed Stats')
-                    .setStyle(ButtonStyle.Success)
-            )
-    ];
-
-    await interaction.reply({ embeds: [collectionEmbed], components, ephemeral: true });
-}
-
-// Share discovery with others
-async function shareDiscovery(interaction) {
-    const shareEmbed = new EmbedBuilder()
-        .setTitle('📢 **Devil Fruit Discovery Shared!**')
-        .setDescription(`🎉 ${interaction.user.username} found an incredible Devil Fruit! Check out their amazing discovery above!`)
-        .setColor('#E67E22')
-        .setFooter({ text: '🍈 Join the hunt with /pull!' });
-
-    await interaction.reply({ embeds: [shareEmbed] });
-}
-
-// Show detailed multi-hunt results
-async function showDetailedResults(interaction) {
-    // This would show individual fruits from the multi-hunt
-    const detailsEmbed = new EmbedBuilder()
-        .setTitle('📋 **Detailed Multi-Hunt Results**')
-        .setDescription('🚧 Detailed results feature coming soon! For now, check your collection to see all acquired fruits.')
-        .setColor('#9B59B6')
-        .setFooter({ text: 'Feature in development...' });
-
-    await interaction.reply({ embeds: [detailsEmbed], ephemeral: true });
-}
-
-module.exports.handleButtonInteractions = handleButtonInteractions;
