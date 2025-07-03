@@ -6,7 +6,7 @@ const { DevilFruitDatabase } = require('../data/devilfruit');
 const DEBUG_CONFIG = {
     enabled: false,
     forcedRarity: null,
-    logMessages: false
+    logMessages: true
 };
 
 function setDebugMode(enabled) {
@@ -14,31 +14,58 @@ function setDebugMode(enabled) {
     if (!enabled) {
         DEBUG_CONFIG.forcedRarity = null;
     }
-    console.log(`🔧 DEBUG MODE: ${enabled ? 'ENABLED' : 'DISABLED'}`);
+    if (DEBUG_CONFIG.logMessages) {
+        console.log(`🔧 DEBUG MODE: ${enabled ? 'ENABLED' : 'DISABLED'}`);
+    }
+    return DEBUG_CONFIG.enabled;
 }
 
 function setForcedRarity(rarity) {
     if (!DEBUG_CONFIG.enabled) {
-        console.log(`⚠️ DEBUG MODE is disabled. Enable it first.`);
+        if (DEBUG_CONFIG.logMessages) {
+            console.log(`⚠️ DEBUG MODE is disabled. Enable it first.`);
+        }
         return false;
     }
     
-    const validRarities = ['common', 'uncommon', 'rare', 'legendary', 'mythical', 'omnipotent'];
+    const validRarities = ['common', 'uncommon', 'rare', 'legendary', 'mythical', 'omnipotent', null];
     if (rarity && !validRarities.includes(rarity)) {
-        console.log(`❌ Invalid rarity: ${rarity}. Valid options: ${validRarities.join(', ')}`);
+        if (DEBUG_CONFIG.logMessages) {
+            console.log(`❌ Invalid rarity: ${rarity}. Valid options: ${validRarities.filter(r => r !== null).join(', ')}`);
+        }
         return false;
     }
     
     DEBUG_CONFIG.forcedRarity = rarity;
-    console.log(`🎯 FORCED RARITY: ${rarity || 'OFF (random)'}`);
+    if (DEBUG_CONFIG.logMessages) {
+        console.log(`🎯 FORCED RARITY: ${rarity || 'OFF (random)'}`);
+    }
     return true;
 }
 
 function getTestRarity() {
+    // If debug mode is enabled and a rarity is forced, use it
     if (DEBUG_CONFIG.enabled && DEBUG_CONFIG.forcedRarity) {
+        if (DEBUG_CONFIG.logMessages) {
+            console.log(`🎯 Debug Mode: Using forced rarity: ${DEBUG_CONFIG.forcedRarity}`);
+        }
         return DEBUG_CONFIG.forcedRarity;
     }
-    return DevilFruitDatabase.calculateDropRarity();
+    
+    // Otherwise use normal rarity calculation
+    const rarity = DevilFruitDatabase.calculateDropRarity();
+    if (DEBUG_CONFIG.logMessages && DEBUG_CONFIG.enabled) {
+        console.log(`🎲 Debug Mode: Random rarity rolled: ${rarity}`);
+    }
+    return rarity;
+}
+
+function getDebugStatus() {
+    return {
+        enabled: DEBUG_CONFIG.enabled,
+        forcedRarity: DEBUG_CONFIG.forcedRarity,
+        logMessages: DEBUG_CONFIG.logMessages
+    };
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -101,12 +128,12 @@ const NextGenGachaEngine = {
         // Convert embed color to square color
         const colorMap = {
             '#FF0000': '🟥', '#FF1212': '🟥', '#FF2424': '🟥', '#FF3636': '🟥', '#FF4848': '🟥', '#E74C3C': '🟥',
-            '#FF6000': '🟧', '#FF7212': '🟧', '#FF8424': '🟧', '#FF9636': '🟧', '#FFA848': '🟧', '#F39C12': '🟧',
-            '#FFCC00': '🟨', '#FFD700': '🟨', '#FFDE12': '🟨', '#FFE418': '🟨', '#FFEA1E': '🟨', '#FFF024': '🟨',
+            '#FF6000': '🟧', '#FF7212': '🟧', '#FF8424': '🟧', '#FF9636': '🟧', '#FFA848': '🟧', '#F39C12': '🟧', '#E67E22': '🟧',
+            '#FFCC00': '🟨', '#FFD700': '🟨', '#FFDE12': '🟨', '#FFE418': '🟨', '#FFEA1E': '🟨', '#FFF024': '🟨', '#F1C40F': '🟨',
             '#00FF00': '🟩', '#06FF06': '🟩', '#12FF12': '🟩', '#18FF18': '🟩', '#2ECC71': '🟩', '#24FF24': '🟩',
-            '#0080FF': '🟦', '#0686FF': '🟦', '#0C8CFF': '🟦', '#1292FF': '🟦', '#3498DB': '🟦', '#24A4FF': '🟦',
+            '#0080FF': '🟦', '#0686FF': '🟦', '#0C8CFF': '🟦', '#1292FF': '🟦', '#3498DB': '🟦', '#24A4FF': '🟦', '#0099FF': '🟦',
             '#00FFFF': '🟦', '#06F9FF': '🟦', '#0CF3FF': '🟦', '#12EDFF': '🟦',
-            '#8000FF': '🟪', '#8606FF': '🟪', '#9212FF': '🟪', '#9B59B6': '🟪', '#B030FF': '🟪', '#C242FF': '🟪',
+            '#8000FF': '🟪', '#8606FF': '🟪', '#9212FF': '🟪', '#9B59B6': '🟪', '#B030FF': '🟪', '#C242FF': '🟪', '#8E44AD': '🟪',
             '#FF00FF': '🟪', '#FF06F9': '🟪', '#FF0080': '🟪', '#FF0686': '🟪'
         };
         
@@ -168,6 +195,7 @@ module.exports = {
     NextGenGachaEngine,
     setDebugMode,
     setForcedRarity,
-    DEBUG_CONFIG,
-    getTestRarity
+    getTestRarity,
+    getDebugStatus,
+    DEBUG_CONFIG
 };
