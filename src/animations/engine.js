@@ -107,7 +107,7 @@ const NextGenGachaEngine = {
         return this.hyperSpectrumColors[combinedIndex];
     },
 
-    // PROGRESSION BAR SYSTEM - Enhanced with suspenseful square-by-square filling
+    // PROGRESSION BAR SYSTEM - Enhanced with rapid color blinking and clean spacing
     createDynamicEnergyStatus(percentage, frame, phase = 'charging', currentEmbedColor = '#0099FF') {
         const phaseDescriptors = {
             scanning: ['AWAKENING', 'STIRRING', 'CALLING', 'REACHING', 'SUMMONING'],
@@ -139,6 +139,12 @@ const NextGenGachaEngine = {
         const filledSlots = Math.floor((percentage / 100) * maxSlots);
         const emptySlots = maxSlots - filledSlots;
         
+        // Rapid color blinking system - different colors every frame
+        const rapidBlinkColors = [
+            '🟥', '🟧', '🟨', '🟩', '🟦', '🟪', 
+            '🔴', '🟠', '🟡', '🟢', '🔵', '🟣'
+        ];
+        
         // Enhanced color mapping with more dramatic colors
         const colorMap = {
             '#FF0000': '🟥', '#FF1212': '🟥', '#FF2424': '🟥', '#FF3636': '🟥', '#FF4848': '🟥', '#E74C3C': '🟥',
@@ -153,39 +159,33 @@ const NextGenGachaEngine = {
         
         let squareColor = colorMap[currentEmbedColor] || '🟦';
         
-        // Special pulsing effect for high percentages
-        if (percentage > 85) {
-            const pulseColors = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪'];
-            squareColor = pulseColors[frame % pulseColors.length];
+        // Rapid blinking for high percentages - different color every frame
+        if (percentage > 70) {
+            squareColor = rapidBlinkColors[frame % rapidBlinkColors.length];
         }
         
-        // Build progress bar with dramatic spacing and effects
+        // Build progress bar with clean spacing
         let progressBar = '';
         
-        // Filled squares with potential pulsing
+        // Filled squares
         for (let i = 0; i < filledSlots; i++) {
-            if (percentage > 90 && i === filledSlots - 1) {
-                // Last square pulses when near completion
-                const lastSquarePulse = ['🟥', '🟧', '🟨', '⭐'];
-                progressBar += lastSquarePulse[frame % lastSquarePulse.length];
+            if (percentage > 85) {
+                // Each square gets different color for rapid blinking effect
+                const colorIndex = (frame + i) % rapidBlinkColors.length;
+                progressBar += rapidBlinkColors[colorIndex];
             } else {
                 progressBar += squareColor;
             }
-            if (i < filledSlots - 1) progressBar += ' ';
         }
         
-        // Empty squares
-        if (emptySlots > 0) {
-            if (filledSlots > 0) progressBar += ' ';
-            for (let i = 0; i < emptySlots; i++) {
-                // Show building tension in empty squares
-                if (percentage > 75 && i === 0) {
-                    // First empty square shows building energy
-                    progressBar += '⚡';
-                } else {
-                    progressBar += '⬜';
-                }
-                if (i < emptySlots - 1) progressBar += ' ';
+        // Empty squares (no spaces between filled and empty)
+        for (let i = 0; i < emptySlots; i++) {
+            if (percentage > 80 && i === 0) {
+                // First empty square shows building energy
+                const energySquares = ['⚡', '🌟', '💫', '✨'];
+                progressBar += energySquares[frame % energySquares.length];
+            } else {
+                progressBar += '⬜';
             }
         }
         
