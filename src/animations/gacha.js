@@ -468,7 +468,7 @@ async function createUltimateCinematicExperience(interaction) {
             await new Promise(resolve => setTimeout(resolve, 250)); // Ultra responsive!
         }
         
-        // PHASE 3: Professional Fake-Out (6 frames, 1.5 seconds)
+        // PHASE 3: Randomized Fake-Out (6 frames, 1.5 seconds)
         for (let frame = 0; frame < 6; frame++) {
             const embed = createFakeOutPhase(frame, rarity);
             await interaction.editReply({ embeds: [embed] });
