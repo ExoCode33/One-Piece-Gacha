@@ -258,7 +258,7 @@ ${energyStatus}
 }
 
 // PHASE 2: Energy Amplification (10 frames, 2.5 seconds)
-function createEnergyAmplification(frame, user) {
+function createEnergyAmplification(frame, user, rarity, devilFruit) {
     const percentage = 15 + Math.floor((frame / 9) * 30); // 15-45%
     const energyStatus = NextGenGachaEngine.createDynamicEnergyStatus(percentage, frame, 'charging');
     const particles = NextGenGachaEngine.createOnePieceParticles(frame + 10, 'energy', 'uncommon');
@@ -284,10 +284,10 @@ ${energyStatus}
 
 *${message}*
 
-⚡ **Devil Fruit Aura:** INTENSIFYING
-🔥 **Sea King's Heart:** AWAKENING  
-🌟 **Grand Line Energy:** SURGING
-💫 **Ocean's Will:** RESPONDING
+⚡ **Devil Fruit Aura:** ${NextGenGachaEngine.getAuraLevel(rarity)}
+🔥 **Sea's Blessing:** ${NextGenGachaEngine.getBlessingLevel(rarity)}
+🌟 **Fruit Resonance:** ${NextGenGachaEngine.getResonanceLevel(rarity)}
+💫 **Type Signature:** ${NextGenGachaEngine.getTypeHint(devilFruit.type)}
         `)
         .setFooter({ text: `💥 Phase: Energy Amplification | Power surge detected!` });
 }
@@ -559,7 +559,7 @@ async function createUltimateCinematicExperience(interaction) {
         
         // PHASE 2: Energy Amplification (10 frames, 2.5 seconds)
         for (let frame = 0; frame < 10; frame++) {
-            const embed = createEnergyAmplification(frame, user);
+            const embed = createEnergyAmplification(frame, user, rarity, devilFruit);
             await interaction.editReply({ embeds: [embed] });
             await new Promise(resolve => setTimeout(resolve, 250)); // Lightning-fast transitions
         }
