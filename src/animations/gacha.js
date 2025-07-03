@@ -1,5 +1,6 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
 const { DevilFruitDatabase } = require('../data/devilfruit');
+const { createCanvas, loadImage } = require('canvas');
 
 // ═══════════════════════════════════════════════════════════════════
 //                    CLEAN PROFESSIONAL ANIMATION SYSTEM
@@ -31,6 +32,252 @@ const CleanEngine = {
         const stream2 = (frame * 31 + intensity * 41) % this.hyperColors.length;
         const combinedIndex = (stream1 + stream2) % this.hyperColors.length;
         return this.hyperColors[combinedIndex];
+    },
+
+    // Epic Canvas Devil Fruit Card Generator
+    async createEpicCanvasFinale(devilFruit, rarity) {
+        const config = DevilFruitDatabase.getRarityConfig(rarity);
+        
+        // Create high-resolution canvas
+        const canvas = createCanvas(800, 600);
+        const ctx = canvas.getContext('2d');
+        
+        // Rarity-based backgrounds and effects
+        const rarityStyles = {
+            omnipotent: {
+                bg: ['#000000', '#4B0082', '#8B00FF', '#9400D3'],
+                glow: '#FF00FF',
+                particles: '#FFFFFF',
+                border: '#FFD700'
+            },
+            mythical: {
+                bg: ['#8B0000', '#DC143C', '#FF4500', '#FF6347'],
+                glow: '#FF0000',
+                particles: '#FFD700',
+                border: '#FF4500'
+            },
+            legendary: {
+                bg: ['#FF8C00', '#FFD700', '#FFA500', '#FFFF00'],
+                glow: '#FFD700',
+                particles: '#FFFFFF',
+                border: '#FFD700'
+            },
+            rare: {
+                bg: ['#4169E1', '#0000FF', '#1E90FF', '#00BFFF'],
+                glow: '#00BFFF',
+                particles: '#FFFFFF',
+                border: '#0000FF'
+            },
+            uncommon: {
+                bg: ['#32CD32', '#00FF00', '#7FFF00', '#ADFF2F'],
+                glow: '#00FF00',
+                particles: '#FFFFFF',
+                border: '#32CD32'
+            },
+            common: {
+                bg: ['#808080', '#A9A9A9', '#C0C0C0', '#D3D3D3'],
+                glow: '#FFFFFF',
+                particles: '#E0E0E0',
+                border: '#808080'
+            }
+        };
+        
+        const style = rarityStyles[rarity] || rarityStyles.common;
+        
+        // Create gradient background based on rarity
+        const gradient = ctx.createRadialGradient(400, 300, 0, 400, 300, 400);
+        gradient.addColorStop(0, style.bg[0]);
+        gradient.addColorStop(0.3, style.bg[1]);
+        gradient.addColorStop(0.6, style.bg[2]);
+        gradient.addColorStop(1, style.bg[3]);
+        
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 800, 600);
+        
+        // Add particle effects
+        this.drawParticleField(ctx, style.particles, rarity);
+        
+        // Draw main Devil Fruit circle with glow effect
+        this.drawGlowingCircle(ctx, 400, 200, 120, style.glow, style.border);
+        
+        // Devil Fruit emoji/icon (large)
+        ctx.font = 'bold 80px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#FFFFFF';
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 3;
+        ctx.strokeText('🍈', 400, 220);
+        ctx.fillText('🍈', 400, 220);
+        
+        // Rarity badge with effects
+        this.drawRarityBadge(ctx, rarity, config, style);
+        
+        // Devil Fruit name with epic styling
+        ctx.font = 'bold 36px Arial';
+        ctx.fillStyle = '#FFFFFF';
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 2;
+        ctx.strokeText(devilFruit.name, 400, 280);
+        ctx.fillText(devilFruit.name, 400, 280);
+        
+        // Type information
+        ctx.font = 'bold 24px Arial';
+        ctx.fillStyle = style.glow;
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 1;
+        ctx.strokeText(`Type: ${devilFruit.type}`, 400, 320);
+        ctx.fillText(`Type: ${devilFruit.type}`, 400, 320);
+        
+        // User information
+        if (devilFruit.user) {
+            ctx.strokeText(`User: ${devilFruit.user}`, 400, 350);
+            ctx.fillText(`User: ${devilFruit.user}`, 400, 350);
+        }
+        
+        // Power description (wrapped text)
+        this.drawWrappedText(ctx, devilFruit.power, 400, 390, 600, 20, '#FFFFFF', '#000000');
+        
+        // Epic border with pulsing effect
+        this.drawEpicBorder(ctx, style.border, rarity);
+        
+        // Rarity watermark
+        ctx.font = 'bold 16px Arial';
+        ctx.fillStyle = style.glow + '80'; // Semi-transparent
+        ctx.textAlign = 'right';
+        ctx.fillText(`${config.name.toUpperCase()} CLASS`, 780, 580);
+        
+        return canvas.toBuffer('image/png');
+    },
+    
+    // Draw particle field based on rarity
+    drawParticleField(ctx, color, rarity) {
+        const particleCount = {
+            omnipotent: 200,
+            mythical: 150,
+            legendary: 100,
+            rare: 70,
+            uncommon: 50,
+            common: 30
+        };
+        
+        const count = particleCount[rarity] || 30;
+        
+        for (let i = 0; i < count; i++) {
+            const x = Math.random() * 800;
+            const y = Math.random() * 600;
+            const size = Math.random() * 3 + 1;
+            
+            ctx.fillStyle = color + Math.floor(Math.random() * 100 + 50).toString(16);
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+    },
+    
+    // Draw glowing circle effect
+    drawGlowingCircle(ctx, x, y, radius, glowColor, borderColor) {
+        // Outer glow
+        const glowGradient = ctx.createRadialGradient(x, y, radius - 20, x, y, radius + 30);
+        glowGradient.addColorStop(0, glowColor + '00');
+        glowGradient.addColorStop(0.5, glowColor + '40');
+        glowGradient.addColorStop(1, glowColor + '00');
+        
+        ctx.fillStyle = glowGradient;
+        ctx.beginPath();
+        ctx.arc(x, y, radius + 30, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        // Main circle
+        ctx.strokeStyle = borderColor;
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, 2 * Math.PI);
+        ctx.stroke();
+    },
+    
+    // Draw rarity badge
+    drawRarityBadge(ctx, rarity, config, style) {
+        const badgeX = 400;
+        const badgeY = 450;
+        
+        // Badge background
+        ctx.fillStyle = style.bg[0] + 'CC';
+        ctx.strokeStyle = style.border;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.roundRect(badgeX - 100, badgeY - 20, 200, 40, 20);
+        ctx.fill();
+        ctx.stroke();
+        
+        // Badge text
+        ctx.font = 'bold 20px Arial';
+        ctx.fillStyle = style.glow;
+        ctx.textAlign = 'center';
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 1;
+        ctx.strokeText(`${config.emoji} ${config.name.toUpperCase()} ${config.emoji}`, badgeX, badgeY + 7);
+        ctx.fillText(`${config.emoji} ${config.name.toUpperCase()} ${config.emoji}`, badgeX, badgeY + 7);
+    },
+    
+    // Draw wrapped text
+    drawWrappedText(ctx, text, x, y, maxWidth, lineHeight, fillColor, strokeColor) {
+        ctx.font = 'bold 18px Arial';
+        ctx.fillStyle = fillColor;
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = 1;
+        ctx.textAlign = 'center';
+        
+        const words = text.split(' ');
+        let line = '';
+        let currentY = y;
+        
+        for (let i = 0; i < words.length; i++) {
+            const testLine = line + words[i] + ' ';
+            const metrics = ctx.measureText(testLine);
+            const testWidth = metrics.width;
+            
+            if (testWidth > maxWidth && i > 0) {
+                ctx.strokeText(line, x, currentY);
+                ctx.fillText(line, x, currentY);
+                line = words[i] + ' ';
+                currentY += lineHeight;
+            } else {
+                line = testLine;
+            }
+        }
+        ctx.strokeText(line, x, currentY);
+        ctx.fillText(line, x, currentY);
+    },
+    
+    // Draw epic border
+    drawEpicBorder(ctx, color, rarity) {
+        const thickness = {
+            omnipotent: 8,
+            mythical: 6,
+            legendary: 5,
+            rare: 4,
+            uncommon: 3,
+            common: 2
+        };
+        
+        ctx.strokeStyle = color;
+        ctx.lineWidth = thickness[rarity] || 2;
+        ctx.strokeRect(10, 10, 780, 580);
+        
+        // Corner decorations for high rarities
+        if (['omnipotent', 'mythical', 'legendary'].includes(rarity)) {
+            ctx.fillStyle = color;
+            const cornerSize = 20;
+            
+            // Top-left
+            ctx.fillRect(10, 10, cornerSize, cornerSize);
+            // Top-right  
+            ctx.fillRect(770, 10, cornerSize, cornerSize);
+            // Bottom-left
+            ctx.fillRect(10, 570, cornerSize, cornerSize);
+            // Bottom-right
+            ctx.fillRect(770, 570, cornerSize, cornerSize);
+        }
     },
 
     // Clean particle effects - no overload
@@ -167,25 +414,24 @@ ${chargingBar}
 
 // PHASE 5: Devil Fruit Revelation (8 frames, 4 seconds)
 function createDevilFruitRevelation(frame, devilFruit, rarity) {
-    const config = DevilFruitDatabase.getRarityConfig(rarity);
     const particles = CleanEngine.createCleanParticles(15);
     
     const revealStages = [
-        "🍈 A Devil Fruit emerges...",
-        `🍈 ${devilFruit.name.substring(0, 20)}...`,
-        `🍈 **${devilFruit.name}**`,
-        `📋 **Type:** ${devilFruit.type}`,
-        `👤 **User:** ${devilFruit.user || 'Unknown'}`,
-        `⚡ **Power:** ${devilFruit.power}`,
-        `💎 **Rarity:** ${rarity.toUpperCase()}`,
-        `✨ **REVELATION COMPLETE!**`
+        "🍈 A Devil Fruit emerges from the mist...",
+        "🌀 The fruit's form becomes clearer...",
+        "✨ Ancient power radiates from within...",
+        "🔮 The Devil Fruit stabilizes...",
+        "💫 Energy patterns are locking in...",
+        "⚡ Power signature finalizing...",
+        "🌟 The revelation is almost complete...",
+        "✨ **DEVIL FRUIT MATERIALIZED!**"
     ];
     
     const currentReveal = revealStages[frame] || revealStages[revealStages.length - 1];
     
     return new EmbedBuilder()
         .setColor(CleanEngine.getHyperColor(frame * 11 + 70, 5))
-        .setTitle(`${config.emoji} **DEVIL FRUIT REVEALED** ${config.emoji}`)
+        .setTitle(`🍈 **DEVIL FRUIT MATERIALIZATION** 🍈`)
         .setDescription(`
 ${particles}
 
@@ -193,21 +439,72 @@ ${particles}
 
 *${currentReveal}*
         `)
-        .setFooter({ text: `${config.emoji} ${config.name} Class Devil Fruit | Revelation Complete!` });
+        .setFooter({ text: `🍈 Materialization Complete | Ready for revelation...` });
 }
 
-// PHASE 6: Epic Finale
-function createEpicFinale(devilFruit, rarity) {
+// PHASE 6: Epic Canvas Finale
+async function createEpicCanvasFinale(devilFruit, rarity) {
+    try {
+        // Generate epic canvas image
+        const canvasBuffer = await CleanEngine.createEpicCanvasFinale(devilFruit, rarity);
+        const attachment = new AttachmentBuilder(canvasBuffer, { name: 'devil-fruit-reveal.png' });
+        
+        const config = DevilFruitDatabase.getRarityConfig(rarity);
+        
+        const rarityMessages = {
+            omnipotent: "🌌 **OMNIPOTENT CLASS ACQUIRED!** Reality itself bends to your will! The multiverse trembles! 🌌",
+            mythical: "🔮 **MYTHICAL CLASS OBTAINED!** Ancient legends come to life! Gods whisper your name! 🔮",
+            legendary: "⭐ **LEGENDARY CLASS DISCOVERED!** Epic power courses through your being! Heroes are born! ⭐",
+            rare: "💎 **RARE CLASS SECURED!** Impressive abilities flow within you! Adventure awaits! 💎",
+            uncommon: "🌟 **UNCOMMON CLASS UNLOCKED!** Notable power gained! Your journey begins! 🌟",
+            common: "⚪ **DEVIL FRUIT ACQUIRED!** Every legend starts with a single step! Potential awaits! ⚪"
+        };
+        
+        const components = [
+            new ActionRowBuilder()
+                .addComponents(
+                    new ButtonBuilder()
+                        .setCustomId('hunt_again')
+                        .setLabel('🍈 Hunt Again!')
+                        .setStyle(ButtonStyle.Primary),
+                    new ButtonBuilder()
+                        .setCustomId('view_collection')
+                        .setLabel('📚 My Collection')
+                        .setStyle(ButtonStyle.Secondary)
+                )
+        ];
+        
+        return {
+            embeds: [new EmbedBuilder()
+                .setColor(config.color)
+                .setTitle(`${config.emoji} **DEVIL FRUIT REVEALED!** ${config.emoji}`)
+                .setDescription(`
+${rarityMessages[rarity]}
+
+**🍈 Name:** ${devilFruit.name}
+**📋 Type:** ${devilFruit.type}
+**👤 User:** ${devilFruit.user || 'Unknown'}
+**⚡ Power:** ${devilFruit.power}
+**💎 Class:** ${config.name}
+**🌟 Level:** ${devilFruit.powerLevel || 'Mysterious'}
+
+*${devilFruit.description || 'A mysterious Devil Fruit with incredible potential...'}*
+                `)
+                .setImage('attachment://devil-fruit-reveal.png')
+                .setFooter({ text: `${config.emoji} Congratulations! You discovered a ${config.name} class Devil Fruit! ${config.emoji}` })],
+            files: [attachment],
+            components
+        };
+    } catch (error) {
+        console.error('Canvas generation error:', error);
+        // Fallback to text-only finale
+        return createTextFallbackFinale(devilFruit, rarity);
+    }
+}
+
+// Fallback text finale if Canvas fails
+function createTextFallbackFinale(devilFruit, rarity) {
     const config = DevilFruitDatabase.getRarityConfig(rarity);
-    
-    const rarityMessages = {
-        omnipotent: "🌌 **OMNIPOTENT CLASS!** Reality bends to your will! 🌌",
-        mythical: "🔮 **MYTHICAL CLASS!** Ancient legends come alive! 🔮",
-        legendary: "⭐ **LEGENDARY CLASS!** Epic power flows through you! ⭐",
-        rare: "💎 **RARE CLASS!** Impressive abilities unlocked! 💎",
-        uncommon: "🌟 **UNCOMMON CLASS!** Notable power gained! 🌟",
-        common: "⚪ **DEVIL FRUIT ACQUIRED!** Your journey begins! ⚪"
-    };
     
     const components = [
         new ActionRowBuilder()
@@ -228,20 +525,15 @@ function createEpicFinale(devilFruit, rarity) {
             .setColor(config.color)
             .setTitle(`${config.emoji} **${devilFruit.name}** ${config.emoji}`)
             .setDescription(`
-${CleanEngine.createCleanParticles(20)}
-
-${rarityMessages[rarity]}
-
 **🍈 Name:** ${devilFruit.name}
 **📋 Type:** ${devilFruit.type}
 **👤 User:** ${devilFruit.user || 'Unknown'}
 **⚡ Power:** ${devilFruit.power}
 **💎 Class:** ${config.name}
-**🌟 Level:** ${devilFruit.powerLevel || 'Mysterious'}
 
 *${devilFruit.description || 'A mysterious Devil Fruit with incredible potential...'}*
             `)
-            .setFooter({ text: `${config.emoji} Congratulations! You discovered a ${config.name} class Devil Fruit! ${config.emoji}` })],
+            .setFooter({ text: `${config.emoji} ${config.name} class Devil Fruit discovered! ${config.emoji}` })],
         components
     };
 }
@@ -290,8 +582,8 @@ async function createUltimateCinematicExperience(interaction) {
             await new Promise(resolve => setTimeout(resolve, 500)); // Slower for dramatic reveal
         }
         
-        // PHASE 6: Epic Finale (permanent display)
-        const finale = createEpicFinale(devilFruit, rarity);
+        // PHASE 6: Epic Canvas Finale (permanent display)
+        const finale = await createEpicCanvasFinale(devilFruit, rarity);
         await interaction.editReply(finale);
         
         console.log(`🎊 CLEAN SUCCESS: ${devilFruit.name} (${rarity}) discovered by ${interaction.user.username}!`);
