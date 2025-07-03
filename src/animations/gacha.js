@@ -60,10 +60,10 @@ The seas whisper of legendary treasures...
         let successfulFrames = 0;
         let totalAttempts = 0;
 
-        // Slower animation with breathing room for Discord API
+        // Slower animation to prevent freezing
         const totalFrames = 20;
         const maxRetries = 2;
-        const baseDelay = 700; // Increased from 400ms to 700ms
+        const baseDelay = 900; // Increased from 700ms to 900ms
         
         for (let frame = 0; frame < totalFrames; frame++) {
             let success = false;
@@ -202,8 +202,8 @@ ${particles}
                 
                 await Promise.race([updatePromise, timeoutPromise]);
                 
-                // Slightly faster timing for suspense
-                await new Promise(resolve => setTimeout(resolve, 500));
+                // Slightly slower timing for suspense to prevent freezing
+                await new Promise(resolve => setTimeout(resolve, 800));
                 
             } catch (error) {
                 console.error(`Suspense frame ${suspenseFrame} error:`, error.message);
