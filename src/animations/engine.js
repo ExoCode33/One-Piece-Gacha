@@ -107,7 +107,7 @@ const NextGenGachaEngine = {
         return this.hyperSpectrumColors[combinedIndex];
     },
 
-    // PROGRESSION BAR SYSTEM - One square at a time progression
+    // PROGRESSION BAR SYSTEM - Colors shift right, newest square (leftmost) matches embed
     createDynamicEnergyStatus(percentage, frame, phase = 'charging', currentEmbedColor = '#0099FF') {
         const phaseDescriptors = {
             scanning: ['AWAKENING', 'STIRRING', 'CALLING', 'REACHING', 'SUMMONING'],
@@ -120,32 +120,77 @@ const NextGenGachaEngine = {
         const descriptorIndex = Math.floor(percentage / 15);
         const energyLevel = descriptors[Math.min(descriptorIndex, descriptors.length - 1)];
         
-        // CONSISTENT WIDTH - Always 20 squares, fill one by one
+        // CONSISTENT WIDTH - Always 20 squares
         const maxSlots = 20;
-        // More precise calculation for one-by-one filling
-        const filledSlots = Math.round((percentage / 100) * maxSlots);
         
-        // Rainbow colors that cycle through
-        const colors = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪'];
+        // Check if we're in suspense phase (100% with continued rainbow movement)
+        const isSuspensePhase = percentage >= 100 && frame >= 20;
         
-        // Build progress bar with moving rainbow
-        let progressBar = '';
-        
-        // Filled squares with rainbow that shifts every frame
-        for (let i = 0; i < filledSlots; i++) {
-            // Rainbow shifts: frame 0 starts with red, frame 1 starts with orange, etc.
-            const colorIndex = (i + frame) % colors.length;
-            progressBar += colors[colorIndex];
-            if (i < filledSlots - 1) progressBar += ' ';
+        let filledSlots;
+        if (isSuspensePhase) {
+            // During suspense, keep all 20 squares filled but continue rainbow movement
+            filledSlots = maxSlots;
+        } else {
+            // Normal progression - fill one by one
+            filledSlots = Math.round((percentage / 100) * maxSlots);
         }
         
-        // Empty squares
-        const emptySlots = maxSlots - filledSlots;
-        if (emptySlots > 0) {
-            if (filledSlots > 0) progressBar += ' ';
-            for (let i = 0; i < emptySlots; i++) {
-                progressBar += '⬜';
-                if (i < emptySlots - 1) progressBar += ' ';
+        // Map embed color to square color
+        const embedColorMap = {
+            '#FF0000': '🟥', '#E74C3C': '🟥', '#C0392B': '🟥',
+            '#FF6000': '🟧', '#E67E22': '🟧', '#D35400': '🟧', '#F39C12': '🟧',
+            '#FFCC00': '🟨', '#FFD700': '🟨', '#F1C40F': '🟨', '#F4D03F': '🟨',
+            '#00FF00': '🟩', '#2ECC71': '🟩', '#27AE60': '🟩', '#58D68D': '🟩',
+            '#0080FF': '🟦', '#3498DB': '🟦', '#2980B9': '🟦', '#5DADE2': '🟦', '#0099FF': '🟦',
+            '#8000FF': '🟪', '#9B59B6': '🟪', '#8E44AD': '🟪', '#BB8FCE': '🟪'
+        };
+        
+        // Get embed color or default to blue
+        const embedSquareColor = embedColorMap[currentEmbedColor] || '🟦';
+        
+        // Rainbow colors for the effect
+        const rainbowColors = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪'];
+        
+        // Build progress bar
+        let progressBar = '';
+        
+        if (isSuspensePhase) {
+            // SUSPENSE PHASE: Full rainbow continues moving, newest square still matches embed
+            for (let i = 0; i < filledSlots; i++) {
+                if (i === 0) {
+                    // Newest square (leftmost) always matches embed color
+                    progressBar += embedSquareColor;
+                } else {
+                    // Continue rainbow movement - older colors get pushed right and eventually disappear
+                    const colorIndex = (i - 1 + frame) % rainbowColors.length;
+                    progressBar += rainbowColors[colorIndex];
+                }
+                
+                if (i < filledSlots - 1) progressBar += ' ';
+            }
+        } else {
+            // NORMAL PHASE: Fill squares one by one with shifting colors
+            for (let i = 0; i < filledSlots; i++) {
+                if (i === 0) {
+                    // Newest square (leftmost) always matches embed color
+                    progressBar += embedSquareColor;
+                } else {
+                    // Existing colors shift right
+                    const colorIndex = (i - 1 + frame) % rainbowColors.length;
+                    progressBar += rainbowColors[colorIndex];
+                }
+                
+                if (i < filledSlots - 1) progressBar += ' ';
+            }
+            
+            // Empty squares for normal phase
+            const emptySlots = maxSlots - filledSlots;
+            if (emptySlots > 0) {
+                if (filledSlots > 0) progressBar += ' ';
+                for (let i = 0; i < emptySlots; i++) {
+                    progressBar += '⬜';
+                    if (i < emptySlots - 1) progressBar += ' ';
+                }
             }
         }
         
