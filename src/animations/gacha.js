@@ -1,354 +1,341 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const { DevilFruitDatabase } = require('../data/devilfruit');
-const { NextGenGachaEngine, setDebugMode, setForcedRarity, DEBUG_CONFIG, getTestRarity } = require('./engine');
-const { IndicatorsSystem } = require('./indicators');
-const { ParticlesSystem } = require('./particles');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
-// PHASE 1: Mystical Initialization (8 frames, 2 seconds)
-function createMysticalInitialization(frame, user, rarity, devilFruit) {
-    const percentage = Math.floor((frame / 7) * 15); // 0-15%
-    const color = NextGenGachaEngine.getHyperSpectrumColor(frame * 3, 1, user?.id?.slice(-2) || 0);
-    const energyStatus = NextGenGachaEngine.createDynamicEnergyStatus(percentage, frame, 'scanning', color);
-    const particles = ParticlesSystem.createOnePieceParticles(frame + 4, 'ocean', 'common');
-    
-    const mysticalMessages = [
-        `)
-        .setFooter({ text: `🎭 Final Revelation | The Grand Line has chosen!` });
-}
+// Try to import the real animation, fall back to mock if not available
+let createUltimateCinematicExperience;
+try {
+    createUltimateCinematicExperience = require('../animations/gacha').createUltimateCinematicExperience;
+} catch (error) {
+    console.log('⚠️ Animation file not found, using mock animation');
+    // Mock animation function
+    createUltimateCinematicExperience = async function(interaction) {
+        const mockResult = {
+            devilFruit: {
+                id: 'mock1',
+                name: 'Gomu Gomu no Mi',
+                type: 'Paramecia',
+                user: 'Monkey D. Luffy',
+                power: 'Rubber Body',
+                powerLevel: 850,
+                description: 'Turns the user into a rubber human.'
+            },
+            rarity: 'legendary',
+            user: interaction.user
+        };
 
-// PHASE 6: Slow Typewriter Revelation (10 frames, 5 seconds) - COLORS FROZEN
-function createSlowTypewriterReveal(frame, devilFruit, rarity, user) {
-    const config = DevilFruitDatabase.getRarityConfig(rarity);
-    const particles = ParticlesSystem.createOnePieceParticles(12, 'celebration', rarity);
-    
-    // FREEZE COLOR - use the rarity's specific color throughout reveal
-    const frozenColor = config.color;
-    
-    // Typewriter effect - slowly reveal information
-    const revealStages = [
-        "🍈 A Devil Fruit emerges...",
-        "🍈 A Devil Fruit emerges...\n\n**Name:** ...",
-        `🍈 A Devil Fruit emerges...\n\n**Name:** ${devilFruit.name}`,
-        `🍈 A Devil Fruit emerges...\n\n**Name:** ${devilFruit.name}\n**Type:** ...`,
-        `🍈 A Devil Fruit emerges...\n\n**Name:** ${devilFruit.name}\n**Type:** ${devilFruit.type}`,
-        `🍈 A Devil Fruit emerges...\n\n**Name:** ${devilFruit.name}\n**Type:** ${devilFruit.type}\n**User:** ...`,
-        `🍈 A Devil Fruit emerges...\n\n**Name:** ${devilFruit.name}\n**Type:** ${devilFruit.type}\n**User:** ${devilFruit.user || 'Unknown'}`,
-        `🍈 A Devil Fruit emerges...\n\n**Name:** ${devilFruit.name}\n**Type:** ${devilFruit.type}\n**User:** ${devilFruit.user || 'Unknown'}\n**Power:** ...`,
-        `🍈 A Devil Fruit emerges...\n\n**Name:** ${devilFruit.name}\n**Type:** ${devilFruit.type}\n**User:** ${devilFruit.user || 'Unknown'}\n**Power:** ${devilFruit.power}`,
-        `🍈 A Devil Fruit emerges...\n\n**Name:** ${devilFruit.name}\n**Type:** ${devilFruit.type}\n**User:** ${devilFruit.user || 'Unknown'}\n**Power:** ${devilFruit.power}\n**Class:** ${config.name.toUpperCase()}`
-    ];
-    
-    const currentReveal = revealStages[frame] || revealStages[revealStages.length - 1];
-    
-    return new EmbedBuilder()
-        .setColor(frozenColor) // FROZEN COLOR - no more cycling
-        .setTitle(`${config.emoji} **DEVIL FRUIT REVELATION** ${config.emoji}`)
-        .setDescription(`
-${particles}
-
-${currentReveal}
-        `)
-        .setFooter({ text: `${config.emoji} Revealing... | ${config.name} Class` });
-}
-
-// PHASE 7: Epic Professional Finale
-function createEpicProfessionalFinale(devilFruit, rarity, user) {
-    const config = DevilFruitDatabase.getRarityConfig(rarity);
-    
-    const ultimateMessages = {
-        omnipotent: "🌌 **OMNIPOTENT CLASS ACHIEVED!** Reality itself kneels before your power! The multiverse trembles in recognition of your transcendent authority! 🌌",
-        mythical: "🔮 **MYTHICAL CLASS OBTAINED!** Ancient legends spring to eternal life! The gods themselves whisper your name across the cosmos in reverent awe! 🔮",
-        legendary: "⭐ **LEGENDARY CLASS DISCOVERED!** Epic power flows through every fiber of your being! Heroes are forged in moments like these! ⭐",
-        rare: "💎 **RARE CLASS SECURED!** Impressive abilities now surge within your soul! Grand adventures await your commanding presence! 💎",
-        uncommon: "🌟 **UNCOMMON CLASS UNLOCKED!** Notable power has been eternally gained! Your legendary journey truly begins this moment! 🌟",
-        common: "⚪ **DEVIL FRUIT ACQUIRED!** Every transcendent legend starts with a single courageous step! Limitless potential awaits your discovery! ⚪"
-    };
-    
-    // Special user recognition
-    const isSpecialUser = user?.id?.endsWith('0') || user?.id?.endsWith('7');
-    const specialMessage = isSpecialUser ? `\n\n🌟 **SPECIAL DESTINY RECOGNIZED!** The Grand Line has chosen you for greatness! 🌟` : '';
-    
-    const components = [
-        new ActionRowBuilder()
-            .addComponents(
-                new ButtonBuilder()
-                    .setCustomId('hunt_again')
-                    .setLabel('🍈 Hunt Again!')
-                    .setStyle(ButtonStyle.Primary),
-                new ButtonBuilder()
-                    .setCustomId('view_collection')
-                    .setLabel('📚 My Collection')
-                    .setStyle(ButtonStyle.Secondary),
-                new ButtonBuilder()
-                    .setCustomId('share_discovery')
-                    .setLabel('📢 Share Discovery!')
-                    .setStyle(ButtonStyle.Success)
-            )
-    ];
-    
-    return {
-        embeds: [new EmbedBuilder()
-            .setColor(config.color)
-            .setTitle(`${config.emoji} **DEVIL FRUIT MASTERY ACHIEVED!** ${config.emoji}`)
+        const embed = new EmbedBuilder()
+            .setTitle('🍈 **DEVIL FRUIT MASTERY ACHIEVED!** 🍈')
             .setDescription(`
-${ParticlesSystem.createOnePieceParticles(12, 'celebration', rarity)}
+🎉 **LEGENDARY CLASS DISCOVERED!**
 
-${ultimateMessages[rarity]}${specialMessage}
+**🍈 Devil Fruit:** ${mockResult.devilFruit.name}
+**📋 Type:** ${mockResult.devilFruit.type}
+**👤 User:** ${mockResult.devilFruit.user}
+**⚡ Power:** ${mockResult.devilFruit.power}
+**💎 Class:** Legendary
+**🌟 Level:** ${mockResult.devilFruit.powerLevel}
 
-**🍈 Devil Fruit:** ${devilFruit.name}
-**📋 Type:** ${devilFruit.type}
-**👤 User:** ${devilFruit.user || 'Unknown'}
-**⚡ Power:** ${devilFruit.power}
-**💎 Class:** ${config.name}
-**🌟 Level:** ${devilFruit.powerLevel || 'Mysterious'}
+*${mockResult.devilFruit.description}*
 
-*${devilFruit.description || 'A mysterious Devil Fruit with incredible potential...'}*
+**Note:** Using mock animation - create animations/gacha.js for full experience!
             `)
-            .setFooter({ text: `${config.emoji} Congratulations, Master! You've achieved ${config.name} class mastery! May the Grand Line guide your legendary adventures! ${config.emoji}` })],
-        components
+            .setColor('#FFD700')
+            .setFooter({ text: 'Mock Devil Fruit System | Animation files needed' });
+
+        const components = [
+            new ActionRowBuilder()
+                .addComponents(
+                    new ButtonBuilder()
+                        .setCustomId('hunt_again')
+                        .setLabel('🍈 Hunt Again!')
+                        .setStyle(ButtonStyle.Primary),
+                    new ButtonBuilder()
+                        .setCustomId('view_collection')
+                        .setLabel('📚 My Collection')
+                        .setStyle(ButtonStyle.Secondary)
+                )
+        ];
+
+        await interaction.editReply({ embeds: [embed], components });
+        return mockResult;
     };
 }
 
-// MAIN NEXT-GENERATION ANIMATION CONTROLLER
-async function createUltimateCinematicExperience(interaction) {
+// User cooldowns and statistics
+const userCooldowns = new Map();
+const userStats = new Map();
+
+// Cooldown times (in milliseconds)
+const COOLDOWNS = {
+    single: 5000,    // 5 seconds
+    multi: 30000,    // 30 seconds
+    premium: 60000   // 60 seconds
+};
+
+module.exports = {
+    data: new SlashCommandBuilder()
+        .setName('pull')
+        .setDescription('Hunt for Devil Fruits in the Grand Line!')
+        .addStringOption(option =>
+            option.setName('type')
+                .setDescription('Choose your hunt type')
+                .setRequired(false)
+                .addChoices(
+                    { name: '🍈 Single Hunt (5s cooldown)', value: 'single' },
+                    { name: '🍈x10 Multi Hunt (30s cooldown)', value: 'multi' },
+                    { name: '💎 Premium Hunt (60s cooldown, better rates)', value: 'premium' }
+                )),
+
+    async execute(interaction) {
+        try {
+            const huntType = interaction.options.getString('type') || 'single';
+            const userId = interaction.user.id;
+            const userName = interaction.user.username;
+
+            // Check cooldowns
+            const now = Date.now();
+            const cooldownKey = `${userId}_${huntType}`;
+            
+            if (userCooldowns.has(cooldownKey)) {
+                const cooldownEnd = userCooldowns.get(cooldownKey);
+                if (now < cooldownEnd) {
+                    const timeLeft = Math.ceil((cooldownEnd - now) / 1000);
+                    return await interaction.reply({
+                        content: `⏰ **Cooldown Active!** Wait **${timeLeft}s** before your next ${huntType} hunt!`,
+                        ephemeral: true
+                    });
+                }
+            }
+
+            // Set cooldown
+            userCooldowns.set(cooldownKey, now + COOLDOWNS[huntType]);
+
+            // Initialize user stats if needed
+            if (!userStats.has(userId)) {
+                userStats.set(userId, {
+                    totalHunts: 0,
+                    devilFruits: {},
+                    rarityCount: { common: 0, uncommon: 0, rare: 0, legendary: 0, mythical: 0, omnipotent: 0 }
+                });
+            }
+
+            const stats = userStats.get(userId);
+            stats.totalHunts++;
+
+            console.log(`🎮 ${userName} initiated ${huntType} Devil Fruit hunt`);
+
+            // Handle different hunt types
+            switch (huntType) {
+                case 'single':
+                    await handleSingleHunt(interaction);
+                    break;
+                case 'multi':
+                    await handleMultiHunt(interaction);
+                    break;
+                case 'premium':
+                    await handlePremiumHunt(interaction);
+                    break;
+                default:
+                    await handleSingleHunt(interaction);
+            }
+
+        } catch (error) {
+            console.error('🚨 Pull Command Error:', error);
+            const errorEmbed = new EmbedBuilder()
+                .setTitle('⚠️ Hunt Failed!')
+                .setDescription('The Grand Line\'s mysteries proved too powerful! Try again when the seas calm.')
+                .setColor('#FF4500')
+                .setFooter({ text: 'Devil Fruit Hunt System | Please try again' });
+            
+            try {
+                if (interaction.replied || interaction.deferred) {
+                    await interaction.followUp({ embeds: [errorEmbed], ephemeral: true });
+                } else {
+                    await interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+                }
+            } catch (replyError) {
+                console.error('Failed to send error message:', replyError);
+            }
+        }
+    }
+};
+
+// Single hunt with full cinematic experience
+async function handleSingleHunt(interaction) {
     try {
-        // Pre-determine results for consistent psychological optimization
-        const rarity = getTestRarity(); // Use debug-aware rarity calculation
-        const devilFruit = DevilFruitDatabase.getRandomDevilFruit(rarity);
-        const user = interaction.user;
-        
-        console.log(`🎭 NEXT-GEN GACHA: ${devilFruit.name} (${rarity}) for ${user.username} (ID: ${user.id})${DEBUG_CONFIG.enabled ? ' [DEBUG MODE]' : ''}`);
-        
-        // PHASE 1: Mystical Initialization (8 frames, 2 seconds)
-        for (let frame = 0; frame < 8; frame++) {
-            const embed = createMysticalInitialization(frame, user, rarity, devilFruit);
-            await interaction.editReply({ embeds: [embed] });
-            await new Promise(resolve => setTimeout(resolve, 250)); // Ultra-fast color cycling
+        // Defer reply for long animation
+        await interaction.deferReply();
+
+        // Start the ultimate cinematic experience
+        const result = await createUltimateCinematicExperience(interaction);
+
+        // Update user statistics
+        const userId = interaction.user.id;
+        const stats = userStats.get(userId);
+        if (stats && result) {
+            stats.rarityCount[result.rarity]++;
+            if (!stats.devilFruits[result.devilFruit.id]) {
+                stats.devilFruits[result.devilFruit.id] = {
+                    ...result.devilFruit,
+                    obtainedAt: new Date(),
+                    timesObtained: 1
+                };
+            } else {
+                stats.devilFruits[result.devilFruit.id].timesObtained++;
+            }
         }
-        
-        // PHASE 2: Energy Amplification (10 frames, 2.5 seconds)
-        for (let frame = 0; frame < 10; frame++) {
-            const embed = createEnergyAmplification(frame, user, rarity, devilFruit);
-            await interaction.editReply({ embeds: [embed] });
-            await new Promise(resolve => setTimeout(resolve, 250)); // Lightning-fast transitions
-        }
-        
-        // PHASE 3: Advanced Fake-Out Sequence (8 frames, 2 seconds)
-        for (let frame = 0; frame < 8; frame++) {
-            const embed = createAdvancedFakeOut(frame, rarity, user, devilFruit);
-            await interaction.editReply({ embeds: [embed] });
-            await new Promise(resolve => setTimeout(resolve, 250)); // Dramatic tension building
-        }
-        
-        // PHASE 4: Quantum Materialization (8 frames, 2 seconds)
-        for (let frame = 0; frame < 8; frame++) {
-            const embed = createQuantumMaterialization(frame, user, rarity, devilFruit);
-            await interaction.editReply({ embeds: [embed] });
-            await new Promise(resolve => setTimeout(resolve, 250)); // Building to climax
-        }
-        
-        // PHASE 5: Ultimate Revelation (10 frames, 2.5 seconds)
-        for (let frame = 0; frame < 10; frame++) {
-            const embed = createUltimateRevelation(frame, user, rarity, devilFruit);
-            await interaction.editReply({ embeds: [embed] });
-            await new Promise(resolve => setTimeout(resolve, 250)); // Climactic revelation
-        }
-        
-        // PHASE 6: Slow Typewriter Revelation (10 frames, 5 seconds)
-        for (let frame = 0; frame < 10; frame++) {
-            const embed = createSlowTypewriterReveal(frame, devilFruit, rarity, user);
-            await interaction.editReply({ embeds: [embed] });
-            await new Promise(resolve => setTimeout(resolve, 500)); // Slower for typewriter effect
-        }
-        
-        // PHASE 7: Epic Professional Finale (permanent display)
-        const finale = createEpicProfessionalFinale(devilFruit, rarity, user);
-        await interaction.editReply(finale);
-        
-        console.log(`🎊 NEXT-GEN SUCCESS: ${devilFruit.name} (${rarity}) mastered by ${user.username}! Power level: ${devilFruit.powerLevel || 'Transcendent'}`);
-        
-        return { devilFruit, rarity, user };
-        
+
+        console.log(`🎊 Single hunt success: ${result.devilFruit.name} (${result.rarity}) for ${interaction.user.username}`);
+
     } catch (error) {
-        console.error('🚨 Next-Gen Animation Error:', error);
+        console.error('Single hunt error:', error);
         const errorEmbed = new EmbedBuilder()
-            .setTitle('⚠️ The Cosmic Forces Resist!')
-            .setDescription('The Devil Fruit\'s transcendent power overwhelmed the dimensional scanning matrix! The multiverse\'s mysteries remain hidden... for now. The Grand Line\'s greatest secrets require patience.')
+            .setTitle('⚠️ The Sea Monsters Interfered!')
+            .setDescription('Your Devil Fruit hunt was disrupted by powerful sea creatures! The Grand Line\'s treasures remain hidden for now.')
             .setColor('#FF4500')
-            .setFooter({ text: 'Next-Generation Gacha System | Cosmic interference detected - please attempt another transcendent hunt' });
+            .setFooter({ text: 'Try again when the waters are calmer...' });
         
         await interaction.editReply({ embeds: [errorEmbed] });
         throw error;
     }
 }
 
-module.exports = {
-    createUltimateCinematicExperience,
-    // Export debug functions for /admin command
-    setDebugMode,
-    setForcedRarity,
-    DEBUG_CONFIG
-};"🔍 Scanning the Grand Line for Devil Fruits...",
-        "🌊 The ocean's power stirs beneath the waves...",
-        "⚡ A Devil Fruit's presence grows stronger...",
-        "🔮 The sea's will guides us to treasure..."
-    ];
-    
-    const message = mysticalMessages[Math.floor(frame / 2)] || mysticalMessages[0];
-    const indicators = IndicatorsSystem.getChangingIndicators(frame, rarity, devilFruit.type);
-    
-    return new EmbedBuilder()
-        .setColor(color)
-        .setTitle('🔮 **DEVIL FRUIT HUNT BEGINS** 🔮')
-        .setDescription(`
-${particles}
+// Multi hunt (10x pulls with summary)
+async function handleMultiHunt(interaction) {
+    try {
+        await interaction.deferReply();
 
-${energyStatus}
+        // Mock multi hunt
+        const mockEmbed = new EmbedBuilder()
+            .setTitle('🍈x10 **MULTI HUNT SYSTEM LOADING** 🍈x10')
+            .setDescription('🚧 Multi Hunt is currently being implemented!\n\n**Note:** Animation files need to be created first.')
+            .setColor('#3498DB')
+            .setFooter({ text: 'Multi Hunt System | Under Development' });
 
-*${message}*
+        await interaction.editReply({ embeds: [mockEmbed] });
 
-⚡ **Devil Fruit Aura:** ${indicators.aura}
-🔥 **Sea's Blessing:** ${indicators.blessing}
-💫 **Type Signature:** ${indicators.type}
-        `)
-        .setFooter({ text: `🔮 Phase: Devil Fruit Hunt | Searching the Grand Line...` });
+        console.log(`🎊 Multi hunt placeholder for ${interaction.user.username}`);
+
+    } catch (error) {
+        console.error('Multi hunt error:', error);
+        throw error;
+    }
 }
 
-// PHASE 2: Energy Amplification (10 frames, 2.5 seconds)
-function createEnergyAmplification(frame, user, rarity, devilFruit) {
-    const percentage = 15 + Math.floor((frame / 9) * 30); // 15-45%
-    const color = NextGenGachaEngine.getHyperSpectrumColor(frame * 5 + 20, 2, user?.id?.slice(-2) || 0);
-    const energyStatus = NextGenGachaEngine.createDynamicEnergyStatus(percentage, frame, 'charging', color);
-    const particles = ParticlesSystem.createOnePieceParticles(frame + 10, 'energy', 'uncommon');
-    
-    const amplificationMessages = [
-        "💥 The sea's power is building rapidly!",
-        "🔥 Devil Fruit energy growing stronger!",
-        "⚡ The Grand Line responds to our call!",
-        "✨ Ocean currents swirl with hidden power!",
-        "🌟 A Devil Fruit draws near!"
-    ];
-    
-    const message = amplificationMessages[Math.floor(frame / 2)] || amplificationMessages[0];
-    const indicators = IndicatorsSystem.getChangingIndicators(frame, rarity, devilFruit.type);
-    
-    return new EmbedBuilder()
-        .setColor(color)
-        .setTitle('💥 **DEVIL FRUIT POWER RISING** 💥')
-        .setDescription(`
-${particles}
+// Show detailed multi-hunt results
+async function showDetailedResults(interaction) {
+    const detailsEmbed = new EmbedBuilder()
+        .setTitle('📋 **Detailed Multi-Hunt Results**')
+        .setDescription('🚧 Detailed results feature coming soon! For now, check your collection to see all acquired fruits.')
+        .setColor('#9B59B6')
+        .setFooter({ text: 'Feature in development...' });
 
-${energyStatus}
-
-*${message}*
-
-⚡ **Devil Fruit Aura:** ${indicators.aura}
-🔥 **Sea's Blessing:** ${indicators.blessing}
-💫 **Type Signature:** ${indicators.type}
-        `)
-        .setFooter({ text: `💥 Phase: Power Rising | Devil Fruit energy building!` });
+    await interaction.reply({ embeds: [detailsEmbed], ephemeral: true });
 }
 
-// PHASE 3: Advanced Fake-Out Sequence (8 frames, 2 seconds)
-function createAdvancedFakeOut(frame, actualRarity, user, devilFruit) {
-    const percentage = 45 + Math.floor((frame / 7) * 25); // 45-70%
-    const color = NextGenGachaEngine.getHyperSpectrumColor(frame * 7 + 40, 3, user?.id?.slice(-2) || 0);
-    const energyStatus = NextGenGachaEngine.createDynamicEnergyStatus(percentage, frame, 'critical', color);
-    const particles = ParticlesSystem.createOnePieceParticles(frame + 15, 'grandline', 'rare');
-    
-    const indicators = IndicatorsSystem.getChangingIndicators(frame, actualRarity, devilFruit.type);
-    
-    return new EmbedBuilder()
-        .setColor(color)
-        .setTitle('🌟 **DEVIL FRUIT APPROACHING** 🌟')
-        .setDescription(`
-${particles}
+// Button interaction handler
+async function handleButtonInteractions(interaction) {
+    try {
+        const { customId, user } = interaction;
 
-${energyStatus}
+        switch (customId) {
+            case 'hunt_again':
+                await interaction.deferUpdate();
+                // Re-run single hunt
+                await handleSingleHunt(interaction);
+                break;
 
-*🎯 A Devil Fruit's spirit awakens from the ocean depths...*
+            case 'view_collection':
+                await showUserCollection(interaction);
+                break;
 
-⚡ **Devil Fruit Aura:** ${indicators.aura}
-🔥 **Sea's Blessing:** ${indicators.blessing}
-💫 **Type Signature:** ${indicators.type}
-        `)
-        .setFooter({ text: `🌟 Phase: Devil Fruit Approaching | The sea chooses!` });
+            case 'share_discovery':
+                await shareDiscovery(interaction);
+                break;
+
+            case 'detailed_results':
+                await showDetailedResults(interaction);
+                break;
+
+            default:
+                await interaction.reply({
+                    content: '❓ Unknown button action!',
+                    ephemeral: true
+                });
+        }
+
+    } catch (error) {
+        console.error('Button interaction error:', error);
+        await interaction.reply({
+            content: '❌ Button action failed!',
+            ephemeral: true
+        });
+    }
 }
 
-// PHASE 4: Quantum Materialization (8 frames, 2 seconds)
-function createQuantumMaterialization(frame, user, rarity, devilFruit) {
-    const percentage = 70 + Math.floor((frame / 7) * 25); // 70-95%
-    const color = NextGenGachaEngine.getHyperSpectrumColor(frame * 9 + 80, 4, user?.id?.slice(-2) || 0);
-    const energyStatus = NextGenGachaEngine.createDynamicEnergyStatus(percentage, frame, 'materializing', color);
-    const particles = ParticlesSystem.createOnePieceParticles(frame + 22, 'grandline', 'legendary');
+// Show user's Devil Fruit collection
+async function showUserCollection(interaction) {
+    const userId = interaction.user.id;
+    const stats = userStats.get(userId);
+
+    if (!stats || Object.keys(stats.devilFruits).length === 0) {
+        const emptyEmbed = new EmbedBuilder()
+            .setTitle('📚 **Your Devil Fruit Collection**')
+            .setDescription('🍈 Your collection is empty! Start hunting to collect Devil Fruits!')
+            .setColor('#95A5A6')
+            .setFooter({ text: 'Use /pull to start your Devil Fruit journey!' });
+
+        return await interaction.reply({ embeds: [emptyEmbed], ephemeral: true });
+    }
+
+    // Collection summary
+    const totalFruits = Object.keys(stats.devilFruits).length;
+    const totalHunts = stats.totalHunts;
     
-    const materializationMessages = [
-        "✨ The Devil Fruit begins to take form...",
-        "🍈 Ocean currents shape the fruit's power...",
-        "💎 The fruit's true nature becomes clear...",
-        "🌟 A Devil Fruit emerges from the sea...",
-        "⭐ The ocean's gift is almost ready..."
-    ];
-    
-    const message = materializationMessages[Math.floor(frame / 2)] || materializationMessages[0];
-    const indicators = IndicatorsSystem.getChangingIndicators(frame, rarity, devilFruit.type);
-    
-    return new EmbedBuilder()
-        .setColor(color)
-        .setTitle('✨ **DEVIL FRUIT FORMING** ✨')
+    let rarityBreakdown = '';
+    Object.keys(stats.rarityCount).reverse().forEach(rarity => {
+        if (stats.rarityCount[rarity] > 0) {
+            const rarityNames = {
+                omnipotent: { emoji: '🌈', name: 'Omnipotent' },
+                mythical: { emoji: '🟥', name: 'Mythical' },
+                legendary: { emoji: '🟨', name: 'Legendary' },
+                rare: { emoji: '🟦', name: 'Rare' },
+                uncommon: { emoji: '🟩', name: 'Uncommon' },
+                common: { emoji: '⬜', name: 'Common' }
+            };
+            const config = rarityNames[rarity] || { emoji: '❓', name: rarity };
+            rarityBreakdown += `${config.emoji} **${config.name}:** ${stats.rarityCount[rarity]}x\n`;
+        }
+    });
+
+    const collectionEmbed = new EmbedBuilder()
+        .setTitle(`📚 **${interaction.user.username}'s Devil Fruit Collection**`)
         .setDescription(`
-${particles}
+🏴‍☠️ **Collection Stats:**
+🍈 **Unique Fruits:** ${totalFruits}
+🎯 **Total Hunts:** ${totalHunts}
+📊 **Success Rate:** ${Math.round((totalFruits / totalHunts) * 100)}%
 
-${energyStatus}
+**🌟 Rarity Breakdown:**
+${rarityBreakdown || 'No fruits collected yet!'}
 
-*${message}*
-
-⚡ **Devil Fruit Aura:** ${indicators.aura}
-🔥 **Sea's Blessing:** ${indicators.blessing}
-💫 **Type Signature:** ${indicators.type}
+*Use buttons below to explore your collection!*
         `)
-        .setFooter({ text: `✨ Phase: Devil Fruit Forming | The sea's gift takes shape...` });
+        .setColor('#3498DB')
+        .setFooter({ text: `Collection last updated: ${new Date().toLocaleDateString()}` });
+
+    await interaction.reply({ embeds: [collectionEmbed], ephemeral: true });
 }
 
-// PHASE 5: Ultimate Revelation (10 frames, 2.5 seconds) - NOW WITH RARITY REVEAL BAR
-function createUltimateRevelation(frame, user, rarity, devilFruit) {
-    const percentage = 95 + Math.floor((frame / 9) * 5); // 95-100%
-    const config = DevilFruitDatabase.getRarityConfig(rarity);
-    const color = config.color; // Use rarity color
-    const particles = ParticlesSystem.createOnePieceParticles(15, 'grandline', 'omnipotent');
-    
-    // USE RARITY REVEAL BAR instead of regular energy status
-    const energyComplete = NextGenGachaEngine.createRarityRevealBar(rarity, frame);
-    
-    const revelationMessages = [
-        "🎭 The Grand Line reveals its secret...",
-        "🌊 Ancient ocean power surfaces...",
-        "⚡ The Devil Fruit shows its true form...",
-        "✨ Behold! Your destiny emerges...",
-        "🍈 The ocean's greatest gift appears...",
-        "🌟 Witness the birth of power...",
-        "💫 The sea itself celebrates...",
-        "🌌 The Grand Line acknowledges you...",
-        "🎊 **THE DEVIL FRUIT IS REVEALED!**",
-        "👑 **YOUR POWER AWAITS!**"
-    ];
-    
-    const message = revelationMessages[frame] || revelationMessages[revelationMessages.length - 1];
-    const indicators = IndicatorsSystem.getChangingIndicators(frame, rarity, devilFruit.type);
-    
-    return new EmbedBuilder()
-        .setColor(color)
-        .setTitle('🎭 **THE DEVIL FRUIT REVEALS ITSELF** 🎭')
-        .setDescription(`
-${particles}
+// Share discovery with others
+async function shareDiscovery(interaction) {
+    const shareEmbed = new EmbedBuilder()
+        .setTitle('📢 **Devil Fruit Discovery Shared!**')
+        .setDescription(`🎉 ${interaction.user.username} found an incredible Devil Fruit! Check out their amazing discovery above!`)
+        .setColor('#E67E22')
+        .setFooter({ text: '🍈 Join the hunt with /pull!' });
 
-${energyComplete}
+    await interaction.reply({ embeds: [shareEmbed] });
+}
 
-*${message}*
-
-⚡ **Devil Fruit Aura:** ${indicators.aura}
-🔥 **Sea's Blessing:** ${indicators.blessing}
-💫 **Type Signature:** ${indicators.type}
-
-🎊 **THE FRUIT IS READY!** 🎊
-👑 **PREPARE FOR YOUR REWARD!** 👑
+// Export the button handler
+module.exports.handleButtonInteractions = handleButtonInteractions;
