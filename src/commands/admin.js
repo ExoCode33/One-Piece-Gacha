@@ -3,8 +3,8 @@ const { setDebugMode, setForcedRarity, getDebugStatus } = require('../animations
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('admin')
-        .setDescription('Admin commands for bot management')
+        .setName('gacha-admin')
+        .setDescription('Devil Fruit Gacha admin commands for debugging and testing')
         .addSubcommand(subcommand =>
             subcommand
                 .setName('debug')
