@@ -107,7 +107,7 @@ const NextGenGachaEngine = {
         return this.hyperSpectrumColors[combinedIndex];
     },
 
-    // PROGRESSION BAR SYSTEM - ONLY basic colored squares with chaotic random colors
+    // PROGRESSION BAR SYSTEM - Clean spacing, embed color matching, fast consistent speed
     createDynamicEnergyStatus(percentage, frame, phase = 'charging', currentEmbedColor = '#0099FF') {
         const phaseDescriptors = {
             scanning: ['AWAKENING', 'STIRRING', 'CALLING', 'REACHING', 'SUMMONING'],
@@ -134,33 +134,67 @@ const NextGenGachaEngine = {
         
         const energyLevel = descriptors[descriptorIndex];
         
-        // CONSISTENT WIDTH - Always 20 squares
+        // CONSISTENT WIDTH - Always 20 squares with proper spacing
         const maxSlots = 20;
         const filledSlots = Math.floor((percentage / 100) * maxSlots);
         const emptySlots = maxSlots - filledSlots;
         
-        // ONLY basic colored squares
-        const basicColors = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪'];
-        
-        // Chaotic random color selection
-        const getRandomColor = (seed1, seed2, seed3) => {
-            const chaos = (seed1 * 7 + seed2 * 13 + seed3 * 17 + Date.now()) % 1000;
-            const colorIndex = (chaos * 3 + seed1 * 5 + seed2 * 11) % basicColors.length;
-            return basicColors[colorIndex];
+        // Map embed color to square color - changes rapidly with frame
+        const colorMap = {
+            '#FF0000': '🟥', '#FF1212': '🟥', '#FF2424': '🟥', '#FF3636': '🟥', '#FF4848': '🟥', '#E74C3C': '🟥',
+            '#FF6000': '🟧', '#FF7212': '🟧', '#FF8424': '🟧', '#FF9636': '🟧', '#FFA848': '🟧', '#F39C12': '🟧', '#E67E22': '🟧',
+            '#FFCC00': '🟨', '#FFD700': '🟨', '#FFDE12': '🟨', '#FFE418': '🟨', '#FFEA1E': '🟨', '#FFF024': '🟨', '#F1C40F': '🟨',
+            '#00FF00': '🟩', '#06FF06': '🟩', '#12FF12': '🟩', '#18FF18': '🟩', '#2ECC71': '🟩', '#24FF24': '🟩',
+            '#0080FF': '🟦', '#0686FF': '🟦', '#0C8CFF': '🟦', '#1292FF': '🟦', '#3498DB': '🟦', '#24A4FF': '🟦', '#0099FF': '🟦',
+            '#00FFFF': '🟦', '#06F9FF': '🟦', '#0CF3FF': '🟦', '#12EDFF': '🟦',
+            '#8000FF': '🟪', '#8606FF': '🟪', '#9212FF': '🟪', '#9B59B6': '🟪', '#B030FF': '🟪', '#C242FF': '🟪', '#8E44AD': '🟪',
+            '#FF00FF': '🟪', '#FF06F9': '🟪', '#FF0080': '🟪', '#FF0686': '🟪'
         };
         
-        // Build progress bar with ONLY basic colored squares
+        // Get base color from embed, but add rapid variations
+        const baseSquareColor = colorMap[currentEmbedColor] || '🟦';
+        
+        // Rapid color switching - changes 2-3 times per square
+        const rapidColors = {
+            '🟥': ['🟥', '🟧', '🟨'], // Red variations
+            '🟧': ['🟧', '🟨', '🟥'], // Orange variations  
+            '🟨': ['🟨', '🟧', '🟩'], // Yellow variations
+            '🟩': ['🟩', '🟦', '🟨'], // Green variations
+            '🟦': ['🟦', '🟪', '🟩'], // Blue variations
+            '🟪': ['🟪', '🟥', '🟦']  // Purple variations
+        };
+        
+        const colorVariations = rapidColors[baseSquareColor] || ['🟦', '🟩', '🟨'];
+        
+        // Build progress bar with SAME spacing as final result
         let progressBar = '';
         
-        // Filled squares - completely random basic colors
+        // Filled squares with proper spacing
         for (let i = 0; i < filledSlots; i++) {
-            const randomColor = getRandomColor(frame, i, percentage);
-            progressBar += randomColor;
+            // Rapid color switching - changes every few frames
+            const colorIndex = Math.floor(frame / 2) % colorVariations.length; // Changes every 2 frames
+            progressBar += colorVariations[colorIndex];
+            
+            // Add space after each square except the last one
+            if (i < filledSlots - 1) {
+                progressBar += ' ';
+            }
         }
         
-        // Empty squares - ONLY white squares
-        for (let i = 0; i < emptySlots; i++) {
-            progressBar += '⬜';
+        // Empty squares with proper spacing
+        if (emptySlots > 0) {
+            // Add space between filled and empty if there are filled squares
+            if (filledSlots > 0) {
+                progressBar += ' ';
+            }
+            
+            for (let i = 0; i < emptySlots; i++) {
+                progressBar += '⬜';
+                // Add space after each square except the last one
+                if (i < emptySlots - 1) {
+                    progressBar += ' ';
+                }
+            }
         }
         
         return `**${energyLevel}**\n${progressBar}`;
