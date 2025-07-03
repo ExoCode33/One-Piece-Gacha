@@ -107,17 +107,31 @@ const NextGenGachaEngine = {
         return this.hyperSpectrumColors[combinedIndex];
     },
 
-    // PROGRESSION BAR SYSTEM - Fixed to sync with embed colors properly
+    // PROGRESSION BAR SYSTEM - Enhanced with suspenseful square-by-square filling
     createDynamicEnergyStatus(percentage, frame, phase = 'charging', currentEmbedColor = '#0099FF') {
         const phaseDescriptors = {
             scanning: ['AWAKENING', 'STIRRING', 'CALLING', 'REACHING', 'SUMMONING'],
-            charging: ['RISING', 'BUILDING', 'SURGING', 'SWELLING', 'ROARING'],
+            charging: ['RISING', 'BUILDING', 'SURGING', 'SWELLING', 'ROARING', 'BLAZING', 'TRANSCENDING'],
             critical: ['LEGENDARY', 'MYTHICAL', 'TRANSCENDENT', 'OVERWHELMING', 'BOUNDLESS'],
             materializing: ['FORMING', 'BLESSING', 'CHOOSING', 'BESTOWING', 'GRANTING']
         };
         
         const descriptors = phaseDescriptors[phase] || phaseDescriptors.charging;
-        const descriptorIndex = Math.min(Math.floor(percentage / 20), descriptors.length - 1);
+        
+        // More dramatic descriptor selection based on percentage
+        let descriptorIndex;
+        if (percentage > 90) {
+            descriptorIndex = Math.min(descriptors.length - 1, 6); // Highest intensity
+        } else if (percentage > 75) {
+            descriptorIndex = Math.min(descriptors.length - 1, 5);
+        } else if (percentage > 50) {
+            descriptorIndex = Math.min(descriptors.length - 1, 4);
+        } else if (percentage > 25) {
+            descriptorIndex = Math.min(descriptors.length - 1, 3);
+        } else {
+            descriptorIndex = Math.floor(percentage / 15);
+        }
+        
         const energyLevel = descriptors[descriptorIndex];
         
         // CONSISTENT WIDTH - Always 20 squares
@@ -125,7 +139,7 @@ const NextGenGachaEngine = {
         const filledSlots = Math.floor((percentage / 100) * maxSlots);
         const emptySlots = maxSlots - filledSlots;
         
-        // Convert embed color to square color
+        // Enhanced color mapping with more dramatic colors
         const colorMap = {
             '#FF0000': '🟥', '#FF1212': '🟥', '#FF2424': '🟥', '#FF3636': '🟥', '#FF4848': '🟥', '#E74C3C': '🟥',
             '#FF6000': '🟧', '#FF7212': '🟧', '#FF8424': '🟧', '#FF9636': '🟧', '#FFA848': '🟧', '#F39C12': '🟧', '#E67E22': '🟧',
@@ -137,24 +151,55 @@ const NextGenGachaEngine = {
             '#FF00FF': '🟪', '#FF06F9': '🟪', '#FF0080': '🟪', '#FF0686': '🟪'
         };
         
-        const squareColor = colorMap[currentEmbedColor] || '🟦';
+        let squareColor = colorMap[currentEmbedColor] || '🟦';
         
-        // Build progress bar with spacing
+        // Special pulsing effect for high percentages
+        if (percentage > 85) {
+            const pulseColors = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪'];
+            squareColor = pulseColors[frame % pulseColors.length];
+        }
+        
+        // Build progress bar with dramatic spacing and effects
         let progressBar = '';
+        
+        // Filled squares with potential pulsing
         for (let i = 0; i < filledSlots; i++) {
-            progressBar += squareColor;
+            if (percentage > 90 && i === filledSlots - 1) {
+                // Last square pulses when near completion
+                const lastSquarePulse = ['🟥', '🟧', '🟨', '⭐'];
+                progressBar += lastSquarePulse[frame % lastSquarePulse.length];
+            } else {
+                progressBar += squareColor;
+            }
             if (i < filledSlots - 1) progressBar += ' ';
         }
         
+        // Empty squares
         if (emptySlots > 0) {
             if (filledSlots > 0) progressBar += ' ';
             for (let i = 0; i < emptySlots; i++) {
-                progressBar += '⬜';
+                // Show building tension in empty squares
+                if (percentage > 75 && i === 0) {
+                    // First empty square shows building energy
+                    progressBar += '⚡';
+                } else {
+                    progressBar += '⬜';
+                }
                 if (i < emptySlots - 1) progressBar += ' ';
             }
         }
         
-        return `**${energyLevel}**\n${progressBar}`;
+        // Add intensity indicator
+        let intensityIndicator = '';
+        if (percentage > 95) {
+            intensityIndicator = '🔥🔥🔥 **CRITICAL** 🔥🔥🔥';
+        } else if (percentage > 85) {
+            intensityIndicator = '⚡⚡ **INTENSE** ⚡⚡';
+        } else if (percentage > 70) {
+            intensityIndicator = '🌟 **BUILDING** 🌟';
+        }
+        
+        return `**${energyLevel}**\n${progressBar}\n${intensityIndicator}`;
     },
 
     // Create rarity reveal bar for final phase
