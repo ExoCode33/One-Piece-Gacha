@@ -50,30 +50,31 @@ The seas whisper of legendary treasures...
         const totalFrames = 18; // Reduced frames for faster animation
         
         for (let frame = 0; frame < totalFrames; frame++) {
-            // Calculate which search frame we're in
-            const searchFrameIndex = Math.floor((frame / totalFrames) * searchFrames.length);
-            const frameData = searchFrames[Math.min(searchFrameIndex, searchFrames.length - 1)];
-            
-            // Linear progression - no slowdown
-            const progressPercentage = ((frame + 1) / totalFrames) * 100;
-            
-            const indicators = IndicatorsSystem.getChangingIndicators(frame, targetRarity, targetFruit.type);
-            const particles = ParticlesSystem.createOnePieceParticles(frame + 3, 'energy', targetRarity);
-            
-            // Use the frame data color consistently - NO overriding
-            const currentColor = frameData.color;
-            
-            // Create progress bar with the SAME color as the embed
-            const progressBar = NextGenGachaEngine.createDynamicEnergyStatus(
-                progressPercentage,
-                frame,
-                'charging',
-                currentColor // Pass the exact same color used for embed
-            );
+            try {
+                // Calculate which search frame we're in
+                const searchFrameIndex = Math.floor((frame / totalFrames) * searchFrames.length);
+                const frameData = searchFrames[Math.min(searchFrameIndex, searchFrames.length - 1)];
+                
+                // Linear progression - no slowdown
+                const progressPercentage = ((frame + 1) / totalFrames) * 100;
+                
+                const indicators = IndicatorsSystem.getChangingIndicators(frame, targetRarity, targetFruit.type);
+                const particles = ParticlesSystem.createOnePieceParticles(frame + 3, 'energy', targetRarity);
+                
+                // Use the frame data color consistently - NO overriding
+                const currentColor = frameData.color;
+                
+                // Create progress bar with moving rainbow effect
+                const progressBar = NextGenGachaEngine.createDynamicEnergyStatus(
+                    progressPercentage,
+                    frame,
+                    'charging',
+                    currentColor // This is now ignored in favor of rainbow
+                );
 
-            const searchEmbed = new EmbedBuilder()
-                .setTitle(frameData.title)
-                .setDescription(`
+                const searchEmbed = new EmbedBuilder()
+                    .setTitle(frameData.title)
+                    .setDescription(`
 **${frameData.desc}**
 
 **🔮 AURA STATUS:** ${indicators.aura}
@@ -83,14 +84,20 @@ The seas whisper of legendary treasures...
 ${progressBar}
 
 ${particles}
-                `)
-                .setColor(currentColor) // Embed uses this color
-                .setFooter({ text: `Hunt Progress: ${Math.round(progressPercentage)}%` });
+                    `)
+                    .setColor(currentColor) // Embed uses this color
+                    .setFooter({ text: `Hunt Progress: ${Math.round(progressPercentage)}%` });
 
-            await huntMessage.edit({ embeds: [searchEmbed] });
-            
-            // Consistent fast timing - no slowdown
-            await new Promise(resolve => setTimeout(resolve, 500)); // Consistent 500ms per frame
+                await huntMessage.edit({ embeds: [searchEmbed] });
+                
+                // Consistent fast timing - no slowdown
+                await new Promise(resolve => setTimeout(resolve, 500)); // Consistent 500ms per frame
+                
+            } catch (error) {
+                console.error(`Frame ${frame} error:`, error);
+                // Continue to next frame if one fails
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
         }
 
         // PHASE 4: Final reveal with full animation
