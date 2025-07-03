@@ -102,17 +102,16 @@ const NextGenGachaEngine = {
         return typeHints[type] || 'MYSTERIOUS POWER';
     },
 
-    // RAPID CHANGING INDICATORS that gradually lock in
+    // RAPID CHANGING INDICATORS that gradually lock in (EXACTLY 3 LINES)
     getChangingIndicators(frame, finalRarity, finalType) {
         const allRarities = ['common', 'uncommon', 'rare', 'legendary', 'mythical', 'omnipotent'];
         const allTypes = ['Paramecia', 'Zoan', 'Logia', 'Ancient Zoan', 'Mythical Zoan'];
         
-        // Early frames: random values, later frames: lock to final values
+        // Lock frames: indicators lock in one by one
         const lockFrames = {
-            aura: frame >= 6,    // Locks after 6 frames
+            aura: frame >= 6,     // Locks after 6 frames
             blessing: frame >= 7, // Locks after 7 frames  
-            resonance: frame >= 8, // Locks after 8 frames
-            type: frame >= 5      // Type locks earliest
+            type: frame >= 8      // Type locks last
         };
         
         return {
@@ -123,10 +122,6 @@ const NextGenGachaEngine = {
             blessing: lockFrames.blessing ? 
                 this.getBlessingLevel(finalRarity) : 
                 this.getBlessingLevel(allRarities[(frame + 2) % allRarities.length]),
-            
-            resonance: lockFrames.resonance ? 
-                this.getResonanceLevel(finalRarity) : 
-                this.getResonanceLevel(allRarities[(frame + 4) % allRarities.length]),
             
             type: lockFrames.type ? 
                 this.getTypeHint(finalType) : 
@@ -370,7 +365,6 @@ ${energyStatus}
 
 ⚡ **Devil Fruit Aura:** ${indicators.aura}
 🔥 **Sea's Blessing:** ${indicators.blessing}
-🌟 **Fruit Resonance:** ${indicators.resonance}
 💫 **Type Signature:** ${indicators.type}
         `)
         .setFooter({ text: `💥 Phase: Energy Amplification | Power surge detected!` });
