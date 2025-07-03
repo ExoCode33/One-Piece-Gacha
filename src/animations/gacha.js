@@ -46,8 +46,8 @@ The seas whisper of legendary treasures...
             { title: '🎆 **MOMENT OF TRUTH** 🎆', desc: 'The Grand Line bestows its gift...', color: '#2ECC71' }
         ];
 
-        // Consistent fast animation - no slowdown at the end
-        const totalFrames = 18; // Reduced frames for faster animation
+        // Simplified fast animation - reduced frames to prevent freezes
+        const totalFrames = 12; // Reduced frames
         
         for (let frame = 0; frame < totalFrames; frame++) {
             try {
@@ -55,21 +55,21 @@ The seas whisper of legendary treasures...
                 const searchFrameIndex = Math.floor((frame / totalFrames) * searchFrames.length);
                 const frameData = searchFrames[Math.min(searchFrameIndex, searchFrames.length - 1)];
                 
-                // Linear progression - no slowdown
+                // Linear progression
                 const progressPercentage = ((frame + 1) / totalFrames) * 100;
                 
                 const indicators = IndicatorsSystem.getChangingIndicators(frame, targetRarity, targetFruit.type);
                 const particles = ParticlesSystem.createOnePieceParticles(frame + 3, 'energy', targetRarity);
                 
-                // Use the frame data color consistently - NO overriding
+                // Use frame color for embed
                 const currentColor = frameData.color;
                 
-                // Create progress bar with moving rainbow effect
+                // Create moving rainbow progress bar
                 const progressBar = NextGenGachaEngine.createDynamicEnergyStatus(
                     progressPercentage,
                     frame,
                     'charging',
-                    currentColor // This is now ignored in favor of rainbow
+                    currentColor
                 );
 
                 const searchEmbed = new EmbedBuilder()
@@ -85,18 +85,18 @@ ${progressBar}
 
 ${particles}
                     `)
-                    .setColor(currentColor) // Embed uses this color
+                    .setColor(currentColor)
                     .setFooter({ text: `Hunt Progress: ${Math.round(progressPercentage)}%` });
 
                 await huntMessage.edit({ embeds: [searchEmbed] });
                 
-                // Consistent fast timing - no slowdown
-                await new Promise(resolve => setTimeout(resolve, 500)); // Consistent 500ms per frame
+                // Faster timing
+                await new Promise(resolve => setTimeout(resolve, 600));
                 
             } catch (error) {
-                console.error(`Frame ${frame} error:`, error);
-                // Continue to next frame if one fails
-                await new Promise(resolve => setTimeout(resolve, 500));
+                console.error(`Animation frame ${frame} error:`, error);
+                // Skip this frame and continue
+                await new Promise(resolve => setTimeout(resolve, 600));
             }
         }
 
