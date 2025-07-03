@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
-// Mock debug config until the animation files are created
+// Debug configuration that can be accessed by other modules
 const DEBUG_CONFIG = {
     enabled: false,
     forcedRarity: null
@@ -31,6 +31,11 @@ function setForcedRarity(rarity) {
     return true;
 }
 
+// Export debug config so other modules can access it
+function getDebugConfig() {
+    return DEBUG_CONFIG;
+}
+
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('admin')
@@ -38,19 +43,19 @@ module.exports = {
         .addSubcommand(subcommand =>
             subcommand
                 .setName('debug')
-                .setDescription('Control debug mode and rarity testing')
+                .setDescription('Debug mode and rarity testing controls')
                 .addStringOption(option =>
                     option.setName('mode')
-                        .setDescription('Debug mode control')
+                        .setDescription('Debug mode setting')
                         .setRequired(true)
                         .addChoices(
-                            { name: 'Enable Debug Mode', value: 'enable' },
-                            { name: 'Disable Debug Mode', value: 'disable' },
+                            { name: 'Enable Debug Mode', value: 'on' },
+                            { name: 'Disable Debug Mode', value: 'off' },
                             { name: 'Status', value: 'status' }
                         ))
                 .addStringOption(option =>
                     option.setName('rarity')
-                        .setDescription('Force a specific rarity (requires debug mode)')
+                        .setDescription('Force specific rarity (requires debug mode enabled)')
                         .setRequired(false)
                         .addChoices(
                             { name: '⬜ Common', value: 'common' },
@@ -68,10 +73,10 @@ module.exports = {
         const rarity = interaction.options.getString('rarity');
 
         try {
-            if (mode === 'enable') {
+            if (mode === 'on') {
                 setDebugMode(true);
                 
-                let response = '✅ **Debug Mode Enabled!**\n\nDebug mode is now active. You can now force specific rarities for testing.';
+                let response = '✅ **Debug Mode Enabled!**\n\n🔧 Debug mode is now active. You can now force specific rarities for testing.\n\n📊 **Debug Features:**\n• Force specific rarities\n• View debug animations\n• Enhanced logging\n• Testing controls';
                 
                 if (rarity && rarity !== 'off') {
                     const success = setForcedRarity(rarity);
@@ -84,39 +89,62 @@ module.exports = {
                             mythical: '🟥',
                             omnipotent: '🌈'
                         };
-                        response += `\n🎯 **Forced Rarity:** ${rarityEmojis[rarity]} ${rarity.toUpperCase()}`;
+                        response += `\n\n🎯 **Forced Rarity Set:** ${rarityEmojis[rarity]} **${rarity.toUpperCase()}**\n*All pulls will now be ${rarity} rarity*`;
                     }
                 }
                 
                 await interaction.reply({ content: response, ephemeral: true });
                 
-            } else if (mode === 'disable') {
+            } else if (mode === 'off') {
                 setDebugMode(false);
                 await interaction.reply({ 
-                    content: '❌ **Debug Mode Disabled!**\n\nDebug mode is now off. All drops will be random.', 
+                    content: '❌ **Debug Mode Disabled!**\n\n🔧 Debug mode is now OFF. All features returned to normal:\n• Random rarity drops\n• Standard animations\n• Normal logging\n• Production mode active', 
                     ephemeral: true 
                 });
                 
             } else if (mode === 'status') {
+                const rarityEmojis = {
+                    common: '⬜ Common',
+                    uncommon: '🟩 Uncommon',
+                    rare: '🟦 Rare',
+                    legendary: '🟨 Legendary',
+                    mythical: '🟥 Mythical',
+                    omnipotent: '🌈 Omnipotent'
+                };
+
                 const statusEmbed = new EmbedBuilder()
-                    .setTitle('🔧 **Debug Status**')
+                    .setTitle('🔧 **Admin Debug Status**')
                     .setColor(DEBUG_CONFIG.enabled ? '#00FF00' : '#FF0000')
                     .addFields(
-                        { name: '🔧 Debug Mode', value: DEBUG_CONFIG.enabled ? '✅ Enabled' : '❌ Disabled', inline: true },
-                        { name: '🎯 Forced Rarity', value: DEBUG_CONFIG.forcedRarity ? `${DEBUG_CONFIG.forcedRarity.toUpperCase()}` : 'Random', inline: true }
+                        { 
+                            name: '🔧 Debug Mode', 
+                            value: DEBUG_CONFIG.enabled ? '✅ **ENABLED**' : '❌ **DISABLED**', 
+                            inline: true 
+                        },
+                        { 
+                            name: '🎯 Forced Rarity', 
+                            value: DEBUG_CONFIG.forcedRarity ? rarityEmojis[DEBUG_CONFIG.forcedRarity] : '🎲 **Random**', 
+                            inline: true 
+                        },
+                        {
+                            name: '📊 Debug Features',
+                            value: DEBUG_CONFIG.enabled ? 
+                                '• Rarity forcing active\n• Debug animations enabled\n• Enhanced logging\n• Test mode controls' :
+                                '• Standard operation\n• Random drops\n• Normal animations\n• Production mode',
+                            inline: false
+                        }
                     )
-                    .setFooter({ text: 'Admin Debug System | Use /admin debug enable to activate' });
+                    .setFooter({ text: 'Admin Debug System | Use /admin debug on to activate' })
+                    .setTimestamp();
                 
                 await interaction.reply({ embeds: [statusEmbed], ephemeral: true });
             }
             
-            // Handle rarity changes when debug is already enabled
-            if (rarity && mode === 'enable') {
-                // Already handled above
-            } else if (rarity) {
+            // Handle standalone rarity changes
+            if (rarity && mode !== 'on') {
                 if (!DEBUG_CONFIG.enabled) {
                     await interaction.reply({ 
-                        content: '⚠️ **Debug mode must be enabled first!**\n\nUse `/admin debug enable` to activate debug mode.', 
+                        content: '⚠️ **Debug mode must be enabled first!**\n\n🔧 Use `/admin debug on` to activate debug mode before setting rarities.', 
                         ephemeral: true 
                     });
                     return;
@@ -125,7 +153,7 @@ module.exports = {
                 if (rarity === 'off') {
                     setForcedRarity(null);
                     await interaction.reply({ 
-                        content: '🎲 **Forced rarity disabled!**\n\nDrops are now random while debug mode remains active.', 
+                        content: '🎲 **Forced rarity disabled!**\n\n🔧 Drops are now random while debug mode remains active.\n\n*Use `/admin debug off` to fully disable debug mode.*', 
                         ephemeral: true 
                     });
                 } else {
@@ -140,7 +168,7 @@ module.exports = {
                             omnipotent: '🌈'
                         };
                         await interaction.reply({ 
-                            content: `🎯 **Forced rarity set!**\n\nAll drops will now be: ${rarityEmojis[rarity]} **${rarity.toUpperCase()}**`, 
+                            content: `🎯 **Forced rarity updated!**\n\n${rarityEmojis[rarity]} All drops will now be: **${rarity.toUpperCase()}**\n\n*Debug mode remains active. Use \`/pull\` to test!*`, 
                             ephemeral: true 
                         });
                     }
@@ -150,9 +178,14 @@ module.exports = {
         } catch (error) {
             console.error('🚨 Admin Command Error:', error);
             await interaction.reply({ 
-                content: '❌ **Admin command failed!**\n\nAn error occurred while processing the admin command.', 
+                content: '❌ **Admin command failed!**\n\n🔧 An error occurred while processing the admin command. Please try again or contact the bot administrator.', 
                 ephemeral: true 
             });
         }
-    }
+    },
+
+    // Export functions for other modules to use
+    getDebugConfig,
+    setDebugMode,
+    setForcedRarity
 };
