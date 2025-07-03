@@ -60,10 +60,10 @@ The seas whisper of legendary treasures...
         let successfulFrames = 0;
         let totalAttempts = 0;
 
-        // Optimized animation with retry logic and rate limiting
+        // Slower animation with breathing room for Discord API
         const totalFrames = 20;
         const maxRetries = 2;
-        const baseDelay = 400;
+        const baseDelay = 700; // Increased from 400ms to 700ms
         
         for (let frame = 0; frame < totalFrames; frame++) {
             let success = false;
@@ -109,8 +109,8 @@ ${particles}
                         .setColor(currentColor)
                         .setFooter({ text: `Hunt Progress: ${Math.round(progressPercentage)}%` });
 
-                    // Optimized timeout with exponential backoff
-                    const timeoutDuration = 2000 + (retryCount * 1000); // 2s, 3s, 4s
+                    // Longer timeout with more breathing room
+                    const timeoutDuration = 3500 + (retryCount * 1000); // 3.5s, 4.5s, 5.5s
                     const updatePromise = huntMessage.edit({ embeds: [searchEmbed] });
                     const timeoutPromise = new Promise((_, reject) => 
                         setTimeout(() => reject(new Error('Discord API timeout')), timeoutDuration)
@@ -119,8 +119,8 @@ ${particles}
                     await Promise.race([updatePromise, timeoutPromise]);
                     success = true;
                     
-                    // Dynamic delay based on performance
-                    const delay = retryCount > 0 ? baseDelay + (retryCount * 200) : baseDelay;
+                    // Longer delay with more breathing room
+                    const delay = retryCount > 0 ? baseDelay + (retryCount * 300) : baseDelay;
                     await new Promise(resolve => setTimeout(resolve, delay));
                     
                 } catch (error) {
@@ -128,8 +128,8 @@ ${particles}
                     console.error(`Animation frame ${frame} attempt ${retryCount} error:`, error.message);
                     
                     if (retryCount <= maxRetries) {
-                        // Exponential backoff before retry
-                        const retryDelay = 200 * Math.pow(2, retryCount - 1); // 200ms, 400ms, 800ms
+                        // Longer backoff delay
+                        const retryDelay = 300 * Math.pow(2, retryCount - 1); // 300ms, 600ms, 1200ms
                         await new Promise(resolve => setTimeout(resolve, retryDelay));
                     }
                 }
