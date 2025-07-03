@@ -456,7 +456,7 @@ ${fakeOut.emoji} **Classification:** ${fakeOut.rarity.toUpperCase()}
 }
 
 // PHASE 4: Quantum Materialization (8 frames, 2 seconds)
-function createQuantumMaterialization(frame, user) {
+function createQuantumMaterialization(frame, user, rarity, devilFruit) {
     const percentage = 70 + Math.floor((frame / 7) * 25); // 70-95%
     const energyStatus = NextGenGachaEngine.createDynamicEnergyStatus(percentage, frame, 'materializing');
     const particles = NextGenGachaEngine.createOnePieceParticles(frame + 22, 'grandline', 'legendary');
@@ -472,6 +472,9 @@ function createQuantumMaterialization(frame, user) {
     const message = materializationMessages[Math.floor(frame / 2)] || materializationMessages[0];
     const color = NextGenGachaEngine.getHyperSpectrumColor(frame * 9 + 80, 4, user?.id?.slice(-2) || 0);
     
+    // Get changing indicators
+    const indicators = NextGenGachaEngine.getChangingIndicators(frame, rarity, devilFruit.type);
+    
     return new EmbedBuilder()
         .setColor(color)
         .setTitle('✨ **QUANTUM MATERIALIZATION SEQUENCE** ✨')
@@ -482,16 +485,15 @@ ${energyStatus}
 
 *${message}*
 
-💎 **Devil's Essence:** FORMING
-🌟 **Sea King's Blessing:** BESTOWED  
-✨ **Pirate's Dream:** REALIZED
-⭐ **Grand Line's Choice:** CONFIRMED
+⚡ **Devil Fruit Aura:** ${indicators.aura}
+🔥 **Sea's Blessing:** ${indicators.blessing}
+💫 **Type Signature:** ${indicators.type}
         `)
         .setFooter({ text: `✨ Phase: Quantum Materialization | Reality crystallizing...` });
 }
 
 // PHASE 5: Ultimate Revelation (10 frames, 2.5 seconds)
-function createUltimateRevelation(frame, user) {
+function createUltimateRevelation(frame, user, rarity, devilFruit) {
     const percentage = 95 + Math.floor((frame / 9) * 5); // 95-100%
     const particles = NextGenGachaEngine.createOnePieceParticles(15, 'grandline', 'omnipotent');
     
@@ -512,6 +514,9 @@ function createUltimateRevelation(frame, user) {
     const energyComplete = `🌟 Sea's Power: **TRANSCENDENT** (${percentage}%)`;
     const color = NextGenGachaEngine.getHyperSpectrumColor(frame * 13 + 100, 6, user?.id?.slice(-2) || 0);
     
+    // Get changing indicators (should be fully locked by now)
+    const indicators = NextGenGachaEngine.getChangingIndicators(frame, rarity, devilFruit.type);
+    
     return new EmbedBuilder()
         .setColor(color)
         .setTitle('🎭 **ULTIMATE REVELATION SEQUENCE** 🎭')
@@ -521,6 +526,10 @@ ${particles}
 ${energyComplete}
 
 *${message}*
+
+⚡ **Devil Fruit Aura:** ${indicators.aura}
+🔥 **Sea's Blessing:** ${indicators.blessing}
+💫 **Type Signature:** ${indicators.type}
 
 🎊 **MATERIALIZATION COMPLETE!** 🎊
 👑 **PREPARE FOR THE REVEAL!** 👑
@@ -647,21 +656,21 @@ async function createUltimateCinematicExperience(interaction) {
         
         // PHASE 3: Advanced Fake-Out Sequence (8 frames, 2 seconds)
         for (let frame = 0; frame < 8; frame++) {
-            const embed = createAdvancedFakeOut(frame, rarity, user);
+            const embed = createAdvancedFakeOut(frame, rarity, user, devilFruit);
             await interaction.editReply({ embeds: [embed] });
             await new Promise(resolve => setTimeout(resolve, 250)); // Dramatic tension building
         }
         
         // PHASE 4: Quantum Materialization (8 frames, 2 seconds)
         for (let frame = 0; frame < 8; frame++) {
-            const embed = createQuantumMaterialization(frame, user);
+            const embed = createQuantumMaterialization(frame, user, rarity, devilFruit);
             await interaction.editReply({ embeds: [embed] });
             await new Promise(resolve => setTimeout(resolve, 250)); // Building to climax
         }
         
         // PHASE 5: Ultimate Revelation (10 frames, 2.5 seconds)
         for (let frame = 0; frame < 10; frame++) {
-            const embed = createUltimateRevelation(frame, user);
+            const embed = createUltimateRevelation(frame, user, rarity, devilFruit);
             await interaction.editReply({ embeds: [embed] });
             await new Promise(resolve => setTimeout(resolve, 250)); // Climactic revelation
         }
