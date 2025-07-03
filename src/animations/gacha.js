@@ -46,7 +46,7 @@ The seas whisper of legendary treasures...
             { title: '🎆 **MOMENT OF TRUTH** 🎆', desc: 'The Grand Line bestows its gift...', color: '#2ECC71' }
         ];
 
-        // Fast animation with rapid color changes
+        // Fast animation with robust error handling
         const totalFrames = 20; // More frames for one-by-one progression
         
         for (let frame = 0; frame < totalFrames; frame++) {
@@ -89,14 +89,20 @@ ${particles}
                     .setColor(currentColor)
                     .setFooter({ text: `Hunt Progress: ${Math.round(progressPercentage)}%` });
 
-                await huntMessage.edit({ embeds: [searchEmbed] });
+                // Add timeout protection for Discord API calls
+                const updatePromise = huntMessage.edit({ embeds: [searchEmbed] });
+                const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Discord API timeout')), 3000)
+                );
+                
+                await Promise.race([updatePromise, timeoutPromise]);
                 
                 // Faster timing for smoother progression
                 await new Promise(resolve => setTimeout(resolve, 400));
                 
             } catch (error) {
-                console.error(`Animation frame ${frame} error:`, error);
-                // Skip this frame and continue
+                console.error(`Animation frame ${frame} error:`, error.message);
+                // Continue animation even if one frame fails
                 await new Promise(resolve => setTimeout(resolve, 400));
             }
         }
