@@ -413,6 +413,7 @@ const NextGenGachaEngine = {
 // PHASE 1: Mystical Initialization (8 frames, 2 seconds)
 function createMysticalInitialization(frame, user, rarity, devilFruit) {
     const percentage = Math.floor((frame / 7) * 15); // 0-15%
+    const color = NextGenGachaEngine.getHyperSpectrumColor(frame * 3, 1, user?.id?.slice(-2) || 0);
     const energyStatus = NextGenGachaEngine.createDynamicEnergyStatus(percentage, frame, 'scanning', color, rarity);
     const particles = NextGenGachaEngine.createOnePieceParticles(frame + 4, 'ocean', 'common');
     
@@ -424,7 +425,6 @@ function createMysticalInitialization(frame, user, rarity, devilFruit) {
     ];
     
     const message = mysticalMessages[Math.floor(frame / 2)] || mysticalMessages[0];
-    const color = NextGenGachaEngine.getHyperSpectrumColor(frame * 3, 1, user?.id?.slice(-2) || 0);
     
     // Get changing indicators that gradually lock in
     const indicators = NextGenGachaEngine.getChangingIndicators(frame, rarity, devilFruit.type);
@@ -449,6 +449,7 @@ ${energyStatus}
 // PHASE 2: Energy Amplification (10 frames, 2.5 seconds)
 function createEnergyAmplification(frame, user, rarity, devilFruit) {
     const percentage = 15 + Math.floor((frame / 9) * 30); // 15-45%
+    const color = NextGenGachaEngine.getHyperSpectrumColor(frame * 5 + 20, 2, user?.id?.slice(-2) || 0);
     const energyStatus = NextGenGachaEngine.createDynamicEnergyStatus(percentage, frame, 'charging', color, rarity);
     const particles = NextGenGachaEngine.createOnePieceParticles(frame + 10, 'energy', 'uncommon');
     
@@ -461,7 +462,6 @@ function createEnergyAmplification(frame, user, rarity, devilFruit) {
     ];
     
     const message = amplificationMessages[Math.floor(frame / 2)] || amplificationMessages[0];
-    const color = NextGenGachaEngine.getHyperSpectrumColor(frame * 5 + 20, 2, user?.id?.slice(-2) || 0);
     
     // Get changing indicators that gradually lock in
     const indicators = NextGenGachaEngine.getChangingIndicators(frame, rarity, devilFruit.type);
@@ -572,6 +572,7 @@ ${fakeOut.emoji} **Classification:** ${fakeOut.rarity.toUpperCase()}
 // PHASE 4: Quantum Materialization (8 frames, 2 seconds)
 function createQuantumMaterialization(frame, user, rarity, devilFruit) {
     const percentage = 70 + Math.floor((frame / 7) * 25); // 70-95%
+    const color = NextGenGachaEngine.getHyperSpectrumColor(frame * 9 + 80, 4, user?.id?.slice(-2) || 0);
     const energyStatus = NextGenGachaEngine.createDynamicEnergyStatus(percentage, frame, 'materializing', color, rarity);
     const particles = NextGenGachaEngine.createOnePieceParticles(frame + 22, 'grandline', 'legendary');
     
@@ -584,7 +585,6 @@ function createQuantumMaterialization(frame, user, rarity, devilFruit) {
     ];
     
     const message = materializationMessages[Math.floor(frame / 2)] || materializationMessages[0];
-    const color = NextGenGachaEngine.getHyperSpectrumColor(frame * 9 + 80, 4, user?.id?.slice(-2) || 0);
     
     // Get changing indicators
     const indicators = NextGenGachaEngine.getChangingIndicators(frame, rarity, devilFruit.type);
@@ -609,6 +609,7 @@ ${energyStatus}
 // PHASE 5: Ultimate Revelation (10 frames, 2.5 seconds)
 function createUltimateRevelation(frame, user, rarity, devilFruit) {
     const percentage = 95 + Math.floor((frame / 9) * 5); // 95-100%
+    const color = NextGenGachaEngine.getHyperSpectrumColor(frame * 13 + 100, 6, user?.id?.slice(-2) || 0);
     const particles = NextGenGachaEngine.createOnePieceParticles(15, 'grandline', 'omnipotent');
     
     const revelationMessages = [
@@ -626,7 +627,6 @@ function createUltimateRevelation(frame, user, rarity, devilFruit) {
     
     const message = revelationMessages[frame] || revelationMessages[revelationMessages.length - 1];
     const energyComplete = NextGenGachaEngine.createDynamicEnergyStatus(100, frame, 'critical', color, rarity);
-    const color = NextGenGachaEngine.getHyperSpectrumColor(frame * 13 + 100, 6, user?.id?.slice(-2) || 0);
     
     // Get changing indicators (should be fully locked by now)
     const indicators = NextGenGachaEngine.getChangingIndicators(frame, rarity, devilFruit.type);
