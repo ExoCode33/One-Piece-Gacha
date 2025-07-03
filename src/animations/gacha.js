@@ -2,13 +2,12 @@ const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('
 const { DevilFruitDatabase } = require('../data/devilfruit');
 
 // ═══════════════════════════════════════════════════════════════════
-//                    PROFESSIONAL CINEMATIC ANIMATION SYSTEM
+//                    CLEAN PROFESSIONAL ANIMATION SYSTEM
 // ═══════════════════════════════════════════════════════════════════
 
-const ProfessionalEngine = {
-    // 150+ ULTRA-DIVERSE COLORS for lightning-fast cycling
+const CleanEngine = {
+    // 120+ ULTRA-DIVERSE COLORS for lightning-fast cycling
     hyperColors: [
-        // ELECTRIC SPECTRUM
         '#FF0000', '#FF1100', '#FF2200', '#FF3300', '#FF4400', '#FF5500', '#FF6600', '#FF7700',
         '#FF8800', '#FF9900', '#FFAA00', '#FFBB00', '#FFCC00', '#FFDD00', '#FFEE00', '#FFFF00',
         '#EEFF00', '#DDFF00', '#CCFF00', '#BBFF00', '#AAFF00', '#99FF00', '#88FF00', '#77FF00',
@@ -23,319 +22,191 @@ const ProfessionalEngine = {
         '#FF0022', '#FF0011', '#8B0000', '#DC143C', '#B22222', '#CD5C5C', '#F08080', '#FA8072',
         '#E9967A', '#FFA07A', '#FF7F50', '#FF6347', '#FF4500', '#FFD700', '#FFFF00', '#ADFF2F',
         '#7FFF00', '#32CD32', '#00FF7F', '#00FA9A', '#40E0D0', '#00CED1', '#5F9EA0', '#4682B4',
-        '#6495ED', '#87CEEB', '#87CEFA', '#00BFFF', '#1E90FF', '#0000FF', '#0000CD', '#4169E1',
-        '#8A2BE2', '#9400D3', '#9932CC', '#8B008B', '#800080', '#FF1493', '#FF69B4', '#FFB6C1',
-        '#FFC0CB', '#FFEFD5', '#FFEBCD', '#F5DEB3', '#DEB887', '#D2691E', '#A0522D', '#8B4513',
-        '#2F4F4F', '#708090', '#778899', '#B0C4DE', '#E6E6FA', '#F0F8FF'
+        '#6495ED', '#87CEEB', '#87CEFA', '#00BFFF', '#1E90FF', '#0000FF', '#0000CD', '#4169E1'
     ],
 
-    // ULTRA-FAST color cycling with mathematical distribution
+    // ULTRA-FAST color cycling
     getHyperColor(frame, intensity = 1) {
-        // Multiple color streams for maximum diversity
         const stream1 = (frame * 17 + intensity * 23) % this.hyperColors.length;
         const stream2 = (frame * 31 + intensity * 41) % this.hyperColors.length;
-        const stream3 = (frame * 7 + intensity * 13) % this.hyperColors.length;
-        
-        // Combine streams for ultra-diversity
-        const combinedIndex = (stream1 + stream2 + stream3) % this.hyperColors.length;
+        const combinedIndex = (stream1 + stream2) % this.hyperColors.length;
         return this.hyperColors[combinedIndex];
     },
 
-    // Professional particle systems
-    createParticleField(intensity, type = 'energy') {
-        const particles = {
-            energy: ['⚡', '💥', '✨', '💫', '🔥', '⭐', '💎', '🌟'],
-            cosmic: ['🌌', '✨', '💫', '⭐', '🌟', '💎', '🔮', '💥'],
-            lightning: ['⚡', '💥', '🔥', '💫', '✨', '⭐', '🌟', '💎'],
-            divine: ['🌟', '✨', '💎', '💫', '⭐', '🔮', '🌌', '💥']
-        };
-        
-        const particleSet = particles[type] || particles.energy;
-        const count = Math.min(intensity + 8, 20);
-        const selected = [];
-        
-        for (let i = 0; i < count; i++) {
-            selected.push(particleSet[i % particleSet.length]);
-        }
-        
-        return selected.join('');
+    // Clean particle effects - no overload
+    createCleanParticles(intensity) {
+        const particles = ['⚡', '✨', '💫', '🔥', '💥', '⭐'];
+        const count = Math.min(intensity + 4, 8);
+        return particles.slice(0, count).join('');
     },
 
-    // Advanced charging bar with effects
-    createAdvancedChargingBar(percentage, frame) {
-        const barLength = 25;
+    // Single clean charging bar
+    createSingleChargingBar(percentage, frame) {
+        const barLength = 20;
         const filled = Math.floor((percentage / 100) * barLength);
         const empty = barLength - filled;
         
-        // Dynamic charging characters based on intensity
-        const chargeChars = ['░', '▒', '▓', '█'];
-        const pulseChar = chargeChars[frame % chargeChars.length];
-        
-        let filledBar = '';
-        for (let i = 0; i < filled; i++) {
-            if (i === filled - 1 && percentage < 100) {
-                filledBar += pulseChar; // Pulsing edge
-            } else {
-                filledBar += '█';
-            }
-        }
-        
+        const filledBar = '█'.repeat(filled);
         const emptyBar = '░'.repeat(empty);
-        const sparkles = percentage > 80 ? '✨' : percentage > 50 ? '⚡' : '🔋';
         
-        return `${sparkles} [${filledBar}${emptyBar}] ${percentage}% ${sparkles}`;
-    },
-
-    // Professional frame with dynamic borders
-    createProfessionalFrame(content, frameType = 'energy', intensity = 1) {
-        const frames = {
-            energy: { top: '⚡', side: '│', bottom: '⚡', corner: '┼' },
-            cosmic: { top: '✨', side: '║', bottom: '✨', corner: '╬' },
-            divine: { top: '🌟', side: '┃', bottom: '🌟', corner: '╋' },
-            lightning: { top: '💥', side: '│', bottom: '💥', corner: '┼' }
-        };
+        // Pulsing effect on the edge
+        const sparkle = percentage > 80 ? '✨' : percentage > 50 ? '⚡' : '🔋';
         
-        const frame = frames[frameType] || frames.energy;
-        const width = 45;
-        
-        const topLine = frame.corner + frame.top.repeat(Math.floor(width/2)) + frame.corner;
-        const bottomLine = frame.corner + frame.bottom.repeat(Math.floor(width/2)) + frame.corner;
-        
-        return `${topLine}\n${frame.side} ${content.padEnd(width-4)} ${frame.side}\n${bottomLine}`;
+        return `${sparkle} [${filledBar}${emptyBar}] ${percentage}%`;
     }
 };
 
-// PHASE 1: Mystical Awakening (8 frames, 2 seconds - ULTRA FAST)
-function createMysticalAwakening(frame) {
-    const percentage = Math.floor((frame / 7) * 15); // 0-15%
-    const chargingBar = ProfessionalEngine.createAdvancedChargingBar(percentage, frame);
-    const particles = ProfessionalEngine.createParticleField(frame + 3, 'energy');
+// PHASE 1: Energy Detection (6 frames, 1.5 seconds)
+function createEnergyDetection(frame) {
+    const percentage = Math.floor((frame / 5) * 25); // 0-25%
+    const chargingBar = CleanEngine.createSingleChargingBar(percentage, frame);
+    const particles = CleanEngine.createCleanParticles(frame + 2);
     
-    const awakeningMessages = [
-        "🌊 The Grand Line stirs with ancient power...",
-        "🔮 Mystical energies begin to converge...",
-        "⚡ Devil Fruit aura detected in the void...",
-        "🌌 Reality trembles as power awakens..."
+    const messages = [
+        "🔍 Scanning the Grand Line for Devil Fruit energy...",
+        "⚡ Mysterious power signature detected...",
+        "🌊 Ancient energy stirring in the depths..."
     ];
     
-    const message = awakeningMessages[Math.floor(frame / 2)] || awakeningMessages[0];
+    const message = messages[Math.floor(frame / 2)] || messages[0];
     
     return new EmbedBuilder()
-        .setColor(ProfessionalEngine.getHyperColor(frame * 3, 1))
-        .setTitle('🔮 **MYSTICAL AWAKENING INITIATED** 🔮')
+        .setColor(CleanEngine.getHyperColor(frame * 3, 1))
+        .setTitle('🔍 **DEVIL FRUIT ENERGY DETECTION** 🔍')
         .setDescription(`
 ${particles}
-╔══════════════════════════════════════════════╗
-║              DEVIL FRUIT SCANNER              ║
-╠══════════════════════════════════════════════╣
-║                                              ║
-║  ${chargingBar}  ║
-║                                              ║
-║  🌊 ${message.padEnd(35)} ║
-║                                              ║
-╚══════════════════════════════════════════════╝
+
+${chargingBar}
+
+*${message}*
         `)
-        .setFooter({ text: `🔮 Phase: Mystical Awakening | Power: ${percentage}% | Status: Scanning...` });
+        .setFooter({ text: `🔋 Scanning... | ${percentage}% Complete` });
 }
 
-// PHASE 2: Energy Amplification (10 frames, 2.5 seconds)
-function createEnergyAmplification(frame) {
-    const percentage = 15 + Math.floor((frame / 9) * 30); // 15-45%
-    const chargingBar = ProfessionalEngine.createAdvancedChargingBar(percentage, frame);
-    const particles = ProfessionalEngine.createParticleField(frame + 8, 'lightning');
+// PHASE 2: Power Surge (8 frames, 2 seconds)
+function createPowerSurge(frame) {
+    const percentage = 25 + Math.floor((frame / 7) * 40); // 25-65%
+    const chargingBar = CleanEngine.createSingleChargingBar(percentage, frame);
+    const particles = CleanEngine.createCleanParticles(frame + 6);
     
-    const amplificationMessages = [
-        "⚡ MASSIVE ENERGY SURGE DETECTED!",
-        "💥 Power levels climbing exponentially!",
-        "🔥 Devil Fruit signature intensifying!",
-        "✨ Energy resonance reaching critical mass!",
-        "⭐ Extraordinary power source confirmed!"
+    const messages = [
+        "💥 MASSIVE ENERGY SURGE DETECTED!",
+        "🔥 Power levels climbing rapidly!",
+        "⚡ Devil Fruit signature intensifying!",
+        "✨ Extraordinary energy resonance confirmed!"
     ];
     
-    const message = amplificationMessages[Math.floor(frame / 2)] || amplificationMessages[0];
+    const message = messages[Math.floor(frame / 2)] || messages[0];
     
     return new EmbedBuilder()
-        .setColor(ProfessionalEngine.getHyperColor(frame * 5 + 15, 2))
-        .setTitle('⚡ **ENERGY AMPLIFICATION PROTOCOL** ⚡')
+        .setColor(CleanEngine.getHyperColor(frame * 5 + 15, 2))
+        .setTitle('💥 **POWER SURGE DETECTED** 💥')
         .setDescription(`
 ${particles}
-╔══════════════════════════════════════════════╗
-║             POWER AMPLIFICATION               ║
-╠══════════════════════════════════════════════╣
-║                                              ║
-║  ${chargingBar}  ║
-║                                              ║
-║  ⚡ ${message.padEnd(35)} ║
-║                                              ║
-║  🌊 Energy Matrix: [█████████░░░░░░░] RISING ║
-║  🔥 Resonance: [███████░░░░░░░░░░] BUILDING  ║
-║                                              ║
-╚══════════════════════════════════════════════╝
+
+${chargingBar}
+
+*${message}*
         `)
-        .setFooter({ text: `⚡ Phase: Energy Amplification | Power: ${percentage}% | Status: Amplifying...` });
+        .setFooter({ text: `⚡ Power Surge | ${percentage}% Complete` });
 }
 
-// PHASE 3: Dimensional Convergence (8 frames, 2 seconds)
-function createDimensionalConvergence(frame) {
-    const percentage = 45 + Math.floor((frame / 7) * 25); // 45-70%
-    const chargingBar = ProfessionalEngine.createAdvancedChargingBar(percentage, frame);
-    const particles = ProfessionalEngine.createParticleField(frame + 15, 'cosmic');
+// PHASE 3: Critical Phase (6 frames, 1.5 seconds)
+function createCriticalPhase(frame) {
+    const percentage = 65 + Math.floor((frame / 5) * 25); // 65-90%
+    const chargingBar = CleanEngine.createSingleChargingBar(percentage, frame);
+    const particles = CleanEngine.createCleanParticles(frame + 10);
     
-    const convergenceMessages = [
-        "🌌 Dimensional barriers are weakening...",
-        "💫 Reality distortion field expanding...",
-        "✨ Cosmic forces align for manifestation...",
-        "🔮 Space-time fabric resonating with power..."
+    const messages = [
+        "🌟 CRITICAL ENERGY THRESHOLD REACHED!",
+        "💫 Power crystallization initiating...",
+        "⭐ Devil Fruit formation beginning..."
     ];
     
-    const message = convergenceMessages[Math.floor(frame / 2)] || convergenceMessages[0];
+    const message = messages[Math.floor(frame / 2)] || messages[0];
     
     return new EmbedBuilder()
-        .setColor(ProfessionalEngine.getHyperColor(frame * 7 + 30, 3))
-        .setTitle('🌌 **DIMENSIONAL CONVERGENCE SEQUENCE** 🌌')
+        .setColor(CleanEngine.getHyperColor(frame * 7 + 30, 3))
+        .setTitle('🌟 **CRITICAL PHASE ACTIVATED** 🌟')
         .setDescription(`
 ${particles}
-╔══════════════════════════════════════════════╗
-║            DIMENSIONAL CONVERGENCE            ║
-╠══════════════════════════════════════════════╣
-║                                              ║
-║  ${chargingBar}  ║
-║                                              ║
-║  🌌 ${message.padEnd(35)} ║
-║                                              ║
-║  💫 Dimension A: [████████████░░░] MERGING   ║
-║  ✨ Dimension B: [██████████░░░░░] ALIGNING  ║
-║  🔮 Nexus Point: [███████████████] LOCKED    ║
-║                                              ║
-╚══════════════════════════════════════════════╝
+
+${chargingBar}
+
+*${message}*
         `)
-        .setFooter({ text: `🌌 Phase: Dimensional Convergence | Power: ${percentage}% | Status: Converging...` });
+        .setFooter({ text: `🌟 Critical Phase | ${percentage}% Complete` });
 }
 
-// PHASE 4: Critical Saturation (6 frames, 1.5 seconds)
-function createCriticalSaturation(frame) {
-    const percentage = 70 + Math.floor((frame / 5) * 25); // 70-95%
-    const chargingBar = ProfessionalEngine.createAdvancedChargingBar(percentage, frame);
-    const particles = ProfessionalEngine.createParticleField(frame + 20, 'divine');
-    
-    const saturationMessages = [
-        "💥 CRITICAL SATURATION ACHIEVED!",
-        "🌟 POWER THRESHOLD EXCEEDED!",
-        "⭐ MAXIMUM ENERGY DENSITY REACHED!"
-    ];
-    
-    const message = saturationMessages[Math.floor(frame / 2)] || saturationMessages[0];
-    
-    return new EmbedBuilder()
-        .setColor(ProfessionalEngine.getHyperColor(frame * 11 + 50, 4))
-        .setTitle('💥 **CRITICAL SATURATION PROTOCOL** 💥')
-        .setDescription(`
-${particles}
-╔══════════════════════════════════════════════╗
-║             CRITICAL SATURATION               ║
-╠══════════════════════════════════════════════╣
-║                                              ║
-║  ${chargingBar}  ║
-║                                              ║
-║  💥 ${message.padEnd(35)} ║
-║                                              ║
-║  ⚠️  WARNING: ENERGY OVERFLOW IMMINENT  ⚠️   ║
-║  🔥 Core Temp: [████████████████] CRITICAL   ║
-║  ⚡ Stability: [████████░░░░░░░░] UNSTABLE    ║
-║                                              ║
-╚══════════════════════════════════════════════╝
-        `)
-        .setFooter({ text: `💥 Phase: Critical Saturation | Power: ${percentage}% | Status: CRITICAL!` });
-}
-
-// PHASE 5: Final Materialization (8 frames, 2 seconds)
+// PHASE 4: Final Materialization (6 frames, 1.5 seconds)
 function createFinalMaterialization(frame) {
-    const percentage = 95 + Math.floor((frame / 7) * 5); // 95-100%
-    const chargingBar = ProfessionalEngine.createAdvancedChargingBar(percentage, frame);
-    const particles = ProfessionalEngine.createParticleField(25, 'divine');
+    const percentage = 90 + Math.floor((frame / 5) * 10); // 90-100%
+    const chargingBar = CleanEngine.createSingleChargingBar(percentage, frame);
+    const particles = CleanEngine.createCleanParticles(frame + 12);
     
-    const materializationMessages = [
-        "✨ Initiating materialization protocol...",
-        "🍈 Devil Fruit matrix stabilizing...",
-        "💎 Physical form crystallizing...",
-        "🌟 Manifestation sequence complete!"
+    const messages = [
+        "✨ Final materialization sequence...",
+        "🍈 Devil Fruit taking physical form...",
+        "💎 Manifestation complete!"
     ];
     
-    const message = materializationMessages[Math.floor(frame / 2)] || materializationMessages[0];
+    const message = messages[Math.floor(frame / 2)] || messages[0];
     
     return new EmbedBuilder()
-        .setColor(ProfessionalEngine.getHyperColor(frame * 13 + 70, 5))
-        .setTitle('✨ **FINAL MATERIALIZATION SEQUENCE** ✨')
+        .setColor(CleanEngine.getHyperColor(frame * 9 + 50, 4))
+        .setTitle('✨ **FINAL MATERIALIZATION** ✨')
         .setDescription(`
 ${particles}
-╔══════════════════════════════════════════════╗
-║            FINAL MATERIALIZATION              ║
-╠══════════════════════════════════════════════╣
-║                                              ║
-║  ${chargingBar}  ║
-║                                              ║
-║  ✨ ${message.padEnd(35)} ║
-║                                              ║
-║  🍈 Form: [██████████████████████] STABLE    ║
-║  💎 Structure: [████████████████] COMPLETE   ║
-║  🌟 Essence: [█████████████████████] PURE    ║
-║                                              ║
-╚══════════════════════════════════════════════╝
+
+${chargingBar}
+
+*${message}*
         `)
-        .setFooter({ text: `✨ Phase: Final Materialization | Power: ${percentage}% | Status: Materializing...` });
+        .setFooter({ text: `✨ Materializing | ${percentage}% Complete` });
 }
 
-// PHASE 6: Devil Fruit Revelation (10 frames, 5 seconds)
+// PHASE 5: Devil Fruit Revelation (8 frames, 4 seconds)
 function createDevilFruitRevelation(frame, devilFruit, rarity) {
     const config = DevilFruitDatabase.getRarityConfig(rarity);
-    const particles = ProfessionalEngine.createParticleField(30, 'divine');
+    const particles = CleanEngine.createCleanParticles(15);
     
     const revealStages = [
-        "🍈 A Devil Fruit emerges from the void...",
-        `🍈 ${devilFruit.name.substring(0, 15)}...`,
+        "🍈 A Devil Fruit emerges...",
+        `🍈 ${devilFruit.name.substring(0, 20)}...`,
         `🍈 **${devilFruit.name}**`,
-        `📋 Type: **${devilFruit.type}**`,
-        `👤 Known User: **${devilFruit.user || 'Unknown'}**`,
-        `⚡ Power: **${devilFruit.power}**`,
-        `💎 Classification: **${rarity.toUpperCase()}**`,
-        `🌟 Power Level: **${devilFruit.powerLevel || 'Mysterious'}**`,
-        `🔮 Rarity: **${config.name} Class**`,
+        `📋 **Type:** ${devilFruit.type}`,
+        `👤 **User:** ${devilFruit.user || 'Unknown'}`,
+        `⚡ **Power:** ${devilFruit.power}`,
+        `💎 **Rarity:** ${rarity.toUpperCase()}`,
         `✨ **REVELATION COMPLETE!**`
     ];
     
     const currentReveal = revealStages[frame] || revealStages[revealStages.length - 1];
     
     return new EmbedBuilder()
-        .setColor(ProfessionalEngine.getHyperColor(frame * 15 + 90, 6))
-        .setTitle(`${config.emoji} **DEVIL FRUIT REVELATION** ${config.emoji}`)
+        .setColor(CleanEngine.getHyperColor(frame * 11 + 70, 5))
+        .setTitle(`${config.emoji} **DEVIL FRUIT REVEALED** ${config.emoji}`)
         .setDescription(`
 ${particles}
-╔══════════════════════════════════════════════╗
-║             DEVIL FRUIT REVEALED              ║
-╠══════════════════════════════════════════════╣
-║                                              ║
-║  🔋 [█████████████████████████] 100% ⚡     ║
-║                                              ║
-║  ${currentReveal.padEnd(44)} ║
-║                                              ║
-║  ${config.emoji}═══════════════════════════════════════${config.emoji}  ║
-║                                              ║
-╚══════════════════════════════════════════════╝
+
+🔋 [████████████████████] 100% ✨
+
+*${currentReveal}*
         `)
-        .setFooter({ text: `${config.emoji} Classification: ${config.name} | Revelation Complete!` });
+        .setFooter({ text: `${config.emoji} ${config.name} Class Devil Fruit | Revelation Complete!` });
 }
 
-// PHASE 7: Epic Finale
+// PHASE 6: Epic Finale
 function createEpicFinale(devilFruit, rarity) {
     const config = DevilFruitDatabase.getRarityConfig(rarity);
     
     const rarityMessages = {
-        omnipotent: "🌌 **OMNIPOTENT CLASS ACQUIRED!** Reality itself bows to your will! The multiverse trembles! 🌌",
-        mythical: "🔮 **MYTHICAL CLASS OBTAINED!** Ancient legends come to life! Gods whisper your name! 🔮",
-        legendary: "⭐ **LEGENDARY CLASS DISCOVERED!** Epic power courses through your being! Heroes are born! ⭐",
-        rare: "💎 **RARE CLASS SECURED!** Impressive abilities flow within you! Adventure awaits! 💎",
-        uncommon: "🌟 **UNCOMMON CLASS UNLOCKED!** Notable power gained! Your journey begins! 🌟",
-        common: "⚪ **DEVIL FRUIT ACQUIRED!** Every legend starts with a single step! Potential awaits! ⚪"
+        omnipotent: "🌌 **OMNIPOTENT CLASS!** Reality bends to your will! 🌌",
+        mythical: "🔮 **MYTHICAL CLASS!** Ancient legends come alive! 🔮",
+        legendary: "⭐ **LEGENDARY CLASS!** Epic power flows through you! ⭐",
+        rare: "💎 **RARE CLASS!** Impressive abilities unlocked! 💎",
+        uncommon: "🌟 **UNCOMMON CLASS!** Notable power gained! 🌟",
+        common: "⚪ **DEVIL FRUIT ACQUIRED!** Your journey begins! ⚪"
     };
     
     const components = [
@@ -357,98 +228,83 @@ function createEpicFinale(devilFruit, rarity) {
             .setColor(config.color)
             .setTitle(`${config.emoji} **${devilFruit.name}** ${config.emoji}`)
             .setDescription(`
-${ProfessionalEngine.createParticleField(35, 'divine')}
+${CleanEngine.createCleanParticles(20)}
 
 ${rarityMessages[rarity]}
 
-╔══════════════════════════════════════════════╗
-║                DEVIL FRUIT DATA               ║
-╠══════════════════════════════════════════════╣
-║                                              ║
-║  🍈 **Name:** ${devilFruit.name.padEnd(25)}    ║
-║  📋 **Type:** ${devilFruit.type.padEnd(25)}    ║
-║  👤 **User:** ${(devilFruit.user || 'Unknown').padEnd(25)}    ║
-║  ⚡ **Power:** ${devilFruit.power.substring(0,24).padEnd(25)} ║
-║  💎 **Class:** ${config.name.padEnd(25)}    ║
-║  🌟 **Level:** ${(devilFruit.powerLevel || 'Mysterious').toString().padEnd(25)} ║
-║                                              ║
-╚══════════════════════════════════════════════╝
+**🍈 Name:** ${devilFruit.name}
+**📋 Type:** ${devilFruit.type}
+**👤 User:** ${devilFruit.user || 'Unknown'}
+**⚡ Power:** ${devilFruit.power}
+**💎 Class:** ${config.name}
+**🌟 Level:** ${devilFruit.powerLevel || 'Mysterious'}
 
-*${devilFruit.description || 'A mysterious Devil Fruit with incredible potential awaiting discovery...'}*
-
-${config.emoji}═══════════════════════════════════════════════════════════════${config.emoji}
+*${devilFruit.description || 'A mysterious Devil Fruit with incredible potential...'}*
             `)
-            .setFooter({ text: `${config.emoji} Congratulations, Captain! You've discovered a ${config.name} class Devil Fruit! ${config.emoji}` })],
+            .setFooter({ text: `${config.emoji} Congratulations! You discovered a ${config.name} class Devil Fruit! ${config.emoji}` })],
         components
     };
 }
 
-// MAIN PROFESSIONAL ANIMATION CONTROLLER
+// MAIN CLEAN ANIMATION CONTROLLER
 async function createUltimateCinematicExperience(interaction) {
     try {
         // Pre-determine results
         const rarity = DevilFruitDatabase.calculateDropRarity();
         const devilFruit = DevilFruitDatabase.getRandomDevilFruit(rarity);
         
-        console.log(`🎭 PROFESSIONAL HUNT: ${devilFruit.name} (${rarity}) for ${interaction.user.username}`);
+        console.log(`🎭 CLEAN HUNT: ${devilFruit.name} (${rarity}) for ${interaction.user.username}`);
         
-        // PHASE 1: Mystical Awakening (8 frames, 2 seconds - ULTRA FAST)
-        for (let frame = 0; frame < 8; frame++) {
-            const embed = createMysticalAwakening(frame);
+        // PHASE 1: Energy Detection (6 frames, 1.5 seconds - ULTRA FAST)
+        for (let frame = 0; frame < 6; frame++) {
+            const embed = createEnergyDetection(frame);
             await interaction.editReply({ embeds: [embed] });
             await new Promise(resolve => setTimeout(resolve, 250)); // Ultra fast!
         }
         
-        // PHASE 2: Energy Amplification (10 frames, 2.5 seconds)
-        for (let frame = 0; frame < 10; frame++) {
-            const embed = createEnergyAmplification(frame);
+        // PHASE 2: Power Surge (8 frames, 2 seconds)
+        for (let frame = 0; frame < 8; frame++) {
+            const embed = createPowerSurge(frame);
             await interaction.editReply({ embeds: [embed] });
             await new Promise(resolve => setTimeout(resolve, 250)); // Lightning fast!
         }
         
-        // PHASE 3: Dimensional Convergence (8 frames, 2 seconds)
-        for (let frame = 0; frame < 8; frame++) {
-            const embed = createDimensionalConvergence(frame);
+        // PHASE 3: Critical Phase (6 frames, 1.5 seconds)
+        for (let frame = 0; frame < 6; frame++) {
+            const embed = createCriticalPhase(frame);
             await interaction.editReply({ embeds: [embed] });
             await new Promise(resolve => setTimeout(resolve, 250)); // Hyper fast!
         }
         
-        // PHASE 4: Critical Saturation (6 frames, 1.5 seconds)
+        // PHASE 4: Final Materialization (6 frames, 1.5 seconds)
         for (let frame = 0; frame < 6; frame++) {
-            const embed = createCriticalSaturation(frame);
+            const embed = createFinalMaterialization(frame);
             await interaction.editReply({ embeds: [embed] });
             await new Promise(resolve => setTimeout(resolve, 250)); // Mega fast!
         }
         
-        // PHASE 5: Final Materialization (8 frames, 2 seconds)
+        // PHASE 5: Devil Fruit Revelation (8 frames, 4 seconds)
         for (let frame = 0; frame < 8; frame++) {
-            const embed = createFinalMaterialization(frame);
-            await interaction.editReply({ embeds: [embed] });
-            await new Promise(resolve => setTimeout(resolve, 250)); // Ultra fast!
-        }
-        
-        // PHASE 6: Devil Fruit Revelation (10 frames, 5 seconds)
-        for (let frame = 0; frame < 10; frame++) {
             const embed = createDevilFruitRevelation(frame, devilFruit, rarity);
             await interaction.editReply({ embeds: [embed] });
             await new Promise(resolve => setTimeout(resolve, 500)); // Slower for dramatic reveal
         }
         
-        // PHASE 7: Epic Finale (permanent display)
+        // PHASE 6: Epic Finale (permanent display)
         const finale = createEpicFinale(devilFruit, rarity);
         await interaction.editReply(finale);
         
-        console.log(`🎊 PROFESSIONAL SUCCESS: ${devilFruit.name} (${rarity}) discovered by ${interaction.user.username}!`);
+        console.log(`🎊 CLEAN SUCCESS: ${devilFruit.name} (${rarity}) discovered by ${interaction.user.username}!`);
         
         return { devilFruit, rarity };
         
     } catch (error) {
-        console.error('🚨 Professional Animation Error:', error);
+        console.error('🚨 Clean Animation Error:', error);
         const errorEmbed = new EmbedBuilder()
-            .setTitle('⚠️ Critical System Failure!')
-            .setDescription('The Devil Fruit summoning matrix experienced a catastrophic overload! The Grand Line\'s power was too intense!')
+            .setTitle('⚠️ Hunt Failed!')
+            .setDescription('The Devil Fruit energy was too chaotic! Please try again.')
             .setColor('#FF0000')
-            .setFooter({ text: 'Professional System Error | Please try again' });
+            .setFooter({ text: 'System Error | Please retry hunt' });
         
         await interaction.editReply({ embeds: [errorEmbed] });
         throw error;
