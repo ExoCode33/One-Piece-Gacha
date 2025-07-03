@@ -199,6 +199,50 @@ const NextGenGachaEngine = {
         }
         
         return `**TRANSCENDENT**\n${progressBar}`;
+    },
+
+    // Calculate how many extra frames needed to reach target rarity color
+    calculateSuspenseFrames(currentFrame, targetRarity) {
+        const rainbowColors = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪'];
+        const rarityTargetColors = {
+            common: '⬜',      // White - not in rainbow, so 0 frames
+            uncommon: '🟩',   // Green - index 3
+            rare: '🟦',       // Blue - index 4  
+            legendary: '🟨',  // Yellow - index 2
+            mythical: '🟥',   // Red - index 0
+            omnipotent: null  // Full rotation - 6 frames
+        };
+
+        const targetColor = rarityTargetColors[targetRarity];
+        
+        // Special cases
+        if (targetRarity === 'common') {
+            return 0; // No extra frames needed
+        }
+        
+        if (targetRarity === 'omnipotent') {
+            return 6; // Full rainbow rotation
+        }
+
+        // Find how many frames to reach the target color
+        const targetIndex = rainbowColors.indexOf(targetColor);
+        if (targetIndex === -1) {
+            return 0; // Color not found, no extra frames
+        }
+
+        // Calculate current color position
+        const currentColorIndex = currentFrame % rainbowColors.length;
+        
+        // Calculate frames needed to reach target
+        let framesToTarget;
+        if (targetIndex >= currentColorIndex) {
+            framesToTarget = targetIndex - currentColorIndex;
+        } else {
+            // Need to wrap around
+            framesToTarget = (rainbowColors.length - currentColorIndex) + targetIndex;
+        }
+
+        return framesToTarget;
     }
 };
 
