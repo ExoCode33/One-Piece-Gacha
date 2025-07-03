@@ -301,7 +301,7 @@ const NextGenGachaEngine = {
 };
 
 // PHASE 1: Mystical Initialization (8 frames, 2 seconds)
-function createMysticalInitialization(frame, user) {
+function createMysticalInitialization(frame, user, rarity, devilFruit) {
     const percentage = Math.floor((frame / 7) * 15); // 0-15%
     const energyStatus = NextGenGachaEngine.createDynamicEnergyStatus(percentage, frame, 'scanning');
     const particles = NextGenGachaEngine.createOnePieceParticles(frame + 4, 'ocean', 'common');
@@ -316,6 +316,9 @@ function createMysticalInitialization(frame, user) {
     const message = mysticalMessages[Math.floor(frame / 2)] || mysticalMessages[0];
     const color = NextGenGachaEngine.getHyperSpectrumColor(frame * 3, 1, user?.id?.slice(-2) || 0);
     
+    // Get changing indicators that gradually lock in
+    const indicators = NextGenGachaEngine.getChangingIndicators(frame, rarity, devilFruit.type);
+    
     return new EmbedBuilder()
         .setColor(color)
         .setTitle('🔮 **MYSTICAL DEVIL FRUIT SCAN INITIATED** 🔮')
@@ -326,9 +329,9 @@ ${energyStatus}
 
 *${message}*
 
-🌊 **Ancient Seas:** STIRRING
-📡 **Devil's Frequency:** AWAKENING
-⚡ **Pirate's Destiny:** CALLING
+⚡ **Devil Fruit Aura:** ${indicators.aura}
+🔥 **Sea's Blessing:** ${indicators.blessing}
+💫 **Type Signature:** ${indicators.type}
         `)
         .setFooter({ text: `🔮 Phase: Mystical Initialization | Scanning ancient powers...` });
 }
@@ -391,9 +394,9 @@ ${energyStatus}
 
 *🎯 Devil Fruit spirit awakening from the depths...*
 
-💫 **Sea's Blessing:** CONVERGING
-🌌 **Pirate's Legend:** MANIFESTING
-✨ **Grand Line's Gift:** APPROACHING
+⚡ **Devil Fruit Aura:** ${indicators.aura}
+🔥 **Sea's Blessing:** ${indicators.blessing}
+💫 **Type Signature:** ${indicators.type}
         `)
             .setFooter({ text: `🌟 Phase: Critical Threshold | Energy critical!` });
     }
@@ -630,7 +633,7 @@ async function createUltimateCinematicExperience(interaction) {
         
         // PHASE 1: Mystical Initialization (8 frames, 2 seconds)
         for (let frame = 0; frame < 8; frame++) {
-            const embed = createMysticalInitialization(frame, user);
+            const embed = createMysticalInitialization(frame, user, rarity, devilFruit);
             await interaction.editReply({ embeds: [embed] });
             await new Promise(resolve => setTimeout(resolve, 250)); // Ultra-fast color cycling
         }
