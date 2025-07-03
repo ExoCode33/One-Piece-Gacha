@@ -46,8 +46,8 @@ The seas whisper of legendary treasures...
             { title: '🎆 **MOMENT OF TRUTH** 🎆', desc: 'The Grand Line bestows its gift...', color: '#2ECC71' }
         ];
 
-        // Simplified fast animation - reduced frames to prevent freezes
-        const totalFrames = 12; // Reduced frames
+        // Fast animation with rapid color changes
+        const totalFrames = 20; // More frames for one-by-one progression
         
         for (let frame = 0; frame < totalFrames; frame++) {
             try {
@@ -55,14 +55,15 @@ The seas whisper of legendary treasures...
                 const searchFrameIndex = Math.floor((frame / totalFrames) * searchFrames.length);
                 const frameData = searchFrames[Math.min(searchFrameIndex, searchFrames.length - 1)];
                 
-                // Linear progression
+                // One-by-one progression - each frame adds exactly one square
                 const progressPercentage = ((frame + 1) / totalFrames) * 100;
                 
                 const indicators = IndicatorsSystem.getChangingIndicators(frame, targetRarity, targetFruit.type);
                 const particles = ParticlesSystem.createOnePieceParticles(frame + 3, 'energy', targetRarity);
                 
-                // Use frame color for embed
-                const currentColor = frameData.color;
+                // Fast color cycling - changes every frame
+                const fastColors = ['#FF0000', '#FF6000', '#FFCC00', '#00FF00', '#0080FF', '#8000FF', '#FF00FF', '#E74C3C', '#F39C12', '#9B59B6', '#2ECC71', '#3498DB'];
+                const currentColor = fastColors[frame % fastColors.length];
                 
                 // Create moving rainbow progress bar
                 const progressBar = NextGenGachaEngine.createDynamicEnergyStatus(
@@ -90,13 +91,13 @@ ${particles}
 
                 await huntMessage.edit({ embeds: [searchEmbed] });
                 
-                // Faster timing
-                await new Promise(resolve => setTimeout(resolve, 600));
+                // Faster timing for smoother progression
+                await new Promise(resolve => setTimeout(resolve, 400));
                 
             } catch (error) {
                 console.error(`Animation frame ${frame} error:`, error);
                 // Skip this frame and continue
-                await new Promise(resolve => setTimeout(resolve, 600));
+                await new Promise(resolve => setTimeout(resolve, 400));
             }
         }
 
