@@ -130,7 +130,7 @@ const NextGenGachaEngine = {
         const descriptorIndex = Math.min(Math.floor(percentage / 20), descriptors.length - 1);
         const energyLevel = descriptors[descriptorIndex];
         
-        return `${sparkle} Energy Matrix: **${energyLevel}** (${percentage}%)`;
+        return `${sparkle} Sea's Power: **${energyLevel}** (${percentage}%)`;
     },
 
     // ADVANCED FAKE-OUT SYSTEM with near-miss psychology
@@ -250,9 +250,9 @@ ${energyStatus}
 
 *${message}*
 
-🌊 **Oceanic Resonance:** BUILDING
-📡 **Mystical Frequency:** STABILIZING
-⚡ **Power Signatures:** SEARCHING
+🌊 **Ancient Seas:** STIRRING
+📡 **Devil's Frequency:** AWAKENING
+⚡ **Pirate's Destiny:** CALLING
         `)
         .setFooter({ text: `🔮 Phase: Mystical Initialization | Scanning ancient powers...` });
 }
@@ -284,10 +284,10 @@ ${energyStatus}
 
 *${message}*
 
-⚡ **Energy Matrix:** AMPLIFYING
-🔥 **Power Core:** OVERCHARGING  
-🌟 **Resonance Field:** EXPANDING
-💫 **Quantum State:** FLUCTUATING
+⚡ **Devil Fruit Aura:** INTENSIFYING
+🔥 **Sea King's Heart:** AWAKENING  
+🌟 **Grand Line Energy:** SURGING
+💫 **Ocean's Will:** RESPONDING
         `)
         .setFooter({ text: `💥 Phase: Energy Amplification | Power surge detected!` });
 }
@@ -311,11 +311,11 @@ ${particles}
 
 ${energyStatus}
 
-*🎯 Devil Fruit signature crystallizing into reality...*
+*🎯 Devil Fruit spirit awakening from the depths...*
 
-💫 **Quantum State:** STABILIZING
-🌌 **Reality Matrix:** ALIGNING
-✨ **Manifestation:** IMMINENT
+💫 **Sea's Blessing:** CONVERGING
+🌌 **Pirate's Legend:** MANIFESTING
+✨ **Grand Line's Gift:** APPROACHING
         `)
             .setFooter({ text: `🌟 Phase: Critical Threshold | Energy critical!` });
     }
@@ -362,7 +362,7 @@ ${fakeOut.emoji} **Classification:** ${fakeOut.rarity.toUpperCase()}
             .setDescription(`
 🌀💫🌌✨🌠💥🔮⚡🌀💫🌌✨
 
-⚠️ Energy Level: **REALITY SHIFTING** (${percentage}%)
+⚠️ Sea's Power: **REALITY SHIFTING** (${percentage}%)
 
 *${shiftMessage}*
 *🔮 Recalibrating dimensional frequencies...*
@@ -401,10 +401,10 @@ ${energyStatus}
 
 *${message}*
 
-💎 **Crystallization:** ACTIVE
-🌟 **Form Stability:** OPTIMAL  
-✨ **Quantum Coherence:** ACHIEVED
-⭐ **Manifestation:** IMMINENT
+💎 **Devil's Essence:** FORMING
+🌟 **Sea King's Blessing:** BESTOWED  
+✨ **Pirate's Dream:** REALIZED
+⭐ **Grand Line's Choice:** CONFIRMED
         `)
         .setFooter({ text: `✨ Phase: Quantum Materialization | Reality crystallizing...` });
 }
@@ -428,7 +428,7 @@ function createUltimateRevelation(frame, user) {
     ];
     
     const message = revelationMessages[frame] || revelationMessages[revelationMessages.length - 1];
-    const energyComplete = `🌟 Energy Matrix: **TRANSCENDENT** (${percentage}%)`;
+    const energyComplete = `🌟 Sea's Power: **TRANSCENDENT** (${percentage}%)`;
     const color = NextGenGachaEngine.getHyperSpectrumColor(frame * 13 + 100, 6, user?.id?.slice(-2) || 0);
     
     return new EmbedBuilder()
