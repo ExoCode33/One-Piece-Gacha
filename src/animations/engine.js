@@ -107,7 +107,7 @@ const NextGenGachaEngine = {
         return this.hyperSpectrumColors[combinedIndex];
     },
 
-    // PROGRESSION BAR SYSTEM - Moving rainbow effect that actually moves
+    // PROGRESSION BAR SYSTEM - One square at a time progression
     createDynamicEnergyStatus(percentage, frame, phase = 'charging', currentEmbedColor = '#0099FF') {
         const phaseDescriptors = {
             scanning: ['AWAKENING', 'STIRRING', 'CALLING', 'REACHING', 'SUMMONING'],
@@ -120,9 +120,10 @@ const NextGenGachaEngine = {
         const descriptorIndex = Math.floor(percentage / 15);
         const energyLevel = descriptors[Math.min(descriptorIndex, descriptors.length - 1)];
         
-        // CONSISTENT WIDTH - Always 20 squares
+        // CONSISTENT WIDTH - Always 20 squares, fill one by one
         const maxSlots = 20;
-        const filledSlots = Math.floor((percentage / 100) * maxSlots);
+        // More precise calculation for one-by-one filling
+        const filledSlots = Math.round((percentage / 100) * maxSlots);
         
         // Rainbow colors that cycle through
         const colors = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪'];
