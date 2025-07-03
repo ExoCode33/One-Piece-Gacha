@@ -60,17 +60,8 @@ The seas whisper of legendary treasures...
             const indicators = IndicatorsSystem.getChangingIndicators(frame, targetRarity, targetFruit.type);
             const particles = ParticlesSystem.createOnePieceParticles(frame + 3, 'energy', targetRarity);
             
-            // More dramatic color switching based on progression
-            let currentColor = frameData.color;
-            if (progressPercentage > 70) {
-                // Final stages - rapid color switching
-                const finalColors = ['#FF0000', '#FF6000', '#FFCC00', '#00FF00', '#0080FF', '#8000FF'];
-                currentColor = finalColors[frame % finalColors.length];
-            } else if (progressPercentage > 40) {
-                // Building tension - moderate color switching
-                const tensionColors = ['#E74C3C', '#F39C12', '#F1C40F', '#9B59B6'];
-                currentColor = tensionColors[Math.floor(frame / 2) % tensionColors.length];
-            }
+            // Use the frame data color consistently - NO overriding
+            const currentColor = frameData.color;
             
             // Create progress bar with the SAME color as the embed
             const progressBar = NextGenGachaEngine.createDynamicEnergyStatus(
