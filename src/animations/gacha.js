@@ -1,6 +1,5 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { DevilFruitDatabase } = require('../data/devilfruit');
-const { createCanvas, loadImage } = require('canvas');
 
 // ═══════════════════════════════════════════════════════════════════
 //                    CLEAN PROFESSIONAL ANIMATION SYSTEM
@@ -442,69 +441,18 @@ ${particles}
         .setFooter({ text: `🍈 Materialization Complete | Ready for revelation...` });
 }
 
-// PHASE 6: Epic Canvas Finale
-async function createEpicCanvasFinale(devilFruit, rarity) {
-    try {
-        // Generate epic canvas image
-        const canvasBuffer = await CleanEngine.createEpicCanvasFinale(devilFruit, rarity);
-        const attachment = new AttachmentBuilder(canvasBuffer, { name: 'devil-fruit-reveal.png' });
-        
-        const config = DevilFruitDatabase.getRarityConfig(rarity);
-        
-        const rarityMessages = {
-            omnipotent: "🌌 **OMNIPOTENT CLASS ACQUIRED!** Reality itself bends to your will! The multiverse trembles! 🌌",
-            mythical: "🔮 **MYTHICAL CLASS OBTAINED!** Ancient legends come to life! Gods whisper your name! 🔮",
-            legendary: "⭐ **LEGENDARY CLASS DISCOVERED!** Epic power courses through your being! Heroes are born! ⭐",
-            rare: "💎 **RARE CLASS SECURED!** Impressive abilities flow within you! Adventure awaits! 💎",
-            uncommon: "🌟 **UNCOMMON CLASS UNLOCKED!** Notable power gained! Your journey begins! 🌟",
-            common: "⚪ **DEVIL FRUIT ACQUIRED!** Every legend starts with a single step! Potential awaits! ⚪"
-        };
-        
-        const components = [
-            new ActionRowBuilder()
-                .addComponents(
-                    new ButtonBuilder()
-                        .setCustomId('hunt_again')
-                        .setLabel('🍈 Hunt Again!')
-                        .setStyle(ButtonStyle.Primary),
-                    new ButtonBuilder()
-                        .setCustomId('view_collection')
-                        .setLabel('📚 My Collection')
-                        .setStyle(ButtonStyle.Secondary)
-                )
-        ];
-        
-        return {
-            embeds: [new EmbedBuilder()
-                .setColor(config.color)
-                .setTitle(`${config.emoji} **DEVIL FRUIT REVEALED!** ${config.emoji}`)
-                .setDescription(`
-${rarityMessages[rarity]}
-
-**🍈 Name:** ${devilFruit.name}
-**📋 Type:** ${devilFruit.type}
-**👤 User:** ${devilFruit.user || 'Unknown'}
-**⚡ Power:** ${devilFruit.power}
-**💎 Class:** ${config.name}
-**🌟 Level:** ${devilFruit.powerLevel || 'Mysterious'}
-
-*${devilFruit.description || 'A mysterious Devil Fruit with incredible potential...'}*
-                `)
-                .setImage('attachment://devil-fruit-reveal.png')
-                .setFooter({ text: `${config.emoji} Congratulations! You discovered a ${config.name} class Devil Fruit! ${config.emoji}` })],
-            files: [attachment],
-            components
-        };
-    } catch (error) {
-        console.error('Canvas generation error:', error);
-        // Fallback to text-only finale
-        return createTextFallbackFinale(devilFruit, rarity);
-    }
-}
-
-// Fallback text finale if Canvas fails
-function createTextFallbackFinale(devilFruit, rarity) {
+// PHASE 6: Epic Finale (Text version for now)
+function createEpicFinale(devilFruit, rarity) {
     const config = DevilFruitDatabase.getRarityConfig(rarity);
+    
+    const rarityMessages = {
+        omnipotent: "🌌 **OMNIPOTENT CLASS ACQUIRED!** Reality itself bends to your will! The multiverse trembles! 🌌",
+        mythical: "🔮 **MYTHICAL CLASS OBTAINED!** Ancient legends come to life! Gods whisper your name! 🔮",
+        legendary: "⭐ **LEGENDARY CLASS DISCOVERED!** Epic power courses through your being! Heroes are born! ⭐",
+        rare: "💎 **RARE CLASS SECURED!** Impressive abilities flow within you! Adventure awaits! 💎",
+        uncommon: "🌟 **UNCOMMON CLASS UNLOCKED!** Notable power gained! Your journey begins! 🌟",
+        common: "⚪ **DEVIL FRUIT ACQUIRED!** Every legend starts with a single step! Potential awaits! ⚪"
+    };
     
     const components = [
         new ActionRowBuilder()
@@ -523,17 +471,22 @@ function createTextFallbackFinale(devilFruit, rarity) {
     return {
         embeds: [new EmbedBuilder()
             .setColor(config.color)
-            .setTitle(`${config.emoji} **${devilFruit.name}** ${config.emoji}`)
+            .setTitle(`${config.emoji} **DEVIL FRUIT REVEALED!** ${config.emoji}`)
             .setDescription(`
+${CleanEngine.createCleanParticles(20)}
+
+${rarityMessages[rarity]}
+
 **🍈 Name:** ${devilFruit.name}
 **📋 Type:** ${devilFruit.type}
 **👤 User:** ${devilFruit.user || 'Unknown'}
 **⚡ Power:** ${devilFruit.power}
 **💎 Class:** ${config.name}
+**🌟 Level:** ${devilFruit.powerLevel || 'Mysterious'}
 
 *${devilFruit.description || 'A mysterious Devil Fruit with incredible potential...'}*
             `)
-            .setFooter({ text: `${config.emoji} ${config.name} class Devil Fruit discovered! ${config.emoji}` })],
+            .setFooter({ text: `${config.emoji} Congratulations! You discovered a ${config.name} class Devil Fruit! ${config.emoji}` })],
         components
     };
 }
@@ -582,8 +535,8 @@ async function createUltimateCinematicExperience(interaction) {
             await new Promise(resolve => setTimeout(resolve, 500)); // Slower for dramatic reveal
         }
         
-        // PHASE 6: Epic Canvas Finale (permanent display)
-        const finale = await createEpicCanvasFinale(devilFruit, rarity);
+        // PHASE 6: Epic Finale (permanent display)
+        const finale = createEpicFinale(devilFruit, rarity);
         await interaction.editReply(finale);
         
         console.log(`🎊 CLEAN SUCCESS: ${devilFruit.name} (${rarity}) discovered by ${interaction.user.username}!`);
