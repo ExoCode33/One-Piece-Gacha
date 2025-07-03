@@ -78,18 +78,6 @@ const NextGenGachaEngine = {
         return blessingLevels[rarity] || 'GENTLE';
     },
 
-    getResonanceLevel(rarity) {
-        const resonanceLevels = {
-            common: 'STABLE',
-            uncommon: 'STRONG',
-            rare: 'OVERWHELMING',
-            legendary: 'LEGENDARY',
-            mythical: 'MYTHICAL',
-            omnipotent: 'OMNIPOTENT'
-        };
-        return resonanceLevels[rarity] || 'STABLE';
-    },
-
     getTypeHint(type) {
         const typeHints = {
             'Paramecia': 'BODY MANIPULATION',
@@ -187,10 +175,10 @@ const NextGenGachaEngine = {
     createDynamicEnergyStatus(percentage, frame, phase = 'charging') {
         // Phase-specific energy descriptors
         const phaseDescriptors = {
-            scanning: ['INITIALIZING', 'SEARCHING', 'DETECTING', 'LOCATING', 'ANALYZING'],
-            charging: ['CHARGING', 'BUILDING', 'RISING', 'SURGING', 'AMPLIFYING'],
-            critical: ['CRITICAL', 'MAXIMUM', 'OVERLOAD', 'EXPLOSIVE', 'TRANSCENDENT'],
-            materializing: ['FORMING', 'STABILIZING', 'CRYSTALLIZING', 'MANIFESTING', 'COMPLETE']
+            scanning: ['AWAKENING', 'STIRRING', 'CALLING', 'REACHING', 'SUMMONING'],
+            charging: ['RISING', 'BUILDING', 'SURGING', 'SWELLING', 'ROARING'],
+            critical: ['LEGENDARY', 'MYTHICAL', 'TRANSCENDENT', 'OVERWHELMING', 'BOUNDLESS'],
+            materializing: ['FORMING', 'BLESSING', 'CHOOSING', 'BESTOWING', 'GRANTING']
         };
         
         // Dynamic sparkle selection based on percentage and phase
@@ -374,15 +362,18 @@ ${energyStatus}
 }
 
 // PHASE 3: Advanced Fake-Out Sequence (8 frames, 2 seconds)
-function createAdvancedFakeOut(frame, actualRarity, user) {
+function createAdvancedFakeOut(frame, actualRarity, user, devilFruit) {
     const percentage = 45 + Math.floor((frame / 7) * 25); // 45-70%
     const fakeOut = NextGenGachaEngine.generateAdvancedFakeOut(actualRarity, frame, user);
     
     if (!fakeOut) {
-        // No fake-out, show critical energy buildup
+        // No fake-out, show critical energy buildup with changing indicators
         const energyStatus = NextGenGachaEngine.createDynamicEnergyStatus(percentage, frame, 'critical');
         const particles = NextGenGachaEngine.createOnePieceParticles(frame + 15, 'grandline', 'rare');
         const color = NextGenGachaEngine.getHyperSpectrumColor(frame * 7 + 40, 3, user?.id?.slice(-2) || 0);
+        
+        // Get changing indicators
+        const indicators = NextGenGachaEngine.getChangingIndicators(frame, actualRarity, devilFruit.type);
         
         return new EmbedBuilder()
             .setColor(color)
