@@ -30,7 +30,7 @@ for (const file of commandFiles) {
             console.log(`⚠️ Command at ${filePath} is missing required "data" or "execute" property.`);
         }
     } catch (error) {
-        console.error(`❌ Error loading command ${file}:`, error); // <== full error logging
+        console.error(`❌ Error loading command ${file}:`, error.message);
     }
 }
 
@@ -58,7 +58,7 @@ client.once('ready', async () => {
     console.log(`🏴‍☠️ ${client.user.tag} is ready to sail!`);
     console.log(`📊 Serving ${client.guilds.cache.size} server(s)`);
     console.log(`👥 Connected to ${client.users.cache.size} user(s)`);
-
+    
     // Initialize database
     try {
         const { initializeDatabase } = require('./src/database/setup');
@@ -69,20 +69,21 @@ client.once('ready', async () => {
         console.error('❌ Database initialization failed:', error.message);
         console.log('⚠️ Bot will continue but data will not persist!');
     }
-
+    
     // Register slash commands
     try {
         console.log('🔄 Registering slash commands...');
-
+        
         const commands = [];
         for (const command of client.commands.values()) {
             commands.push(command.data.toJSON());
         }
-
+        
+        // Register commands globally
         await client.application.commands.set(commands);
         console.log('✅ Successfully registered slash commands!');
         console.log(`📝 Commands: ${commands.map(cmd => `/${cmd.name}`).join(' and ')}`);
-
+        
     } catch (error) {
         console.error('❌ Failed to register slash commands:', error);
     }
@@ -91,6 +92,7 @@ client.once('ready', async () => {
 // Handle process termination
 process.on('SIGINT', async () => {
     console.log('🛑 Received SIGINT, shutting down gracefully...');
+    
     try {
         const DatabaseManager = require('./src/database/manager');
         await DatabaseManager.cleanup();
@@ -99,12 +101,14 @@ process.on('SIGINT', async () => {
     } catch (error) {
         console.error('❌ Error during shutdown:', error);
     }
+    
     client.destroy();
     process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
     console.log('🛑 Received SIGTERM, shutting down gracefully...');
+    
     try {
         const DatabaseManager = require('./src/database/manager');
         await DatabaseManager.cleanup();
@@ -113,6 +117,7 @@ process.on('SIGTERM', async () => {
     } catch (error) {
         console.error('❌ Error during shutdown:', error);
     }
+    
     client.destroy();
     process.exit(0);
 });
