@@ -346,35 +346,6 @@ ${finalParticles2}
     }
 }
 
-async function handleHuntAgain(interaction) {
-    try {
-        // Send a new pull command instead of re-rolling current message
-        await interaction.reply({
-            content: '/pull',
-            ephemeral: true
-        });
-        
-        // Follow up with a message explaining what happened
-        setTimeout(async () => {
-            try {
-                await interaction.followUp({
-                    content: '🍈 **Hunt Again activated!** Use the `/pull` command above to start a new hunt!',
-                    ephemeral: true
-                });
-            } catch (error) {
-                console.error('Follow-up message error:', error);
-            }
-        }, 1000);
-        
-    } catch (error) {
-        console.error('Hunt again error:', error);
-        await interaction.reply({
-            content: '❌ Use `/pull` command to start a new hunt!',
-            ephemeral: true
-        });
-    }
-}
-
 async function handleViewCollection(interaction) {
     const collectionEmbed = new EmbedBuilder()
         .setTitle('📚 **Your Devil Fruit Collection**')
@@ -385,11 +356,8 @@ async function handleViewCollection(interaction) {
     await interaction.reply({ embeds: [collectionEmbed], ephemeral: true });
 }
 
-// REMOVED: handleShareDiscovery function since we removed the share button
-
 module.exports = {
     createUltimateCinematicExperience,
-    handleHuntAgain,
     handleViewCollection
-    // Removed handleShareDiscovery export
+    // Removed handleHuntAgain - now handled in pull.js
 };
