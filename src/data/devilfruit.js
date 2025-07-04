@@ -1,638 +1,657 @@
-// ═══════════════════════════════════════════════════════════════════
-//                    ONE PIECE DEVIL FRUIT DATABASE
-// ═══════════════════════════════════════════════════════════════════
+const { CombatSystem, DEVIL_FRUIT_ELEMENTS } = require('./counter-system');
 
-const RARITY_CONFIG = {
-    common: { 
-        name: 'Common',
-        color: '#8B4513',  // Fixed brown color
-        emoji: '🟫',
-        stars: '⭐',
-        chance: 45.0,
-        description: 'Basic Devil Fruits with useful but limited abilities',
-        power: 'Foundation',
-        baseValue: 100
+// Devil Fruit database with detailed information
+const DEVIL_FRUITS = {
+    // LOGIA FRUITS (Most Powerful)
+    'magu_magu_001': {
+        id: 'magu_magu_001',
+        name: 'Magu Magu no Mi',
+        type: 'Logia',
+        rarity: 'mythical',
+        power: 'Absolute control over magma and volcanic forces',
+        previousUser: 'Admiral Akainu',
+        description: 'The ultimate offensive Logia fruit. Grants the user the ability to create, control, and become magma. The magma is so hot it can even burn fire itself, making it superior to most other Logia fruits.',
+        awakening: 'Can permanently alter the landscape into volcanic terrain and create massive magma constructs.',
+        weakness: 'Standard Devil Fruit weaknesses: sea water and Haki. Extremely vulnerable to cooling attacks.'
     },
-    uncommon: { 
-        name: 'Uncommon',
-        color: '#2ECC71',
-        emoji: '🟩',
-        stars: '⭐⭐',
-        chance: 30.0,
-        description: 'Notable Devil Fruits with respectable combat potential',
-        power: 'Rising',
-        baseValue: 250
+    'pika_pika_001': {
+        id: 'pika_pika_001',
+        name: 'Pika Pika no Mi',
+        type: 'Logia',
+        rarity: 'mythical',
+        power: 'Light manipulation and light-speed movement',
+        previousUser: 'Admiral Kizaru',
+        description: 'Grants the user the power to create, control, and become light. Allows for light-speed attacks and movement, making the user nearly untouchable.',
+        awakening: 'Can bend light to create illusions and manipulate gravity through photons.',
+        weakness: 'Reflective surfaces can redirect attacks. Sea water and Haki.'
     },
-    rare: { 
-        name: 'Rare',
-        color: '#3498DB',
-        emoji: '🟦',
-        stars: '⭐⭐⭐',
-        chance: 18.0,
-        description: 'Powerful Devil Fruits with significant abilities',
-        power: 'Elite',
-        baseValue: 500
+    'hie_hie_001': {
+        id: 'hie_hie_001',
+        name: 'Hie Hie no Mi',
+        type: 'Logia',
+        rarity: 'legendary',
+        power: 'Ice creation and manipulation',
+        previousUser: 'Former Admiral Aokiji',
+        description: 'Allows the user to create, control, and become ice. Can freeze large bodies of water and create massive ice structures.',
+        awakening: 'Can permanently change the climate of entire islands to frozen wastelands.',
+        weakness: 'Fire and heat-based attacks. Sea water and Haki.'
     },
-    legendary: { 
-        name: 'Legendary',
-        color: '#F39C12',
-        emoji: '🟨',
-        stars: '⭐⭐⭐⭐',
-        chance: 5.5,
-        description: 'Exceptional Devil Fruits that define their users as legends',
-        power: 'Legendary',
-        baseValue: 1000
+    'mera_mera_001': {
+        id: 'mera_mera_001',
+        name: 'Mera Mera no Mi',
+        type: 'Logia',
+        rarity: 'legendary',
+        power: 'Fire creation and manipulation',
+        previousUser: 'Portgas D. Ace',
+        description: 'Grants the user the ability to create, control, and become fire. One of the most destructive Logia fruits with incredible offensive capabilities.',
+        awakening: 'Can create self-sustaining fires and manipulate the temperature of the environment.',
+        weakness: 'Magma-based attacks, water, and sea water. Haki can also bypass the fire body.'
     },
-    mythical: { 
-        name: 'Mythical',
-        color: '#E74C3C',
-        emoji: '🟥',
-        stars: '⭐⭐⭐⭐⭐',
-        chance: 1.3,
-        description: 'World-changing Devil Fruits of immense power',
-        power: 'Mythical',
-        baseValue: 2500
+    'goro_goro_001': {
+        id: 'goro_goro_001',
+        name: 'Goro Goro no Mi',
+        type: 'Logia',
+        rarity: 'legendary',
+        power: 'Lightning generation and control',
+        previousUser: 'Eneru (Enel)',
+        description: 'Allows the user to create, control, and become lightning. Grants incredible speed and destructive electrical attacks.',
+        awakening: 'Can manipulate electromagnetic fields and control electronic devices.',
+        weakness: 'Rubber completely nullifies electrical attacks. Sea water and Haki.'
     },
-    omnipotent: { 
-        name: 'Divine',  // Updated name
-        color: '#9B59B6',
-        emoji: '🟪',
-        stars: '⭐⭐⭐⭐⭐⭐',
-        chance: 0.2,
-        description: 'Reality-bending Devil Fruits that transcend normal limits',
-        power: 'Divine',
-        baseValue: 10000
+    'suna_suna_001': {
+        id: 'suna_suna_001',
+        name: 'Suna Suna no Mi',
+        type: 'Logia',
+        rarity: 'epic',
+        power: 'Sand manipulation and desiccation',
+        previousUser: 'Sir Crocodile',
+        description: 'Grants the ability to create, control, and become sand. Can absorb moisture from anything touched.',
+        awakening: 'Can turn entire landscapes into desert and control sandstorms on a massive scale.',
+        weakness: 'Water negates sand powers temporarily. Sea water and Haki.'
+    },
+    'yami_yami_001': {
+        id: 'yami_yami_001',
+        name: 'Yami Yami no Mi',
+        type: 'Logia',
+        rarity: 'omnipotent',
+        power: 'Darkness manipulation and Devil Fruit nullification',
+        previousUser: 'Marshall D. Teach (Blackbeard)',
+        description: 'The most dangerous Logia fruit. Grants control over darkness and gravity, and can nullify other Devil Fruit powers upon contact.',
+        awakening: 'Can create black holes and completely absorb light and matter.',
+        weakness: 'User takes increased damage from physical attacks. Cannot become intangible like other Logias.'
+    },
+
+    // MYTHICAL ZOAN FRUITS
+    'hito_hito_001': {
+        id: 'hito_hito_001',
+        name: 'Hito Hito no Mi, Model: Nika',
+        type: 'Mythical Zoan',
+        rarity: 'omnipotent',
+        power: 'Rubber body with reality-bending properties',
+        previousUser: 'Monkey D. Luffy',
+        description: 'The legendary Sun God Nika fruit. Grants a rubber body with the most ridiculous power in the world - the ability to fight with complete freedom and bring joy to others.',
+        awakening: 'Can turn the environment into rubber and grant rubber properties to other objects and people.',
+        weakness: 'Sharp objects can still cut through rubber. Sea water and Haki.'
+    },
+    'uo_uo_001': {
+        id: 'uo_uo_001',
+        name: 'Uo Uo no Mi, Model: Seiryu',
+        type: 'Mythical Zoan',
+        rarity: 'omnipotent',
+        power: 'Azure Dragon transformation',
+        previousUser: 'Kaido of the Hundred Beasts',
+        description: 'Transforms the user into a massive Azure Dragon. Grants incredible physical strength, the ability to fly, and control over wind and lightning.',
+        awakening: 'Can manipulate weather patterns and create devastating natural disasters.',
+        weakness: 'Large size makes user an easier target. Sea water and Haki.'
+    },
+    'tori_tori_002': {
+        id: 'tori_tori_002',
+        name: 'Tori Tori no Mi, Model: Phoenix',
+        type: 'Mythical Zoan',
+        rarity: 'mythical',
+        power: 'Phoenix transformation with regeneration',
+        previousUser: 'Marco the Phoenix',
+        description: 'Allows transformation into a phoenix. Grants flight and the ability to heal from any injury with blue flames.',
+        awakening: 'Can resurrect from death once per year and heal others with phoenix flames.',
+        weakness: 'Regeneration has limits against overwhelming damage. Sea water and Haki.'
+    },
+    'inu_inu_003': {
+        id: 'inu_inu_003',
+        name: 'Inu Inu no Mi, Model: Okuchi no Makami',
+        type: 'Mythical Zoan',
+        rarity: 'mythical',
+        power: 'Great Wolf deity transformation',
+        previousUser: 'Yamato',
+        description: 'Transforms the user into the legendary wolf deity. Grants ice powers and incredible physical abilities.',
+        awakening: 'Can command other wolves and manipulate ice on a massive scale.',
+        weakness: 'Fire-based attacks are particularly effective. Sea water and Haki.'
+    },
+
+    // ANCIENT ZOAN FRUITS
+    'ryu_ryu_001': {
+        id: 'ryu_ryu_001',
+        name: 'Ryu Ryu no Mi, Model: Allosaurus',
+        type: 'Ancient Zoan',
+        rarity: 'epic',
+        power: 'Allosaurus transformation',
+        previousUser: 'X-Drake',
+        description: 'Allows transformation into an Allosaurus. Grants immense physical strength and predatory instincts.',
+        awakening: 'Enhanced durability and the ability to track prey across vast distances.',
+        weakness: 'Slower movement in full transformation. Sea water and Haki.'
+    },
+    'zou_zou_001': {
+        id: 'zou_zou_001',
+        name: 'Zou Zou no Mi, Model: Mammoth',
+        type: 'Ancient Zoan',
+        rarity: 'epic',
+        power: 'Mammoth transformation',
+        previousUser: 'Jack the Drought',
+        description: 'Transforms the user into a massive mammoth. Provides incredible physical strength and durability.',
+        awakening: 'Can cause earthquakes with footsteps and enhanced cold resistance.',
+        weakness: 'Extremely large target. Vulnerable to fire attacks. Sea water and Haki.'
+    },
+    'ryu_ryu_002': {
+        id: 'ryu_ryu_002',
+        name: 'Ryu Ryu no Mi, Model: Spinosaurus',
+        type: 'Ancient Zoan',
+        rarity: 'epic',
+        power: 'Spinosaurus transformation',
+        previousUser: 'Page One',
+        description: 'Allows transformation into a Spinosaurus. Grants aquatic abilities and powerful jaw strength.',
+        awakening: 'Can breathe underwater in hybrid form and enhanced swimming speed.',
+        weakness: 'Requires water for optimal performance. Sea water and Haki.'
+    },
+
+    // REGULAR ZOAN FRUITS
+    'hito_hito_002': {
+        id: 'hito_hito_002',
+        name: 'Hito Hito no Mi',
+        type: 'Zoan',
+        rarity: 'uncommon',
+        power: 'Human transformation and intelligence',
+        previousUser: 'Tony Tony Chopper',
+        description: 'Grants human-like intelligence and the ability to walk upright. For animals, provides human transformation.',
+        awakening: 'Enhanced learning ability and can understand all languages.',
+        weakness: 'Minimal combat enhancement for humans. Sea water and Haki.'
+    },
+    'inu_inu_001': {
+        id: 'inu_inu_001',
+        name: 'Inu Inu no Mi, Model: Wolf',
+        type: 'Zoan',
+        rarity: 'rare',
+        power: 'Wolf transformation',
+        previousUser: 'Jabra',
+        description: 'Allows transformation into a wolf. Grants enhanced speed, agility, and pack hunting instincts.',
+        awakening: 'Can communicate with and command other canines.',
+        weakness: 'Vulnerable to loud noises. Sea water and Haki.'
+    },
+    'neko_neko_001': {
+        id: 'neko_neko_001',
+        name: 'Neko Neko no Mi, Model: Leopard',
+        type: 'Zoan',
+        rarity: 'rare',
+        power: 'Leopard transformation',
+        previousUser: 'Rob Lucci',
+        description: 'Transforms the user into a leopard. Provides incredible speed, agility, and predatory instincts.',
+        awakening: 'Enhanced night vision and the ability to move completely silently.',
+        weakness: 'Overconfidence in predatory instincts. Sea water and Haki.'
+    },
+    'zou_zou_002': {
+        id: 'zou_zou_002',
+        name: 'Zou Zou no Mi',
+        type: 'Zoan',
+        rarity: 'uncommon',
+        power: 'Elephant transformation',
+        previousUser: 'Spandam\'s sword Funkfreed',
+        description: 'Grants elephant transformation. Provides immense physical strength and a powerful trunk.',
+        awakening: 'Enhanced memory and the ability to communicate with elephants.',
+        weakness: 'Large size makes user slow. Sea water and Haki.'
+    },
+
+    // SPECIAL PARAMECIA FRUITS
+    'mochi_mochi_001': {
+        id: 'mochi_mochi_001',
+        name: 'Mochi Mochi no Mi',
+        type: 'Special Paramecia',
+        rarity: 'legendary',
+        power: 'Mochi creation and manipulation',
+        previousUser: 'Charlotte Katakuri',
+        description: 'A Special Paramecia that acts like a Logia. Allows the user to create, control, and become mochi. Can see slightly into the future.',
+        awakening: 'Can turn the environment into mochi and predict enemy movements.',
+        weakness: 'Liquid attacks can make mochi soggy and unusable. Sea water and Haki.'
+    },
+
+    // PARAMECIA FRUITS
+    'gura_gura_001': {
+        id: 'gura_gura_001',
+        name: 'Gura Gura no Mi',
+        type: 'Paramecia',
+        rarity: 'omnipotent',
+        power: 'Earthquake generation',
+        previousUser: 'Edward Newgate (Whitebeard)',
+        description: 'The strongest Paramecia fruit. Grants the power to create earthquakes and destroy the world itself.',
+        awakening: 'Can create permanent tectonic changes and control seismic activity globally.',
+        weakness: 'Vibrations can be countered by opposing frequencies. Sea water and Haki.'
+    },
+    'ope_ope_001': {
+        id: 'ope_ope_001',
+        name: 'Ope Ope no Mi',
+        type: 'Paramecia',
+        rarity: 'mythical',
+        power: 'Operating room creation and spatial manipulation',
+        previousUser: 'Trafalgar D. Water Law',
+        description: 'Creates a spherical operating room where the user can manipulate anything within. Can perform impossible surgical procedures.',
+        awakening: 'Can extend the Room to cover entire islands and grant eternal life to others.',
+        weakness: 'Requires stamina to maintain large Rooms. Sea water and Haki.'
+    },
+    'nikyu_nikyu_001': {
+        id: 'nikyu_nikyu_001',
+        name: 'Nikyu Nikyu no Mi',
+        type: 'Paramecia',
+        rarity: 'legendary',
+        power: 'Paw pad creation and repulsion',
+        previousUser: 'Bartholomew Kuma',
+        description: 'Creates paw pads that can repel anything, including physical attacks, pain, and even abstract concepts.',
+        awakening: 'Can repel time itself and travel to any location instantly.',
+        weakness: 'Requires precise timing and positioning. Sea water and Haki.'
+    },
+    'doku_doku_001': {
+        id: 'doku_doku_001',
+        name: 'Doku Doku no Mi',
+        type: 'Paramecia',
+        rarity: 'epic',
+        power: 'Poison generation and immunity',
+        previousUser: 'Magellan',
+        description: 'Grants the ability to generate various types of poison and complete immunity to all toxins.',
+        awakening: 'Can create airborne toxins and poison that affects the soul itself.',
+        weakness: 'Wax can contain poison. Antidotes exist for some poisons. Sea water and Haki.'
+    },
+    'mera_mera_002': {
+        id: 'mera_mera_002',
+        name: 'Gomu Gomu no Mi',
+        type: 'Paramecia',
+        rarity: 'rare',
+        power: 'Rubber body properties',
+        previousUser: 'Unknown',
+        description: 'Grants the user a rubber body, providing immunity to blunt attacks and electrical attacks.',
+        awakening: 'Can turn the environment into rubber and affect other people with rubber properties.',
+        weakness: 'Sharp objects can cut through rubber. Fire can burn rubber. Sea water and Haki.'
+    },
+    'bari_bari_001': {
+        id: 'bari_bari_001',
+        name: 'Bari Bari no Mi',
+        type: 'Paramecia',
+        rarity: 'epic',
+        power: 'Barrier creation',
+        previousUser: 'Bartolomeo',
+        description: 'Creates invisible barriers that are virtually indestructible. Can be shaped into various forms.',
+        awakening: 'Barriers can reflect attacks back at enemies and become permanently placed.',
+        weakness: 'Limited number of barriers at once. Can be bypassed by going around. Sea water and Haki.'
+    },
+    'hana_hana_001': {
+        id: 'hana_hana_001',
+        name: 'Hana Hana no Mi',
+        type: 'Paramecia',
+        rarity: 'rare',
+        power: 'Body part replication',
+        previousUser: 'Nico Robin',
+        description: 'Allows the user to sprout copies of their body parts from any surface.',
+        awakening: 'Can create full-body clones and sprout body parts of other people.',
+        weakness: 'Damage to sprouted parts affects the real body. Sea water and Haki.'
+    },
+    'sube_sube_001': {
+        id: 'sube_sube_001',
+        name: 'Sube Sube no Mi',
+        type: 'Paramecia',
+        rarity: 'uncommon',
+        power: 'Smooth skin and attack deflection',
+        previousUser: 'Alvida',
+        description: 'Makes the user\'s skin perfectly smooth, causing attacks to slip off harmlessly.',
+        awakening: 'Can make other objects and people smooth, and control friction.',
+        weakness: 'Targeted attacks can still hit. Sea water and Haki affect the smoothness.'
+    },
+    'bomu_bomu_001': {
+        id: 'bomu_bomu_001',
+        name: 'Bomu Bomu no Mi',
+        type: 'Paramecia',
+        rarity: 'rare',
+        power: 'Explosion generation',
+        previousUser: 'Mr. 5',
+        description: 'Allows the user to make any part of their body explode, including breath and bodily waste.',
+        awakening: 'Can create delayed explosions and make other objects explosive.',
+        weakness: 'User is not immune to other explosions. Sea water and Haki.'
+    },
+    'kilo_kilo_001': {
+        id: 'kilo_kilo_001',
+        name: 'Kilo Kilo no Mi',
+        type: 'Paramecia',
+        rarity: 'common',
+        power: 'Weight manipulation',
+        previousUser: 'Miss Valentine',
+        description: 'Allows the user to change their body weight from 1 kilogram to 10,000 kilograms.',
+        awakening: 'Can affect the weight of other objects and people.',
+        weakness: 'Cannot become lighter than 1kg or heavier than 10,000kg. Sea water and Haki.'
+    },
+    'supa_supa_001': {
+        id: 'supa_supa_001',
+        name: 'Supa Supa no Mi',
+        type: 'Paramecia',
+        rarity: 'uncommon',
+        power: 'Blade body transformation',
+        previousUser: 'Daz Bonez (Mr. 1)',
+        description: 'Turns any part of the user\'s body into steel blades.',
+        awakening: 'Can turn other objects into blades and extend blade length.',
+        weakness: 'Rust can affect the blades. Strong enough force can break the blades. Sea water and Haki.'
+    },
+    'toge_toge_001': {
+        id: 'toge_toge_001',
+        name: 'Toge Toge no Mi',
+        type: 'Paramecia',
+        rarity: 'uncommon',
+        power: 'Spike generation',
+        previousUser: 'Miss Doublefinger',
+        description: 'Allows the user to grow spikes from any part of their body.',
+        awakening: 'Can create spikes from the environment and control their size and sharpness.',
+        weakness: 'Spikes can be broken with enough force. Sea water and Haki.'
+    },
+    'ori_ori_001': {
+        id: 'ori_ori_001',
+        name: 'Ori Ori no Mi',
+        type: 'Paramecia',
+        rarity: 'rare',
+        power: 'Cage and binding creation',
+        previousUser: 'Hina',
+        description: 'Allows the user to create iron restraints and cages that pass through the target\'s body.',
+        awakening: 'Can create permanent restraints and manipulate existing metal.',
+        weakness: 'Strong enough individuals can break the restraints. Sea water and Haki.'
+    },
+    'noro_noro_001': {
+        id: 'noro_noro_001',
+        name: 'Noro Noro no Mi',
+        type: 'Paramecia',
+        rarity: 'epic',
+        power: 'Slowness beam projection',
+        previousUser: 'Foxy',
+        description: 'Emits beams that slow down anything they hit for 30 seconds.',
+        awakening: 'Can create areas of permanent slowness and affect time flow.',
+        weakness: 'Beams can be reflected by mirrors. Effect is temporary. Sea water and Haki.'
+    },
+    'door_door_001': {
+        id: 'door_door_001',
+        name: 'Doa Doa no Mi',
+        type: 'Paramecia',
+        rarity: 'epic',
+        power: 'Door creation anywhere',
+        previousUser: 'Blueno',
+        description: 'Allows the user to create doors on any surface, including the air itself.',
+        awakening: 'Can create permanent doorways and access pocket dimensions.',
+        weakness: 'Doors can be locked from the other side. Sea water and Haki.'
+    },
+    'awa_awa_001': {
+        id: 'awa_awa_001',
+        name: 'Awa Awa no Mi',
+        type: 'Paramecia',
+        rarity: 'uncommon',
+        power: 'Soap bubble creation',
+        previousUser: 'Kalifa',
+        description: 'Creates soap bubbles that can clean the strength out of people and make surfaces slippery.',
+        awakening: 'Can create acidic bubbles and control cleanliness of the environment.',
+        weakness: 'Water washes away the soap. Wind can blow bubbles away. Sea water and Haki.'
+    },
+    'berry_berry_001': {
+        id: 'berry_berry_001',
+        name: 'Beri Beri no Mi',
+        type: 'Paramecia',
+        rarity: 'uncommon',
+        power: 'Body separation into berry-like spheres',
+        previousUser: 'Very Good',
+        description: 'Allows the user to split their body into small berry-like spheres.',
+        awakening: 'Can control the spheres remotely and split other objects.',
+        weakness: 'Spheres can be scattered or lost. Sea water and Haki.'
+    },
+    'shari_shari_001': {
+        id: 'shari_shari_001',
+        name: 'Shari Shari no Mi',
+        type: 'Paramecia',
+        rarity: 'uncommon',
+        power: 'Wheel transformation',
+        previousUser: 'Sharinguru',
+        description: 'Allows the user to turn their limbs into wheels for high-speed movement.',
+        awakening: 'Can turn other objects into wheels and control their rotation.',
+        weakness: 'Vulnerable when wheels are stuck or damaged. Sea water and Haki.'
+    },
+    'yomi_yomi_001': {
+        id: 'yomi_yomi_001',
+        name: 'Yomi Yomi no Mi',
+        type: 'Paramecia',
+        rarity: 'mythical',
+        power: 'Soul revival and manipulation',
+        previousUser: 'Brook',
+        description: 'Grants a second life after death and the ability to interact with souls.',
+        awakening: 'Can see and manipulate the souls of living beings and travel to the afterlife.',
+        weakness: 'Only works once for revival. Soul can be exorcised. Sea water and Haki.'
+    },
+    'kage_kage_001': {
+        id: 'kage_kage_001',
+        name: 'Kage Kage no Mi',
+        type: 'Paramecia',
+        rarity: 'legendary',
+        power: 'Shadow manipulation',
+        previousUser: 'Gecko Moria',
+        description: 'Allows the user to steal and manipulate shadows, creating zombie armies.',
+        awakening: 'Can manipulate shadows globally and create permanent shadow constructs.',
+        weakness: 'Salt purifies shadows. Sunlight weakens shadow powers. Sea water and Haki.'
+    },
+    'horo_horo_001': {
+        id: 'horo_horo_001',
+        name: 'Horo Horo no Mi',
+        type: 'Paramecia',
+        rarity: 'rare',
+        power: 'Ghost creation',
+        previousUser: 'Perona',
+        description: 'Creates ghosts that can pass through objects and induce negative emotions.',
+        awakening: 'Can possess living beings and create permanent haunted areas.',
+        weakness: 'Already negative people are immune. Physical body is vulnerable. Sea water and Haki.'
+    },
+    'suke_suke_001': {
+        id: 'suke_suke_001',
+        name: 'Suke Suke no Mi',
+        type: 'Paramecia',
+        rarity: 'epic',
+        power: 'Invisibility',
+        previousUser: 'Absalom',
+        description: 'Grants invisibility to the user and anything they touch.',
+        awakening: 'Can make large areas invisible and create permanent invisible objects.',
+        weakness: 'Observation Haki can detect invisible users. Sea water and Haki.'
+    },
+    'nikyu_nikyu_002': {
+        id: 'nikyu_nikyu_002',
+        name: 'Kuma Kuma no Mi',
+        type: 'Paramecia',
+        rarity: 'rare',
+        power: 'Bear transformation and strength',
+        previousUser: 'Unknown',
+        description: 'Grants bear-like strength and the ability to enter a berserker rage.',
+        awakening: 'Enhanced hibernation abilities and can communicate with bears.',
+        weakness: 'Berserker rage reduces tactical thinking. Sea water and Haki.'
+    },
+    'memo_memo_001': {
+        id: 'memo_memo_001',
+        name: 'Memo Memo no Mi',
+        type: 'Paramecia',
+        rarity: 'epic',
+        power: 'Memory manipulation',
+        previousUser: 'Charlotte Pudding',
+        description: 'Allows the user to extract, edit, and replace memories of other people.',
+        awakening: 'Can create false realities through mass memory manipulation.',
+        weakness: 'Strong-willed individuals can resist. Physical contact required. Sea water and Haki.'
+    },
+    'tama_tama_001': {
+        id: 'tama_tama_001',
+        name: 'Tama Tama no Mi',
+        type: 'Paramecia',
+        rarity: 'common',
+        power: 'Egg body with regeneration',
+        previousUser: 'Tamago',
+        description: 'Grants an egg-like body that can regenerate by cracking and reforming.',
+        awakening: 'Can lay eggs that hatch into various creatures.',
+        weakness: 'Vulnerable while regenerating. Sea water and Haki.'
     }
 };
 
-// Import counter system
-const { DEVIL_FRUIT_ELEMENTS, CombatSystem } = require('./counter-system');
-
-const DEVILFRUIT_DATABASE = {
-    // ═══════════════════════════════════════════════════════════════════
-    //                           COMMON TIER
-    // Basic Zoan and simple Paramecia fruits
-    // ═══════════════════════════════════════════════════════════════════
-    common: [
-        {
-            id: 'hito_hito_001',
-            name: 'Hito Hito no Mi',
-            type: 'Zoan',
-            power: 'Human transformation',
-            user: 'Tony Tony Chopper',
-            description: 'Allows an animal to become human, granting intelligence and forms',
-            awakening: 'Enhanced physical capabilities and multiple transformation points',
-            weakness: 'Standard Devil Fruit weaknesses, transformation fatigue',
-            powerLevel: 150,
-            rarity: 'common',
-            element: 'zoan_beast'
-        },
-        {
-            id: 'mogu_mogu_001',
-            name: 'Mogu Mogu no Mi',
-            type: 'Zoan',
-            power: 'Mole transformation',
-            user: 'Miss Merry Christmas',
-            description: 'Grants the ability to transform into a mole and dig underground',
-            awakening: 'Enhanced tunneling speed and earth manipulation',
-            weakness: 'Limited surface combat effectiveness',
-            powerLevel: 120,
-            rarity: 'common',
-            element: 'zoan_beast'
-        },
-        {
-            id: 'sube_sube_001',
-            name: 'Sube Sube no Mi',
-            type: 'Paramecia',
-            power: 'Smooths the body, attacks slide off',
-            user: 'Alvida',
-            description: 'Makes the user\'s body perfectly smooth, deflecting attacks',
-            awakening: 'Environmental smoothing and friction manipulation',
-            weakness: 'Limited offensive capabilities',
-            powerLevel: 140,
-            rarity: 'common',
-            element: 'rubber'
-        },
-        {
-            id: 'noro_noro_001',
-            name: 'Noro Noro no Mi',
-            type: 'Paramecia',
-            power: 'Emits slow-motion beams',
-            user: 'Foxy',
-            description: 'Slows down anything hit by its beams for 30 seconds',
-            awakening: 'Area-wide time dilation effects',
-            weakness: 'Beams can be reflected, limited duration',
-            powerLevel: 160,
-            rarity: 'common',
-            element: 'gravity'
-        },
-        {
-            id: 'awa_awa_001',
-            name: 'Awa Awa no Mi',
-            type: 'Paramecia',
-            power: 'Produces cleansing bubbles',
-            user: 'Kalifa',
-            description: 'Creates soap bubbles that clean away strength and lubricate surfaces',
-            awakening: 'Environmental bubble generation and power draining',
-            weakness: 'Water neutralizes soap effects',
-            powerLevel: 130,
-            rarity: 'common',
-            element: 'poison'
-        }
-    ],
-
-    // ═══════════════════════════════════════════════════════════════════
-    //                          UNCOMMON TIER
-    // Useful combat fruits and basic animal Zoans
-    // ═══════════════════════════════════════════════════════════════════
-    uncommon: [
-        {
-            id: 'bara_bara_001',
-            name: 'Bara Bara no Mi',
-            type: 'Paramecia',
-            power: 'Splits body into levitating pieces',
-            user: 'Buggy',
-            description: 'Allows the user to split their body into pieces and control them',
-            awakening: 'Object splitting and environmental fragmentation',
-            weakness: 'Feet cannot float, blade immunity only',
-            powerLevel: 280,
-            rarity: 'uncommon',
-            element: 'metal'
-        },
-        {
-            id: 'hana_hana_001',
-            name: 'Hana Hana no Mi',
-            type: 'Paramecia',
-            power: 'Sprouts limbs anywhere',
-            user: 'Nico Robin',
-            description: 'Allows sprouting of body parts from any surface',
-            awakening: 'Gigantic limb creation and environmental body part sprouting',
-            weakness: 'Damage to sprouted limbs affects the user',
-            powerLevel: 320,
-            rarity: 'uncommon',
-            element: 'zoan_beast'
-        },
-        {
-            id: 'doru_doru_001',
-            name: 'Doru Doru no Mi',
-            type: 'Paramecia',
-            power: 'Produces and manipulates wax',
-            user: 'Mr. 3 (Galdino)',
-            description: 'Creates and controls wax that hardens to steel-like strength',
-            awakening: 'Environmental wax generation and temperature resistance',
-            weakness: 'Fire melts wax constructs',
-            powerLevel: 250,
-            rarity: 'uncommon',
-            element: 'stone'
-        },
-        {
-            id: 'buki_buki_001',
-            name: 'Buki Buki no Mi',
-            type: 'Paramecia',
-            power: 'Turns body parts into weapons',
-            user: 'Baby 5',
-            description: 'Transforms any part of the body into various weapons',
-            awakening: 'Environmental weapon transformation',
-            weakness: 'Complex weapons require more concentration',
-            powerLevel: 300,
-            rarity: 'uncommon',
-            element: 'metal'
-        },
-        {
-            id: 'ushi_ushi_001',
-            name: 'Ushi Ushi no Mi, Model: Bison',
-            type: 'Zoan',
-            power: 'Bison form',
-            user: 'Dalton',
-            description: 'Transformation into a powerful bison with enhanced strength',
-            awakening: 'Enhanced herd instincts and territorial dominance',
-            weakness: 'Standard Zoan weaknesses',
-            powerLevel: 310,
-            rarity: 'uncommon',
-            element: 'zoan_beast'
-        },
-        {
-            id: 'inu_inu_wolf_001',
-            name: 'Inu Inu no Mi, Model: Wolf',
-            type: 'Zoan',
-            power: 'Wolf form',
-            user: 'Jabra',
-            description: 'Wolf transformation with enhanced speed and pack tactics',
-            awakening: 'Pack coordination and enhanced senses',
-            weakness: 'Vulnerable to loud sounds',
-            powerLevel: 330,
-            rarity: 'uncommon',
-            element: 'zoan_beast'
-        }
-    ],
-
-    // ═══════════════════════════════════════════════════════════════════
-    //                            RARE TIER
-    // Strong Paramecia, powerful Zoans, and basic Logia
-    // ═══════════════════════════════════════════════════════════════════
-    rare: [
-        {
-            id: 'doku_doku_001',
-            name: 'Doku Doku no Mi',
-            type: 'Paramecia',
-            power: 'Creates and controls poison',
-            user: 'Magellan',
-            description: 'Generates various types of deadly poison with different effects',
-            awakening: 'Environmental poison generation and immunity granting',
-            weakness: 'User may suffer from own poison effects',
-            powerLevel: 650,
-            rarity: 'rare',
-            element: 'poison'
-        },
-        {
-            id: 'mero_mero_001',
-            name: 'Mero Mero no Mi',
-            type: 'Paramecia',
-            power: 'Turns lustful victims to stone',
-            user: 'Boa Hancock',
-            description: 'Petrifies those who feel attraction to the user',
-            awakening: 'Emotion-based petrification and statue animation',
-            weakness: 'Ineffective against pure-hearted individuals',
-            powerLevel: 680,
-            rarity: 'rare',
-            element: 'soul'
-        },
-        {
-            id: 'nikyu_nikyu_001',
-            name: 'Nikyu Nikyu no Mi',
-            type: 'Paramecia',
-            power: 'Repels anything, including pain',
-            user: 'Bartholomew Kuma',
-            description: 'Repels anything touched by paw pads, including abstract concepts',
-            awakening: 'Environmental repulsion and dimensional displacement',
-            weakness: 'Requires direct contact with paw pads',
-            powerLevel: 720,
-            rarity: 'rare',
-            element: 'spatial'
-        },
-        {
-            id: 'gasu_gasu_001',
-            name: 'Gasu Gasu no Mi',
-            type: 'Logia',
-            power: 'Poisonous/flame gas',
-            user: 'Caesar Clown',
-            description: 'Become and control various gases including poison',
-            awakening: 'Atmospheric control and gas composition manipulation',
-            weakness: 'Wind can disperse gas forms',
-            powerLevel: 580,
-            rarity: 'rare',
-            element: 'gas'
-        },
-        {
-            id: 'suna_suna_001',
-            name: 'Suna Suna no Mi',
-            type: 'Logia',
-            power: 'Sand control',
-            user: 'Crocodile',
-            description: 'Transform into sand and control desert environments',
-            awakening: 'Desertification and moisture absorption on massive scales',
-            weakness: 'Water nullifies sand powers completely',
-            powerLevel: 620,
-            rarity: 'rare',
-            element: 'sand'
-        },
-        {
-            id: 'neko_neko_001',
-            name: 'Neko Neko no Mi, Model: Leopard',
-            type: 'Zoan',
-            power: 'Leopard form',
-            user: 'Rob Lucci',
-            description: 'Leopard transformation with enhanced stealth and combat prowess',
-            awakening: 'Enhanced predatory instincts and territory control',
-            weakness: 'Overconfidence in hunting abilities',
-            powerLevel: 700,
-            rarity: 'rare',
-            element: 'zoan_beast'
-        },
-        {
-            id: 'ryu_ryu_allo_001',
-            name: 'Ryu Ryu no Mi, Model: Allosaurus',
-            type: 'Ancient Zoan',
-            power: 'Allosaurus form',
-            user: 'X-Drake',
-            description: 'Ancient dinosaur transformation with massive physical power',
-            awakening: 'Prehistoric instincts and enhanced recovery',
-            weakness: 'Large size makes user a bigger target',
-            powerLevel: 750,
-            rarity: 'rare',
-            element: 'zoan_ancient'
-        }
-    ],
-
-    // ═══════════════════════════════════════════════════════════════════
-    //                         LEGENDARY TIER
-    // Top-tier Logia, powerful Paramecia, and elite Ancient Zoans
-    // ═══════════════════════════════════════════════════════════════════
-    legendary: [
-        {
-            id: 'mera_mera_001',
-            name: 'Mera Mera no Mi',
-            type: 'Logia',
-            power: 'Fire control & transformation',
-            user: 'Ace → Sabo',
-            description: 'Transform into fire and control flames with devastating power',
-            awakening: 'Environmental ignition and temperature manipulation',
-            weakness: 'Magma can overpower fire',
-            powerLevel: 1200,
-            rarity: 'legendary',
-            element: 'fire'
-        },
-        {
-            id: 'hie_hie_001',
-            name: 'Hie Hie no Mi',
-            type: 'Logia',
-            power: 'Ice control',
-            user: 'Aokiji',
-            description: 'Transform into ice and freeze vast areas instantly',
-            awakening: 'Climate manipulation and ice age induction',
-            weakness: 'Fire and heat can melt ice constructs',
-            powerLevel: 1300,
-            rarity: 'legendary',
-            element: 'ice'
-        },
-        {
-            id: 'pika_pika_001',
-            name: 'Pika Pika no Mi',
-            type: 'Logia',
-            power: 'Light speed & lasers',
-            user: 'Kizaru',
-            description: 'Transform into light and move at light speed with laser attacks',
-            awakening: 'Photon manipulation and blinding environmental effects',
-            weakness: 'Mirrors can redirect attacks',
-            powerLevel: 1350,
-            rarity: 'legendary',
-            element: 'light'
-        },
-        {
-            id: 'goro_goro_001',
-            name: 'Goro Goro no Mi',
-            type: 'Logia',
-            power: 'Lightning control',
-            user: 'Enel',
-            description: 'Transform into lightning with electric attacks and observation',
-            awakening: 'Electromagnetic field control and electronic manipulation',
-            weakness: 'Rubber insulates against electricity',
-            powerLevel: 1250,
-            rarity: 'legendary',
-            element: 'lightning'
-        },
-        {
-            id: 'magu_magu_001',
-            name: 'Magu Magu no Mi',
-            type: 'Logia',
-            power: 'Magma control',
-            user: 'Akainu',
-            description: 'Transform into magma with the highest offensive power among Logia',
-            awakening: 'Volcanic eruption induction and geological transformation',
-            weakness: 'Extreme cold can solidify magma',
-            powerLevel: 1400,
-            rarity: 'legendary',
-            element: 'magma'
-        },
-        {
-            id: 'yami_yami_001',
-            name: 'Yami Yami no Mi',
-            type: 'Logia',
-            power: 'Darkness & gravity',
-            user: 'Blackbeard',
-            description: 'Control darkness and gravity, nullifying other Devil Fruit powers',
-            awakening: 'Black hole creation and power absorption',
-            weakness: 'Cannot dodge attacks like other Logia, attracts more damage',
-            powerLevel: 1180,
-            rarity: 'legendary',
-            element: 'darkness'
-        },
-        {
-            id: 'ope_ope_001',
-            name: 'Ope Ope no Mi',
-            type: 'Paramecia',
-            power: 'Surgical spatial \'Room\'',
-            user: 'Trafalgar Law',
-            description: 'Creates a spherical space where the user can manipulate anything',
-            awakening: 'Environmental surgery and object property manipulation',
-            weakness: 'Requires significant stamina for large rooms',
-            powerLevel: 1150,
-            rarity: 'legendary',
-            element: 'spatial'
-        },
-        {
-            id: 'zushi_zushi_001',
-            name: 'Zushi Zushi no Mi',
-            type: 'Paramecia',
-            power: 'Gravity manipulation',
-            user: 'Fujitora',
-            description: 'Controls gravitational forces and can summon meteorites',
-            awakening: 'Planetary gravitational influence',
-            weakness: 'Requires concentration for precise control',
-            powerLevel: 1280,
-            rarity: 'legendary',
-            element: 'gravity'
-        }
-    ],
-
-    // ═══════════════════════════════════════════════════════════════════
-    //                          MYTHICAL TIER
-    // World-changing fruits and powerful Mythical Zoans
-    // ═══════════════════════════════════════════════════════════════════
-    mythical: [
-        {
-            id: 'gura_gura_001',
-            name: 'Gura Gura no Mi',
-            type: 'Paramecia',
-            power: 'Earthquake shockwaves',
-            user: 'Whitebeard → Blackbeard',
-            description: 'Creates devastating earthquakes capable of destroying the world',
-            awakening: 'Tectonic plate manipulation and dimensional cracking',
-            weakness: 'Vibrations can be absorbed by certain materials',
-            powerLevel: 2800,
-            rarity: 'mythical',
-            element: 'vibration'
-        },
-        {
-            id: 'soru_soru_001',
-            name: 'Soru Soru no Mi',
-            type: 'Paramecia',
-            power: 'Soul control & object animation',
-            user: 'Big Mom',
-            description: 'Manipulates souls and grants life to inanimate objects',
-            awakening: 'Mass soul manipulation and homie army creation',
-            weakness: 'Fear weakens soul manipulation power',
-            powerLevel: 2700,
-            rarity: 'mythical',
-            element: 'soul'
-        },
-        {
-            id: 'uo_uo_001',
-            name: 'Uo Uo no Mi, Model: Seiryu',
-            type: 'Mythical Zoan',
-            power: 'Azure Dragon form',
-            user: 'Kaido',
-            description: 'Mythical azure dragon with weather control and incredible durability',
-            awakening: 'Elemental mastery and indestructible scales',
-            weakness: 'Extreme size in dragon form',
-            powerLevel: 2900,
-            rarity: 'mythical',
-            element: 'zoan_mythical'
-        },
-        {
-            id: 'tori_tori_phoenix_001',
-            name: 'Tori Tori no Mi, Model: Phoenix',
-            type: 'Mythical Zoan',
-            power: 'Blue Phoenix form',
-            user: 'Marco',
-            description: 'Phoenix transformation with blue flames of regeneration',
-            awakening: 'Mass healing and resurrection abilities',
-            weakness: 'Regeneration has limits and requires energy',
-            powerLevel: 2600,
-            rarity: 'mythical',
-            element: 'zoan_mythical'
-        },
-        {
-            id: 'hito_hito_daibutsu_001',
-            name: 'Hito Hito no Mi, Model: Daibutsu',
-            type: 'Mythical Zoan',
-            power: 'Golden Buddha form',
-            user: 'Sengoku',
-            description: 'Golden Buddha transformation with shockwave generation',
-            awakening: 'Divine authority and enlightenment powers',
-            weakness: 'Requires calm mind for full power',
-            powerLevel: 2650,
-            rarity: 'mythical',
-            element: 'zoan_mythical'
-        }
-    ],
-
-    // ═══════════════════════════════════════════════════════════════════
-    //                         OMNIPOTENT/DIVINE TIER
-    // Reality-bending ultimate Devil Fruits
-    // ═══════════════════════════════════════════════════════════════════
-    omnipotent: [
-        {
-            id: 'hito_hito_nika_001',
-            name: 'Hito Hito no Mi, Model: Nika',
-            type: 'Mythical Zoan',
-            power: 'Rubber body & reality-bending freedom',
-            user: 'Monkey D. Luffy',
-            description: 'The most ridiculous power - turns imagination into reality through joy',
-            awakening: 'Environmental rubber transformation and cartoon physics manipulation',
-            weakness: 'Requires joy and freedom of spirit to activate fully',
-            powerLevel: 5500,
-            rarity: 'omnipotent',
-            element: 'rubber'
-        },
-        {
-            id: 'inu_inu_okuchi_001',
-            name: 'Inu Inu no Mi, Model: Okuchi no Makami',
-            type: 'Mythical Zoan',
-            power: 'Mythical wolf deity with ice powers',
-            user: 'Yamato',
-            description: 'Guardian wolf deity of Wano with divine ice and thunder powers',
-            awakening: 'Divine protection and elemental mastery over ice/thunder',
-            weakness: 'Bound by duty and protective instincts',
-            powerLevel: 4800,
-            rarity: 'omnipotent',
-            element: 'zoan_mythical'
-        }
-    ]
+// Rarity probabilities (must add up to 100)
+const RARITY_RATES = {
+    'common': 35,      // 35%
+    'uncommon': 25,    // 25%
+    'rare': 20,        // 20%
+    'epic': 12,        // 12%
+    'legendary': 6,    // 6%
+    'mythical': 1.8,   // 1.8%
+    'omnipotent': 0.2  // 0.2%
 };
 
-// Enhanced database functions with counter system
-class DevilFruitDatabase {
-    static getAllDevilFruits() {
-        return DEVILFRUIT_DATABASE;
-    }
-
-    static getDevilFruitsByRarity(rarity) {
-        return DEVILFRUIT_DATABASE[rarity] || [];
-    }
-
-    static getDevilFruitById(id) {
-        for (const rarity in DEVILFRUIT_DATABASE) {
-            const fruit = DEVILFRUIT_DATABASE[rarity].find(fruit => fruit.id === id);
-            if (fruit) return fruit;
-        }
-        return null;
-    }
-
-    static getRandomDevilFruit(rarity) {
-        const pool = this.getDevilFruitsByRarity(rarity);
-        if (!pool || pool.length === 0) {
-            console.warn(`No Devil Fruits found for rarity: ${rarity}`);
-            return this.getDevilFruitsByRarity('common')[0];
-        }
-        return pool[Math.floor(Math.random() * pool.length)];
-    }
-
-    static getRarityConfig(rarity) {
-        return RARITY_CONFIG[rarity] || RARITY_CONFIG.common;
-    }
-
-    static getAllRarities() {
-        return RARITY_CONFIG;
-    }
-
-    static calculateDropRarity() {
-        const roll = Math.random() * 100;
-        let cumulative = 0;
-        
-        for (const [rarity, config] of Object.entries(RARITY_CONFIG)) {
-            cumulative += config.chance;
-            if (roll <= cumulative) {
-                return rarity;
-            }
-        }
-        return 'common';
-    }
-
-    // NEW: Get fruit with counter information
-    static getFruitWithCounters(id) {
-        const fruit = this.getDevilFruitById(id);
-        if (!fruit) return null;
-
-        const element = DEVIL_FRUIT_ELEMENTS[id];
-        const elementName = element ? CombatSystem.getElementName(element) : 'Unknown';
-
-        return {
-            ...fruit,
-            element: element,
-            elementName: elementName,
-            counters: this.getFruitCounters(id)
-        };
-    }
-
-    // NEW: Get what this fruit is strong/weak against
-    static getFruitCounters(id) {
-        const element = DEVIL_FRUIT_ELEMENTS[id];
-        if (!element) return { strongAgainst: [], weakAgainst: [] };
-
-        // Find fruits this one counters
-        const strongAgainst = [];
-        const weakAgainst = [];
-
-        for (const [fruitId, targetElement] of Object.entries(DEVIL_FRUIT_ELEMENTS)) {
-            if (fruitId === id) continue;
-
-            const effectiveness = CombatSystem.calculateEffectiveness(id, fruitId);
-            const targetFruit = this.getDevilFruitById(fruitId);
-
-            if (effectiveness.effectiveness > 1.2 && targetFruit) {
-                strongAgainst.push(targetFruit.name);
-            } else if (effectiveness.effectiveness < 0.8 && targetFruit) {
-                weakAgainst.push(targetFruit.name);
-            }
-        }
-
-        return { strongAgainst, weakAgainst };
-    }
+// Get fruits by rarity
+function getFruitsByRarity(rarity) {
+    return Object.values(DEVIL_FRUITS).filter(fruit => fruit.rarity === rarity);
 }
 
+// Generate a random Devil Fruit based on rarity rates
+function generateRandomDevilFruit() {
+    // Generate random number between 0-100
+    const roll = Math.random() * 100;
+    
+    // Determine rarity based on probabilities
+    let cumulativeRate = 0;
+    let selectedRarity = 'common';
+    
+    for (const [rarity, rate] of Object.entries(RARITY_RATES)) {
+        cumulativeRate += rate;
+        if (roll <= cumulativeRate) {
+            selectedRarity = rarity;
+            break;
+        }
+    }
+    
+    // Get all fruits of the selected rarity
+    const availableFruits = getFruitsByRarity(selectedRarity);
+    
+    if (availableFruits.length === 0) {
+        // Fallback to common if no fruits found
+        const commonFruits = getFruitsByRarity('common');
+        const randomIndex = Math.floor(Math.random() * commonFruits.length);
+        return { ...commonFruits[randomIndex] };
+    }
+    
+    // Select random fruit from the rarity tier
+    const randomIndex = Math.floor(Math.random() * availableFruits.length);
+    const selectedFruit = availableFruits[randomIndex];
+    
+    // Return a copy to avoid modifying the original
+    return { ...selectedFruit };
+}
+
+// Get fruit by ID
+function getDevilFruitById(id) {
+    return DEVIL_FRUITS[id] ? { ...DEVIL_FRUITS[id] } : null;
+}
+
+// Get all fruits of a specific type
+function getFruitsByType(type) {
+    return Object.values(DEVIL_FRUITS).filter(fruit => fruit.type === type);
+}
+
+// Get rarity information
+function getRarityInfo() {
+    return { ...RARITY_RATES };
+}
+
+// Get total number of fruits
+function getTotalFruits() {
+    return Object.keys(DEVIL_FRUITS).length;
+}
+
+// Get fruits by element (using counter system)
+function getFruitsByElement(element) {
+    return Object.values(DEVIL_FRUITS).filter(fruit => {
+        const fruitElement = DEVIL_FRUIT_ELEMENTS[fruit.id];
+        return fruitElement === element;
+    });
+}
+
+// Statistics
+function getTypeDistribution() {
+    const distribution = {};
+    Object.values(DEVIL_FRUITS).forEach(fruit => {
+        distribution[fruit.type] = (distribution[fruit.type] || 0) + 1;
+    });
+    return distribution;
+}
+
+function getRarityDistribution() {
+    const distribution = {};
+    Object.values(DEVIL_FRUITS).forEach(fruit => {
+        distribution[fruit.rarity] = (distribution[fruit.rarity] || 0) + 1;
+    });
+    return distribution;
+}
+
+// Search functions
+function searchFruitsByName(query) {
+    const lowercaseQuery = query.toLowerCase();
+    return Object.values(DEVIL_FRUITS).filter(fruit =>
+        fruit.name.toLowerCase().includes(lowercaseQuery)
+    );
+}
+
+function searchFruitsByUser(query) {
+    const lowercaseQuery = query.toLowerCase();
+    return Object.values(DEVIL_FRUITS).filter(fruit =>
+        fruit.previousUser.toLowerCase().includes(lowercaseQuery)
+    );
+}
+
+// Utility functions
+function isValidRarity(rarity) {
+    return Object.keys(RARITY_RATES).includes(rarity);
+}
+
+function getAllTypes() {
+    const types = new Set();
+    Object.values(DEVIL_FRUITS).forEach(fruit => {
+        types.add(fruit.type);
+    });
+    return Array.from(types);
+}
+
+function getAllRarities() {
+    return Object.keys(RARITY_RATES);
+}
+
+// Export all functions and data
 module.exports = {
-    DevilFruitDatabase,
-    RARITY_CONFIG,
-    DEVILFRUIT_DATABASE
+    // Main data
+    DEVIL_FRUITS,
+    RARITY_RATES,
+    
+    // Core functions
+    generateRandomDevilFruit,
+    getDevilFruitById,
+    getFruitsByRarity,
+    getFruitsByType,
+    getFruitsByElement,
+    
+    // Search functions
+    searchFruitsByName,
+    searchFruitsByUser,
+    
+    // Statistics
+    getRarityInfo,
+    getTotalFruits,
+    getTypeDistribution,
+    getRarityDistribution,
+    
+    // Utility functions
+    isValidRarity,
+    getAllTypes,
+    getAllRarities
 };
