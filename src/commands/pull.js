@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { createUltimateCinematicExperience } = require('../animations/gacha');
 const { DevilFruitDatabase } = require('../data/devilfruit');
+const { CombatSystem } = require('../data/counter-system');
 
 // User cooldowns and statistics
 const userCooldowns = new Map();
