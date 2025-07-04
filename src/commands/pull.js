@@ -1,7 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { createUltimateCinematicExperience } = require('../animations/gacha');
 const { DevilFruitDatabase } = require('../data/devilfruit');
-const { CombatSystem } = require('../data/counter-system');
+const { CombatSystem, LevelSystem } = require('../data/counter-system');
 
 // User cooldowns and statistics
 const userCooldowns = new Map();
@@ -330,7 +330,7 @@ async function handleHuntAgain(interaction) {
     }
 }
 
-// ENHANCED: Show professional collection with combat power analysis
+// ENHANCED: Show professional collection with level-boosted combat power
 async function showUserCollection(interaction) {
     const userId = interaction.user.id;
     const stats = userStats.get(userId);
@@ -351,52 +351,34 @@ Start your journey on the Grand Line by hunting for Devil Fruits!
         return await interaction.reply({ embeds: [emptyEmbed], ephemeral: true });
     }
 
-    // Calculate total combat power and advanced statistics
+    // Get user's battle profile with level integration
+    const battleProfile = LevelSystem.getUserBattleProfile(stats, interaction.member);
+    
     const totalFruits = Object.keys(stats.devilFruits).length;
     const totalHunts = stats.totalHunts;
     const discoveryRate = Math.round((totalFruits / totalHunts) * 100);
-    
-    // Calculate total combat power
-    let totalCombatPower = 0;
+
+    // Find strongest fruit
     let strongestFruit = null;
     let strongestPower = 0;
     
     Object.values(stats.devilFruits).forEach(fruit => {
-        const fruitPower = fruit.powerLevel * fruit.timesObtained;
-        totalCombatPower += fruitPower;
-        
         if (fruit.powerLevel > strongestPower) {
             strongestPower = fruit.powerLevel;
             strongestFruit = fruit;
         }
     });
 
-    // Rarity multipliers for combat power calculation
-    const rarityMultipliers = {
-        common: 1.0,
-        uncommon: 1.2,
-        rare: 1.5,
-        legendary: 2.0,
-        mythical: 3.0,
-        omnipotent: 5.0
-    };
-
-    // Calculate enhanced combat power with rarity bonuses
-    let enhancedCombatPower = 0;
-    Object.values(stats.devilFruits).forEach(fruit => {
-        const multiplier = rarityMultipliers[fruit.rarity] || 1.0;
-        enhancedCombatPower += fruit.powerLevel * multiplier * fruit.timesObtained;
-    });
-
-    // Combat power ranking
+    // Combat power ranking with level consideration
     let powerRank = 'Rookie';
-    if (enhancedCombatPower >= 50000) powerRank = 'Yonko';
-    else if (enhancedCombatPower >= 25000) powerRank = 'Admiral';
-    else if (enhancedCombatPower >= 15000) powerRank = 'Warlord';
-    else if (enhancedCombatPower >= 8000) powerRank = 'Supernova';
-    else if (enhancedCombatPower >= 4000) powerRank = 'Captain';
-    else if (enhancedCombatPower >= 2000) powerRank = 'Elite Pirate';
-    else if (enhancedCombatPower >= 1000) powerRank = 'Bounty Hunter';
+    const totalCP = battleProfile.totalCombatPower;
+    if (totalCP >= 100000) powerRank = 'Yonko';
+    else if (totalCP >= 50000) powerRank = 'Admiral';
+    else if (totalCP >= 25000) powerRank = 'Warlord';
+    else if (totalCP >= 12000) powerRank = 'Supernova';
+    else if (totalCP >= 6000) powerRank = 'Captain';
+    else if (totalCP >= 3000) powerRank = 'Elite Pirate';
+    else if (totalCP >= 1500) powerRank = 'Bounty Hunter';
 
     // Type breakdown with combat analysis
     let typeBreakdown = '';
@@ -407,6 +389,16 @@ Start your journey on the Grand Line by hunting for Devil Fruits!
         'Ancient Zoan': '🦕',
         'Mythical Zoan': '🐉',
         'Special Paramecia': '✨'
+    };
+    
+    // Rarity multipliers for combat power calculation
+    const rarityMultipliers = {
+        common: 1.0,
+        uncommon: 1.2,
+        rare: 1.5,
+        legendary: 2.0,
+        mythical: 3.0,
+        omnipotent: 5.0
     };
     
     for (const [type, count] of Object.entries(stats.typeCount)) {
@@ -420,16 +412,19 @@ Start your journey on the Grand Line by hunting for Devil Fruits!
                 }
             });
             
+            // Apply level multiplier to type power
+            const levelBoostedTypePower = Math.round(typePower * battleProfile.levelMultiplier);
+            
             const emoji = typeEmojis[type] || '🔮';
-            typeBreakdown += `${emoji} **${type}:** ${count}x (${typePower.toLocaleString()} CP)\n`;
+            typeBreakdown += `${emoji} **${type}:** ${count}x (${levelBoostedTypePower.toLocaleString()} CP)\n`;
         }
     }
     
-    // Rarity breakdown with combat power
+    // Rarity breakdown with level-boosted combat power
     let rarityBreakdown = '';
     const rarityOrder = ['omnipotent', 'mythical', 'legendary', 'rare', 'uncommon', 'common'];
     const rarityEmojis = {
-        omnipotent: { emoji: '🌈', name: 'Omnipotent' },
+        omnipotent: { emoji: '🌈', name: 'Divine' },
         mythical: { emoji: '🟥', name: 'Mythical' },
         legendary: { emoji: '🟨', name: 'Legendary' },
         rare: { emoji: '🟦', name: 'Rare' },
@@ -439,7 +434,7 @@ Start your journey on the Grand Line by hunting for Devil Fruits!
     
     rarityOrder.forEach(rarity => {
         if (stats.rarityCount[rarity] > 0) {
-            // Calculate rarity-specific power
+            // Calculate rarity-specific power with level boost
             let rarityPower = 0;
             Object.values(stats.devilFruits).forEach(fruit => {
                 if (fruit.rarity === rarity) {
@@ -448,21 +443,30 @@ Start your journey on the Grand Line by hunting for Devil Fruits!
                 }
             });
             
+            const levelBoostedRarityPower = Math.round(rarityPower * battleProfile.levelMultiplier);
+            
             const config = rarityEmojis[rarity];
-            rarityBreakdown += `${config.emoji} **${config.name}:** ${stats.rarityCount[rarity]}x (${rarityPower.toLocaleString()} CP)\n`;
+            rarityBreakdown += `${config.emoji} **${config.name}:** ${stats.rarityCount[rarity]}x (${levelBoostedRarityPower.toLocaleString()} CP)\n`;
         }
     });
 
-    // Create professional collection embed
+    // Create professional collection embed with level integration
     const collectionEmbed = new EmbedBuilder()
         .setTitle(`⚔️ **${interaction.user.username}'s Devil Fruit Arsenal**`)
         .setDescription(`
 🏴‍☠️ **Pirate Profile:**
-**⚔️ Combat Power:** ${enhancedCombatPower.toLocaleString()} CP
+**🎖️ Level:** ${battleProfile.level} (${battleProfile.rank})
+**⚔️ Total Combat Power:** ${battleProfile.totalCombatPower.toLocaleString()} CP
+**📈 Level Bonus:** ${battleProfile.experienceBonus}
 **🏆 Power Rank:** ${powerRank}
 **🍈 Collection:** ${totalFruits} unique fruits (${totalHunts} hunts)
 **📊 Success Rate:** ${discoveryRate}%
-**💪 Strongest Fruit:** ${strongestFruit?.name || 'None'} (${strongestPower.toLocaleString()} CP)
+**💪 Strongest Fruit:** ${strongestFruit?.name || 'None'} (${strongestPower.toLocaleString()} base CP)
+
+**💡 Combat Power Breakdown:**
+**Base Power:** ${battleProfile.baseCombatPower.toLocaleString()} CP
+**Level Multiplier:** x${battleProfile.levelMultiplier}
+**Level Bonus:** +${battleProfile.levelBonus.toLocaleString()} CP
 
 **🌟 Power by Rarity:**
 ${rarityBreakdown || 'No fruits collected yet!'}
@@ -470,14 +474,43 @@ ${rarityBreakdown || 'No fruits collected yet!'}
 **🔮 Power by Type:**
 ${typeBreakdown || 'No fruits collected yet!'}
 
-**⚔️ Combat Analysis:**
-*Your collection grants ${enhancedCombatPower.toLocaleString()} Combat Power*
-*Ranking: ${powerRank} - ${getPowerDescription(powerRank)}*
+**⚔️ Battle Analysis:**
+*Your level ${battleProfile.level} ${battleProfile.rank} status grants ${battleProfile.experienceBonus} to all Devil Fruit combat power!*
+*Total Battle Strength: ${battleProfile.totalCombatPower.toLocaleString()} CP*
 
-*Ready for battle! Use your collection to fight other pirates and claim their Devil Fruits!*
+*Ready for battle! Your experience amplifies your Devil Fruit mastery!*
         `)
         .setColor(getPowerRankColor(powerRank))
-        .setFooter({ text: `Collection analyzed | Combat system coming soon!` });
+        .setFooter({ text: `Level ${battleProfile.level} ${battleProfile.rank} | Combat system ready!` });
+
+    // Add combat readiness button
+    const actionRow = new ActionRowBuilder()
+        .addComponents(
+            new ButtonBuilder()
+                .setCustomId('view_detailed_stats')
+                .setLabel('📊 Detailed Stats')
+                .setStyle(ButtonStyle.Secondary),
+            new ButtonBuilder()
+                .setCustomId('combat_preview')
+                .setLabel('⚔️ Combat Preview')
+                .setStyle(ButtonStyle.Danger)
+                .setDisabled(true) // Coming soon
+        );
+
+    await interaction.reply({ embeds: [collectionEmbed], components: [actionRow], ephemeral: true });
+}
+
+**🔮 Power by Type:**
+${typeBreakdown || 'No fruits collected yet!'}
+
+**⚔️ Combat Analysis:**
+*Your level ${battleProfile.level} ${battleProfile.rank} status grants ${battleProfile.experienceBonus} to all Devil Fruit combat power!*
+*Total Battle Strength: ${battleProfile.totalCombatPower.toLocaleString()} CP*
+
+*Ready for battle! Your experience amplifies your Devil Fruit mastery!*
+        `)
+        .setColor(getPowerRankColor(powerRank))
+        .setFooter({ text: `Level ${battleProfile.level} ${battleProfile.rank} | Combat system ready!` });
 
     // Add combat readiness button
     const actionRow = new ActionRowBuilder()
