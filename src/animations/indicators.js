@@ -1,254 +1,425 @@
-// One Piece themed indicators system for Devil Fruit animation
+// Center-outward conversion for 20-square bars
+            const barLength = 20;
+            const radius = transFrame;
+            const centerPositions = [10, 11]; // Visual center positions for 20-wide bar
+            const positions = [];
+            
+            for (let i = 0; i < barLength; i++) {
+                let useRewardColor = false;
+                
+          const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { generateRandomDevilFruit } = require('../data/devilfruit');
+const { generateParticles } = require('./particles');
+const { getChangingIndicators } = require('./indicators');
+const DatabaseManager = require('../database/manager');
+const { CombatSystem, DEVIL_FRUIT_ELEMENTS } = require('../data/counter-system');
 
-// Fruit Energy Levels (replaces aura - shows the Devil Fruit's power emanating)
-const FRUIT_ENERGY_LEVELS = {
-    'common': ['FAINT AURA', 'WEAK GLOW', 'SOFT SHIMMER'],
-    'uncommon': ['GENTLE PULSE', 'STEADY GLOW', 'WARM RADIANCE'],
-    'rare': ['BRIGHT ENERGY', 'STRONG PULSE', 'VIBRANT AURA'],
-    'epic': ['CRACKLING POWER', 'INTENSE ENERGY', 'PULSING FORCE'],
-    'legendary': ['BLAZING POWER', 'ROARING ENERGY', 'OVERWHELMING FORCE'],
-    'mythical': ['REALITY DISTORTION', 'COSMIC ENERGY', 'WORLD-SHAKING AURA'],
-    'omnipotent': ['GODLIKE PRESENCE', 'UNIVERSE-BENDING POWER', 'ABSOLUTE AUTHORITY']
+// Color constants
+const rainbowColors = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪', '🟫'];
+const rainbowEmbedColors = [0xFF0000, 0xFF7F00, 0xFFFF00, 0x00FF00, 0x0000FF, 0x8000FF, 0x8B4513];
+
+// Rarity color mappings
+const rarityColors = {
+    common: { emoji: '🟫', embed: 0x8B4513 },
+    uncommon: { emoji: '🟩', embed: 0x00FF00 },
+    rare: { emoji: '🟦', embed: 0x0000FF },
+    epic: { emoji: '🟪', embed: 0x8000FF },
+    legendary: { emoji: '🟨', embed: 0xFFFF00 },
+    mythical: { emoji: '🟥', embed: 0xFF0000 },
+    omnipotent: { emoji: '⬜', embed: 0xFFFFFF }
 };
 
-// Rarity Sense Levels (hints at the fruit's classification level)
-const RARITY_SENSE_LEVELS = {
-    'common': ['STANDARD FRUIT', 'ORDINARY POWER', 'BASIC ABILITY'],
-    'uncommon': ['DECENT FRUIT', 'NOTABLE POWER', 'SOLID ABILITY'],
-    'rare': ['IMPRESSIVE FRUIT', 'STRONG POWER', 'REMARKABLE ABILITY'],
-    'epic': ['POWERFUL FRUIT', 'GREAT POWER', 'EXTRAORDINARY ABILITY'],
-    'legendary': ['RENOWNED FRUIT', 'IMMENSE POWER', 'LEGENDARY ABILITY'],
-    'mythical': ['MYTHICAL FRUIT', 'DIVINE POWER', 'REALITY-ALTERING ABILITY'],
-    'omnipotent': ['ULTIMATE FRUIT', 'SUPREME POWER', 'WORLD-CHANGING ABILITY']
-};
-
-// Devil Fruit Type Classifications
-const DEVIL_FRUIT_CLASSIFICATIONS = {
-    'Paramecia': ['SUPERHUMAN BODY', 'REALITY MANIPULATION', 'SPECIAL ABILITY'],
-    'Zoan': ['ANIMAL TRANSFORMATION', 'BEAST POWER', 'PRIMAL INSTINCT'],
-    'Logia': ['NATURE\'S FORCE', 'ELEMENTAL POWER', 'NATURAL PHENOMENON'],
-    'Ancient Zoan': ['PREHISTORIC BEAST', 'ANCIENT POWER', 'EXTINCT CREATURE'],
-    'Mythical Zoan': ['LEGENDARY CREATURE', 'DIVINE BEAST', 'MYTHICAL BEING'],
-    'Special Paramecia': ['UNIQUE AWAKENING', 'SPECIAL NATURE', 'EXTRAORDINARY TYPE']
-};
-
-// Random cycling options for early animation frames
-const RANDOM_ENERGY_OPTIONS = [
-    'SENSING POWER...', 'ANALYZING ENERGY...', 'DETECTING AURA...', 'FEELING PRESENCE...',
-    'MYSTERIOUS FORCE', 'UNKNOWN ENERGY', 'HIDDEN POWER', 'VEILED STRENGTH',
-    'STIRRING ENERGY', 'BUILDING FORCE', 'GROWING POWER', 'RISING AURA'
-];
-
-const RANDOM_RARITY_OPTIONS = [
-    'UNKNOWN GRADE', 'MYSTERIOUS RANK', 'HIDDEN CLASS', 'VEILED TIER',
-    'ANALYZING...', 'SCANNING...', 'DETECTING...', 'EVALUATING...',
-    'STANDARD?', 'SPECIAL?', 'RARE?', 'LEGENDARY?'
-];
-
-const RANDOM_TYPE_OPTIONS = [
-    'UNKNOWN TYPE', 'MYSTERIOUS FRUIT', 'HIDDEN NATURE', 'VEILED ABILITY',
-    'BODY CHANGE?', 'ANIMAL FORM?', 'ELEMENTAL?', 'SPECIAL POWER?',
-    'PARAMECIA?', 'ZOAN?', 'LOGIA?', 'MYTHICAL?'
-];
-
-/**
- * Get the appropriate energy level for a rarity
- * @param {string} rarity - The Devil Fruit rarity
- * @returns {string} Energy level description
- */
-function getFruitEnergyLevel(rarity) {
-    const levels = FRUIT_ENERGY_LEVELS[rarity];
-    if (!levels) return 'UNKNOWN ENERGY';
-    
-    // Return random level from the rarity tier
-    return levels[Math.floor(Math.random() * levels.length)];
+async function createUltimateCinematicExperience(interaction, userLevel = 0) {
+    try {
+        // Generate target fruit
+        const targetFruit = generateRandomDevilFruit();
+        const oldRarity = targetFruit.rarity;
+        
+        console.log(`🎯 Animation Starting: ${targetFruit.name} (${oldRarity})`);
+        
+        // Get element information
+        const fruitElement = DEVIL_FRUIT_ELEMENTS[targetFruit.id];
+        const elementName = fruitElement ? CombatSystem.getElementName(fruitElement) : 'Unknown';
+        
+        // Performance tracking
+        const performanceMetrics = {
+            startTime: Date.now(),
+            frameAttempts: 0,
+            frameSuccesses: 0,
+            connectionQuality: interaction.client.ws.ping
+        };
+        
+        console.log(`📡 Connection quality: ${performanceMetrics.connectionQuality}ms`);
+        
+        // Initial response
+        const initialEmbed = new EmbedBuilder()
+            .setTitle('🍈 Devil Fruit Hunt in Progress...')
+            .setDescription('🌊 Searching the mysterious waters of the Grand Line...')
+            .setColor(rainbowEmbedColors[0])
+            .setTimestamp();
+            
+        await interaction.reply({ embeds: [initialEmbed] });
+        
+        // Main animation phase (18 frames)
+        for (let frame = 0; frame < 18; frame++) {
+            const success = await updateAnimationFrame(interaction, frame, targetFruit, performanceMetrics);
+            if (!success) {
+                console.log(`Frame ${frame} failed after retries, continuing animation`);
+            }
+            await sleep(1000); // 1 second per frame
+        }
+        
+        console.log(`📊 Animation Performance: ${performanceMetrics.frameSuccesses}/${performanceMetrics.frameAttempts} frames (${(performanceMetrics.frameSuccesses/performanceMetrics.frameAttempts*100).toFixed(1)}%) - ${performanceMetrics.frameAttempts} total attempts`);
+        
+        // Progression phase (12 frames)
+        console.log('🌊 Starting progression phase...');
+        for (let progFrame = 0; progFrame < 12; progFrame++) {
+            const success = await updateProgressionFrame(interaction, progFrame, targetFruit, performanceMetrics);
+            if (!success) {
+                console.log(`Progression frame ${progFrame} error: Discord API timeout`);
+            }
+            await sleep(800); // Slightly faster for progression
+        }
+        
+        // Center-outward transition phase (10 frames)
+        console.log('🎆 Smooth transition: Rainbow to reward color...');
+        for (let transFrame = 0; transFrame < 10; transFrame++) {
+            const success = await updateTransitionFrame(interaction, transFrame, targetFruit, performanceMetrics);
+            if (!success) {
+                console.log(`Transition frame ${transFrame} error: Discord API timeout`);
+            }
+            await sleep(900); // Moderate pace for transition
+        }
+        
+        // Gradual information reveal
+        console.log('🎊 Gradual reveal: Devil Fruit information...');
+        await revealInformationGradually(interaction, targetFruit, elementName, userLevel);
+        
+        // Save to database
+        await DatabaseManager.saveUserFruit(interaction.user.id, targetFruit);
+        await DatabaseManager.updateUserStats(interaction.user.id);
+        
+        console.log(`🎊 Single hunt success: ${targetFruit.name} (${targetFruit.rarity}) for ${interaction.user.username}`);
+        
+    } catch (error) {
+        console.error(`🚨 Animation Error:`, error);
+        throw error;
+    }
 }
 
-/**
- * Get the appropriate rarity sense for a rarity
- * @param {string} rarity - The Devil Fruit rarity
- * @returns {string} Rarity sense description
- */
-function getRaritySense(rarity) {
-    const senses = RARITY_SENSE_LEVELS[rarity];
-    if (!senses) return 'UNKNOWN FRUIT';
+async function updateAnimationFrame(interaction, frame, targetFruit, metrics) {
+    const maxRetries = 3;
     
-    // Return random sense from the rarity tier
-    return senses[Math.floor(Math.random() * senses.length)];
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            metrics.frameAttempts++;
+            
+            // Calculate rainbow positions and colors for 20-square bars
+            const barLength = 20;
+            const positions = [];
+            
+            for (let i = 0; i < barLength; i++) {
+                const colorIndex = (i - frame + rainbowColors.length * 100) % rainbowColors.length;
+                positions.push(rainbowColors[colorIndex]);
+            }
+            
+            // Create dual rainbow bars
+            const topBar = positions.join(' ');
+            const bottomBar = positions.join(' ');
+            
+            // Calculate embed color (rainbow for most of animation)
+            let embedColor;
+            if (frame < 16) {
+                // Rainbow embed color
+                const embedColorIndex = (0 - frame + rainbowEmbedColors.length * 100) % rainbowEmbedColors.length;
+                embedColor = rainbowEmbedColors[embedColorIndex];
+            } else if (frame < 17) {
+                // Brief hint at rarity
+                embedColor = rarityColors[targetFruit.rarity]?.embed || rainbowEmbedColors[0];
+            } else {
+                // Final reveal
+                embedColor = rarityColors[targetFruit.rarity]?.embed || rainbowEmbedColors[0];
+            }
+            
+            // Get changing indicators
+            const indicators = getChangingIndicators(frame, targetFruit.rarity, targetFruit.type);
+            
+            // Get particles
+            const particles = generateParticles();
+            
+            // Create animation content
+            const animationContent = `${topBar}\n\n` +
+                `🌊 **GRAND LINE EXPLORATION** 🌊\n\n` +
+                `⚡ **FRUIT ENERGY:** ${indicators.aura}\n` +
+                `🔮 **RARITY SENSE:** ${indicators.blessing}\n` +
+                `🍈 **DEVIL FRUIT:** ${indicators.typeHint}\n\n` +
+                `*The mystical energies swirl around you...*\n\n` +
+                `${bottomBar}\n\n` +
+                `${particles}`;
+            
+            const embed = new EmbedBuilder()
+                .setTitle('🍈 Devil Fruit Hunt in Progress...')
+                .setDescription(animationContent)
+                .setColor(embedColor)
+                .setTimestamp();
+            
+            await interaction.editReply({ embeds: [embed] });
+            
+            metrics.frameSuccesses++;
+            return true;
+            
+        } catch (error) {
+            console.log(`Animation frame ${frame} attempt ${attempt} error: ${error.message.includes('timeout') ? 'Discord API timeout' : error.message}`);
+            
+            if (attempt === maxRetries) {
+                return false;
+            }
+            
+            await sleep(200 * attempt); // Exponential backoff
+        }
+    }
+    return false;
 }
 
-/**
- * Get the appropriate type classification for a Devil Fruit type
- * @param {string} type - The Devil Fruit type
- * @returns {string} Type classification description
- */
-function getTypeClassification(type) {
-    const classifications = DEVIL_FRUIT_CLASSIFICATIONS[type];
-    if (!classifications) return 'UNKNOWN TYPE';
+async function updateProgressionFrame(interaction, progFrame, targetFruit, metrics) {
+    const maxRetries = 3;
     
-    // Return random classification from the type
-    return classifications[Math.floor(Math.random() * classifications.length)];
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            metrics.frameAttempts++;
+            
+            // Calculate rainbow positions for 20-square bars
+            const barLength = 20;
+            const positions = [];
+            
+            for (let i = 0; i < barLength; i++) {
+                const colorIndex = (i - (18 + progFrame) + rainbowColors.length * 100) % rainbowColors.length;
+                positions.push(rainbowColors[colorIndex]);
+            }
+            
+            const topBar = positions.join(' ');
+            const bottomBar = positions.join(' ');
+            
+            // Rainbow embed color
+            const embedColorIndex = (0 - (18 + progFrame) + rainbowEmbedColors.length * 100) % rainbowEmbedColors.length;
+            const embedColor = rainbowEmbedColors[embedColorIndex];
+            
+            // Get indicators (more locked as progression continues)
+            const indicators = getChangingIndicators(18 + progFrame, targetFruit.rarity, targetFruit.type);
+            
+            const particles = generateParticles('intense');
+            
+            const progressContent = `${topBar}\n\n` +
+                `🌊 **POWER CRYSTALLIZING** 🌊\n\n` +
+                `⚡ **FRUIT ENERGY:** ${indicators.aura}\n` +
+                `🔮 **RARITY SENSE:** ${indicators.blessing}\n` +
+                `🍈 **DEVIL FRUIT:** ${indicators.typeHint}\n\n` +
+                `*The Devil Fruit's true nature begins to emerge...*\n\n` +
+                `${bottomBar}\n\n` +
+                `${particles}`;
+            
+            const embed = new EmbedBuilder()
+                .setTitle('🔮 Power Crystallization Phase')
+                .setDescription(progressContent)
+                .setColor(embedColor)
+                .setTimestamp();
+            
+            await interaction.editReply({ embeds: [embed] });
+            
+            metrics.frameSuccesses++;
+            return true;
+            
+        } catch (error) {
+            if (attempt === maxRetries) {
+                return false;
+            }
+            await sleep(300 * attempt);
+        }
+    }
+    return false;
 }
 
-/**
- * Get random cycling indicator
- * @param {Array} options - Array of random options
- * @returns {string} Random option
- */
-function getRandomIndicator(options) {
-    return options[Math.floor(Math.random() * options.length)];
+async function updateTransitionFrame(interaction, transFrame, targetFruit, metrics) {
+    const maxRetries = 3;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            metrics.frameAttempts++;
+            
+            // Center-outward conversion for 20-square bars
+            const barLength = 20;
+            const radius = transFrame;
+            const centerPositions = [9, 10]; // True center positions for 20-wide bar (0-19 indexing)
+            const positions = [];
+            
+            for (let i = 0; i < barLength; i++) {
+                let useRewardColor = false;
+                
+                // Check if this position should be converted
+                for (const center of centerPositions) {
+                    if (Math.abs(i - center) <= radius) {
+                        useRewardColor = true;
+                        break;
+                    }
+                }
+                
+                if (useRewardColor) {
+                    positions.push(rarityColors[targetFruit.rarity]?.emoji || '🟫');
+                } else {
+                    const colorIndex = (i - (30 + transFrame) + rainbowColors.length * 100) % rainbowColors.length;
+                    positions.push(rainbowColors[colorIndex]);
+                }
+            }
+            
+            const topBar = positions.join(' ');
+            const bottomBar = positions.join(' ');
+            
+            // Transition embed color
+            const embedColor = transFrame > 5 ? 
+                (rarityColors[targetFruit.rarity]?.embed || 0x8B4513) :
+                rainbowEmbedColors[(0 - (30 + transFrame) + rainbowEmbedColors.length * 100) % rainbowEmbedColors.length];
+            
+            const particles = generateParticles('crystallizing');
+            
+            const transitionContent = `${topBar}\n\n` +
+                `⚡ **CRYSTALLIZING INTO REALITY** ⚡\n\n` +
+                `*The Devil Fruit's power takes its final form...*\n\n` +
+                `${bottomBar}\n\n` +
+                `${particles}`;
+            
+            const embed = new EmbedBuilder()
+                .setTitle('⚡ Final Crystallization')
+                .setDescription(transitionContent)
+                .setColor(embedColor)
+                .setTimestamp();
+            
+            await interaction.editReply({ embeds: [embed] });
+            
+            metrics.frameSuccesses++;
+            return true;
+            
+        } catch (error) {
+            if (attempt === maxRetries) {
+                return false;
+            }
+            await sleep(400 * attempt);
+        }
+    }
+    return false;
 }
 
-/**
- * Main function to get changing indicators based on animation frame
- * @param {number} frame - Current animation frame
- * @param {string} finalRarity - The final rarity of the Devil Fruit
- * @param {string} finalType - The final type of the Devil Fruit
- * @returns {Object} Object containing current indicators
- */
-function getChangingIndicators(frame, finalRarity, finalType) {
-    let energy, rarity, type;
+async function revealInformationGradually(interaction, targetFruit, elementName, userLevel) {
+    // Create reward color bar
+    const rewardEmoji = rarityColors[targetFruit.rarity]?.emoji || '🟫';
+    const rewardBar = Array(20).fill(rewardEmoji).join(' ');
     
-    // Progressive lock system based on frame number
-    // Early frames (0-4): Everything random
-    if (frame < 5) {
-        energy = getRandomIndicator(RANDOM_ENERGY_OPTIONS);
-        rarity = getRandomIndicator(RANDOM_RARITY_OPTIONS);
-        type = getRandomIndicator(RANDOM_TYPE_OPTIONS);
-    }
-    // Mid frames (5-8): Energy locks to correct value
-    else if (frame < 9) {
-        energy = getFruitEnergyLevel(finalRarity);
-        rarity = getRandomIndicator(RANDOM_RARITY_OPTIONS);
-        type = getRandomIndicator(RANDOM_TYPE_OPTIONS);
-    }
-    // Later frames (9-12): Energy + Rarity lock
-    else if (frame < 13) {
-        energy = getFruitEnergyLevel(finalRarity);
-        rarity = getRaritySense(finalRarity);
-        type = getRandomIndicator(RANDOM_TYPE_OPTIONS);
-    }
-    // Final frames (13+): All indicators locked
-    else {
-        energy = getFruitEnergyLevel(finalRarity);
-        rarity = getRaritySense(finalRarity);
-        type = getTypeClassification(finalType);
+    // Calculate combat power if user has level
+    let combatPowerInfo = '';
+    if (userLevel > 0) {
+        const basePower = CombatSystem.calculateBasePower(targetFruit.rarity);
+        const levelMultiplier = CombatSystem.getLevelMultiplier(userLevel);
+        const totalPower = Math.floor(basePower * levelMultiplier);
+        combatPowerInfo = `⚔️ **Combat Power:** ${totalPower.toLocaleString()} CP\n`;
     }
     
-    return {
-        aura: energy,        // For backward compatibility
-        blessing: rarity,    // For backward compatibility
-        typeHint: type,
-        fruitEnergy: energy,
-        raritySense: rarity,
-        typeClassification: type
+    // Prepare all information lines
+    const rarityTitles = {
+        common: "Common Discovery",
+        uncommon: "Uncommon Find", 
+        rare: "Rare Discovery",
+        epic: "Epic Revelation",
+        legendary: "Legendary Find",
+        mythical: "Mythical Discovery",
+        omnipotent: "Omnipotent Revelation"
     };
-}
-
-/**
- * Get indicators for a specific lock phase
- * @param {string} phase - 'random', 'energy', 'rarity', 'complete'
- * @param {string} finalRarity - The final rarity
- * @param {string} finalType - The final type
- * @returns {Object} Indicators for the phase
- */
-function getIndicatorsForPhase(phase, finalRarity, finalType) {
-    switch (phase) {
-        case 'random':
-            return {
-                aura: getRandomIndicator(RANDOM_ENERGY_OPTIONS),
-                blessing: getRandomIndicator(RANDOM_RARITY_OPTIONS),
-                typeHint: getRandomIndicator(RANDOM_TYPE_OPTIONS)
-            };
-        case 'energy':
-            return {
-                aura: getFruitEnergyLevel(finalRarity),
-                blessing: getRandomIndicator(RANDOM_RARITY_OPTIONS),
-                typeHint: getRandomIndicator(RANDOM_TYPE_OPTIONS)
-            };
-        case 'rarity':
-            return {
-                aura: getFruitEnergyLevel(finalRarity),
-                blessing: getRaritySense(finalRarity),
-                typeHint: getRandomIndicator(RANDOM_TYPE_OPTIONS)
-            };
-        case 'complete':
-            return {
-                aura: getFruitEnergyLevel(finalRarity),
-                blessing: getRaritySense(finalRarity),
-                typeHint: getTypeClassification(finalType)
-            };
-        default:
-            return getIndicatorsForPhase('random', finalRarity, finalType);
+    
+    const rarityDescriptions = {
+        common: "A Devil Fruit with basic powers, but still formidable in the right hands.",
+        uncommon: "An intriguing Devil Fruit with notable abilities.",
+        rare: "A Devil Fruit with impressive powers that few possess.",
+        epic: "A remarkable Devil Fruit with extraordinary capabilities.",
+        legendary: "A Devil Fruit of immense power, known throughout the Grand Line.",
+        mythical: "A Devil Fruit of legendary status, wielding reality-bending powers.",
+        omnipotent: "A Devil Fruit of ultimate power, capable of reshaping the very fabric of existence."
+    };
+    
+    const typeEmojis = {
+        'Paramecia': '🔮',
+        'Zoan': '🐺',
+        'Logia': '🌪️',
+        'Ancient Zoan': '🦕',
+        'Mythical Zoan': '🐉',
+        'Special Paramecia': '✨'
+    };
+    
+    // Lines to reveal gradually
+    const revealLines = [
+        `🌟 **${rarityTitles[targetFruit.rarity]}**`,
+        '',
+        `🍈 **${targetFruit.name}**`,
+        `${typeEmojis[targetFruit.type] || '🍈'} **Type:** ${targetFruit.type}`,
+        `👤 **Previous User:** ${targetFruit.previousUser}`,
+        `💪 **Power:** ${targetFruit.power}`,
+        `⭐ **Rarity:** ${targetFruit.rarity.charAt(0).toUpperCase() + targetFruit.rarity.slice(1)}`,
+        combatPowerInfo,
+        `⚔️ **Element:** ${elementName}`,
+        '',
+        `📖 **Description:**`,
+        targetFruit.description,
+        '',
+        `🔥 **Awakening:** ${targetFruit.awakening}`,
+        `💧 **Weakness:** ${targetFruit.weakness}`
+    ];
+    
+    // Reveal line by line
+    let currentContent = `${rewardBar}\n\n`;
+    
+    for (let i = 0; i < revealLines.length; i++) {
+        if (revealLines[i]) {
+            currentContent += revealLines[i] + '\n';
+        } else {
+            currentContent += '\n';
+        }
+        
+        const embed = new EmbedBuilder()
+            .setTitle('🏴‍☠️ Devil Fruit Discovered!')
+            .setDescription(currentContent + `\n${rewardBar}`)
+            .setColor(rarityColors[targetFruit.rarity]?.embed || 0x8B4513)
+            .setTimestamp();
+        
+        await interaction.editReply({ embeds: [embed] });
+        await sleep(800); // 800ms between line reveals
     }
-}
-
-/**
- * Get preview of what indicators will show for a given rarity/type
- * @param {string} rarity - Devil Fruit rarity
- * @param {string} type - Devil Fruit type
- * @returns {Object} Preview of final indicators
- */
-function getIndicatorPreview(rarity, type) {
-    return {
-        energy: getFruitEnergyLevel(rarity),
-        rarity: getRaritySense(rarity),
-        type: getTypeClassification(type)
-    };
-}
-
-/**
- * Get all possible indicators for a rarity (for admin/debug purposes)
- * @param {string} rarity - Devil Fruit rarity
- * @returns {Object} All possible indicators for the rarity
- */
-function getAllIndicatorsForRarity(rarity) {
-    return {
-        energy: FRUIT_ENERGY_LEVELS[rarity] || ['UNKNOWN'],
-        rarity: RARITY_SENSE_LEVELS[rarity] || ['UNKNOWN'],
-        types: Object.keys(DEVIL_FRUIT_CLASSIFICATIONS)
-    };
-}
-
-/**
- * Validate rarity and type
- * @param {string} rarity - Rarity to validate
- * @param {string} type - Type to validate
- * @returns {Object} Validation result
- */
-function validateIndicatorInputs(rarity, type) {
-    const validRarity = FRUIT_ENERGY_LEVELS.hasOwnProperty(rarity);
-    const validType = DEVIL_FRUIT_CLASSIFICATIONS.hasOwnProperty(type);
     
-    return {
-        valid: validRarity && validType,
-        validRarity,
-        validType,
-        availableRarities: Object.keys(FRUIT_ENERGY_LEVELS),
-        availableTypes: Object.keys(DEVIL_FRUIT_CLASSIFICATIONS)
-    };
+    // Final complete display with buttons
+    const finalContent = currentContent + `\n${rewardBar}`;
+    
+    const actionRow = new ActionRowBuilder()
+        .addComponents(
+            new ButtonBuilder()
+                .setCustomId('huntAgain')
+                .setLabel('🍈 Hunt Again')
+                .setStyle(ButtonStyle.Primary),
+            new ButtonBuilder()
+                .setCustomId('collection')
+                .setLabel('📚 My Collection')
+                .setStyle(ButtonStyle.Secondary)
+        );
+    
+    const finalEmbed = new EmbedBuilder()
+        .setTitle('🏴‍☠️ Devil Fruit Claimed!')
+        .setDescription(finalContent)
+        .setColor(rarityColors[targetFruit.rarity]?.embed || 0x8B4513)
+        .setTimestamp();
+    
+    await interaction.editReply({ 
+        embeds: [finalEmbed], 
+        components: [actionRow] 
+    });
 }
 
-// Export all functions and data
-module.exports = {
-    // Main function
-    getChangingIndicators,
-    
-    // Helper functions
-    getFruitEnergyLevel,
-    getRaritySense,
-    getTypeClassification,
-    getRandomIndicator,
-    getIndicatorsForPhase,
-    getIndicatorPreview,
-    getAllIndicatorsForRarity,
-    validateIndicatorInputs,
-    
-    // Data constants
-    FRUIT_ENERGY_LEVELS,
-    RARITY_SENSE_LEVELS,
-    DEVIL_FRUIT_CLASSIFICATIONS,
-    RANDOM_ENERGY_OPTIONS,
-    RANDOM_RARITY_OPTIONS,
-    RANDOM_TYPE_OPTIONS
-};
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+module.exports = { createUltimateCinematicExperience };
