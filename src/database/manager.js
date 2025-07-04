@@ -1,379 +1,374 @@
-const { DatabaseSetup } = require('./setup');
-const { LevelSystem } = require('../data/counter-system');
+const { Pool } = require('pg');
 
 class DatabaseManager {
-    // ═══════════════════════════════════════════════════════════════
-    //                         USER MANAGEMENT
-    // ═══════════════════════════════════════════════════════════════
-    
-    static async getOrCreateUser(userId, username, guildId = null) {
+    constructor() {
+        this.pool = new Pool({
+            connectionString: process.env.DATABASE_URL,
+            ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+        });
+    }
+
+    async query(text, params) {
+        const client = await this.pool.connect();
         try {
-            // Check if user exists
-            const userResult = await DatabaseSetup.query(
+            const result = await client.query(text, params);
+            return result;
+        } finally {
+            client.release();
+        }
+    }
+
+    // User management
+    async ensureUser(userId, username) {
+        try {
+            const result = await this.query(
+                `INSERT INTO users (user_id, username, total_hunts, discovery_rate, level, created_at, updated_at)
+                 VALUES ($1, $2, 0, 0, 0, NOW(), NOW())
+                 ON CONFLICT (user_id) 
+                 DO UPDATE SET username = $2, updated_at = NOW()
+                 RETURNING *`,
+                [userId, username]
+            );
+            return result.rows[0];
+        } catch (error) {
+            console.error('Error ensuring user:', error);
+            throw error;
+        }
+    }
+
+    async getUser(userId) {
+        try {
+            const result = await this.query(
                 'SELECT * FROM users WHERE user_id = $1',
                 [userId]
             );
-
-            if (userResult.rows.length > 0) {
-                // Update username if changed
-                await DatabaseSetup.query(
-                    'UPDATE users SET username = $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2',
-                    [username, userId]
-                );
-                return userResult.rows[0];
-            }
-
-            // Create new user
-            const newUserResult = await DatabaseSetup.query(`
-                INSERT INTO users (user_id, username, guild_id) 
-                VALUES ($1, $2, $3) 
-                RETURNING *
-            `, [userId, username, guildId]);
-
-            // Initialize user stats tables
-            await this.initializeUserStats(userId);
-
-            return newUserResult.rows[0];
-
+            return result.rows[0];
         } catch (error) {
-            console.error('Error getting/creating user:', error);
-            throw error;
+            console.error('Error getting user:', error);
+            return null;
         }
     }
 
-    static async initializeUserStats(userId) {
+    async updateUserStats(userId) {
         try {
-            // Initialize rarity stats
-            const rarities = ['common', 'uncommon', 'rare', 'legendary', 'mythical', 'omnipotent'];
-            for (const rarity of rarities) {
-                await DatabaseSetup.query(`
-                    INSERT INTO user_rarity_stats (user_id, rarity, count) 
-                    VALUES ($1, $2, 0) 
-                    ON CONFLICT (user_id, rarity) DO NOTHING
-                `, [userId, rarity]);
-            }
-
-            // Initialize type stats
-            const types = ['Paramecia', 'Zoan', 'Logia', 'Ancient Zoan', 'Mythical Zoan', 'Special Paramecia'];
-            for (const type of types) {
-                await DatabaseSetup.query(`
-                    INSERT INTO user_type_stats (user_id, fruit_type, count) 
-                    VALUES ($1, $2, 0) 
-                    ON CONFLICT (user_id, fruit_type) DO NOTHING
-                `, [userId, type]);
-            }
-
-            // Initialize level stats
-            await DatabaseSetup.query(`
-                INSERT INTO user_levels (user_id) 
-                VALUES ($1) 
-                ON CONFLICT (user_id) DO NOTHING
-            `, [userId]);
-
-            // Initialize cooldowns
-            await DatabaseSetup.query(`
-                INSERT INTO user_cooldowns (user_id) 
-                VALUES ($1) 
-                ON CONFLICT (user_id) DO NOTHING
-            `, [userId]);
-
-        } catch (error) {
-            console.error('Error initializing user stats:', error);
-            throw error;
-        }
-    }
-
-    // ═══════════════════════════════════════════════════════════════
-    //                         DEVIL FRUIT MANAGEMENT
-    // ═══════════════════════════════════════════════════════════════
-
-    static async addDevilFruit(userId, fruit, element = null) {
-        try {
-            // Check if user already has this fruit
-            const existingResult = await DatabaseSetup.query(
-                'SELECT * FROM user_devil_fruits WHERE user_id = $1 AND fruit_id = $2',
-                [userId, fruit.id]
+            // Get total hunts and unique fruits
+            const huntsResult = await this.query(
+                'SELECT COUNT(*) as total_hunts FROM user_devil_fruits WHERE user_id = $1',
+                [userId]
             );
-
-            if (existingResult.rows.length > 0) {
-                // Update times obtained
-                await DatabaseSetup.query(`
-                    UPDATE user_devil_fruits 
-                    SET times_obtained = times_obtained + 1, last_obtained = CURRENT_TIMESTAMP 
-                    WHERE user_id = $1 AND fruit_id = $2
-                `, [userId, fruit.id]);
-            } else {
-                // Add new fruit
-                await DatabaseSetup.query(`
-                    INSERT INTO user_devil_fruits 
-                    (user_id, fruit_id, fruit_name, fruit_type, rarity, element, power_level) 
-                    VALUES ($1, $2, $3, $4, $5, $6, $7)
-                `, [userId, fruit.id, fruit.name, fruit.type, fruit.rarity, element, fruit.powerLevel]);
-            }
-
-            // Update rarity stats
-            await DatabaseSetup.query(`
-                UPDATE user_rarity_stats 
-                SET count = count + 1 
-                WHERE user_id = $1 AND rarity = $2
-            `, [userId, fruit.rarity]);
-
-            // Update type stats
-            await DatabaseSetup.query(`
-                UPDATE user_type_stats 
-                SET count = count + 1 
-                WHERE user_id = $1 AND fruit_type = $2
-            `, [userId, fruit.type]);
-
-            // Update user totals
-            await DatabaseSetup.query(`
-                UPDATE users 
-                SET total_hunts = total_hunts + 1,
-                    total_fruits = (SELECT COUNT(*) FROM user_devil_fruits WHERE user_id = $1),
-                    updated_at = CURRENT_TIMESTAMP 
-                WHERE user_id = $1
-            `, [userId]);
-
-            // Recalculate discovery rate
-            await this.updateDiscoveryRate(userId);
-
-        } catch (error) {
-            console.error('Error adding devil fruit:', error);
-            throw error;
-        }
-    }
-
-    static async getUserCollection(userId) {
-        try {
-            const result = await DatabaseSetup.query(`
-                SELECT 
-                    u.*,
-                    COALESCE(ul.discord_level, 0) as discord_level,
-                    COALESCE(ul.rank_name, 'Newcomer') as rank_name,
-                    COALESCE(ul.level_multiplier, 1.0) as level_multiplier,
-                    COALESCE(ul.total_combat_power, 0) as total_combat_power
-                FROM users u
-                LEFT JOIN user_levels ul ON u.user_id = ul.user_id
-                WHERE u.user_id = $1
-            `, [userId]);
-
-            if (result.rows.length === 0) {
-                return null;
-            }
-
-            const user = result.rows[0];
-
-            // Get devil fruits
-            const fruitsResult = await DatabaseSetup.query(`
-                SELECT * FROM user_devil_fruits 
-                WHERE user_id = $1 
-                ORDER BY power_level DESC
-            `, [userId]);
-
-            // Get rarity stats
-            const rarityResult = await DatabaseSetup.query(`
-                SELECT rarity, count FROM user_rarity_stats 
-                WHERE user_id = $1 AND count > 0
-            `, [userId]);
-
-            // Get type stats
-            const typeResult = await DatabaseSetup.query(`
-                SELECT fruit_type, count FROM user_type_stats 
-                WHERE user_id = $1 AND count > 0
-            `, [userId]);
-
-            // Build collection object
-            const collection = {
-                user: user,
-                devilFruits: {},
-                rarityCount: {},
-                typeCount: {},
-                battleProfile: {
-                    level: user.discord_level,
-                    rank: user.rank_name,
-                    levelMultiplier: parseFloat(user.level_multiplier),
-                    totalCombatPower: user.total_combat_power
-                }
-            };
-
-            // Process fruits
-            fruitsResult.rows.forEach(fruit => {
-                collection.devilFruits[fruit.fruit_id] = {
-                    id: fruit.fruit_id,
-                    name: fruit.fruit_name,
-                    type: fruit.fruit_type,
-                    rarity: fruit.rarity,
-                    element: fruit.element,
-                    powerLevel: fruit.power_level,
-                    timesObtained: fruit.times_obtained,
-                    obtainedAt: fruit.first_obtained
-                };
-            });
-
-            // Process rarity counts
-            rarityResult.rows.forEach(row => {
-                collection.rarityCount[row.rarity] = row.count;
-            });
-
-            // Process type counts
-            typeResult.rows.forEach(row => {
-                collection.typeCount[row.fruit_type] = row.count;
-            });
-
-            return collection;
-
-        } catch (error) {
-            console.error('Error getting user collection:', error);
-            throw error;
-        }
-    }
-
-    // ═══════════════════════════════════════════════════════════════
-    //                         LEVEL MANAGEMENT
-    // ═══════════════════════════════════════════════════════════════
-
-    static async updateUserLevel(userId, member) {
-        try {
-            const discordLevel = LevelSystem.extractLevelFromRoles(member);
-            const levelMultiplier = LevelSystem.getMultiplierForLevel(discordLevel);
-            const rankName = LevelSystem.getRankName(discordLevel);
-
-            // Get user's base combat power
-            const basePowerResult = await DatabaseSetup.query(`
-                SELECT SUM(
-                    udf.power_level * udf.times_obtained * 
-                    CASE 
-                        WHEN udf.rarity = 'common' THEN 1.0
-                        WHEN udf.rarity = 'uncommon' THEN 1.2
-                        WHEN udf.rarity = 'rare' THEN 1.5
-                        WHEN udf.rarity = 'legendary' THEN 2.0
-                        WHEN udf.rarity = 'mythical' THEN 3.0
-                        WHEN udf.rarity = 'omnipotent' THEN 5.0
-                        ELSE 1.0
-                    END
-                ) as base_power
-                FROM user_devil_fruits udf
-                WHERE udf.user_id = $1
-            `, [userId]);
-
-            const basePower = basePowerResult.rows[0]?.base_power || 0;
-            const totalCombatPower = Math.round(basePower * levelMultiplier);
-            const levelBonus = totalCombatPower - basePower;
-
-            // Update level stats
-            await DatabaseSetup.query(`
-                UPDATE user_levels 
-                SET discord_level = $1,
-                    rank_name = $2,
-                    level_multiplier = $3,
-                    base_combat_power = $4,
-                    total_combat_power = $5,
-                    level_bonus = $6,
-                    last_level_update = CURRENT_TIMESTAMP
-                WHERE user_id = $7
-            `, [discordLevel, rankName, levelMultiplier, basePower, totalCombatPower, levelBonus, userId]);
-
-            return {
-                level: discordLevel,
-                rank: rankName,
-                levelMultiplier: levelMultiplier,
-                baseCombatPower: basePower,
-                totalCombatPower: totalCombatPower,
-                levelBonus: levelBonus
-            };
-
-        } catch (error) {
-            console.error('Error updating user level:', error);
-            throw error;
-        }
-    }
-
-    // ═══════════════════════════════════════════════════════════════
-    //                         COOLDOWN MANAGEMENT
-    // ═══════════════════════════════════════════════════════════════
-
-    static async checkCooldown(userId) {
-        try {
-            const result = await DatabaseSetup.query(`
-                SELECT * FROM user_cooldowns 
-                WHERE user_id = $1
-            `, [userId]);
-
-            if (result.rows.length === 0) {
-                return { onCooldown: false, timeLeft: 0 };
-            }
-
-            const cooldown = result.rows[0];
-            const now = new Date();
-
-            if (cooldown.cooldown_end && new Date(cooldown.cooldown_end) > now) {
-                const timeLeft = Math.ceil((new Date(cooldown.cooldown_end) - now) / 1000);
-                return { onCooldown: true, timeLeft: timeLeft };
-            }
-
-            return { onCooldown: false, timeLeft: 0 };
-
-        } catch (error) {
-            console.error('Error checking cooldown:', error);
-            throw error;
-        }
-    }
-
-    static async setCooldown(userId, cooldownSeconds = 5) {
-        try {
-            const cooldownEnd = new Date(Date.now() + (cooldownSeconds * 1000));
             
-            await DatabaseSetup.query(`
-                UPDATE user_cooldowns 
-                SET last_single_pull = CURRENT_TIMESTAMP,
-                    cooldown_end = $1
-                WHERE user_id = $2
-            `, [cooldownEnd, userId]);
+            const uniqueResult = await this.query(
+                'SELECT COUNT(DISTINCT fruit_id) as unique_fruits FROM user_devil_fruits WHERE user_id = $1',
+                [userId]
+            );
+            
+            const totalHunts = parseInt(huntsResult.rows[0].total_hunts);
+            const uniqueFruits = parseInt(uniqueResult.rows[0].unique_fruits);
+            const discoveryRate = totalHunts > 0 ? Math.round((uniqueFruits / totalHunts) * 100) : 0;
+            
+            await this.query(
+                `UPDATE users 
+                 SET total_hunts = $2, discovery_rate = $3, updated_at = NOW()
+                 WHERE user_id = $1`,
+                [userId, totalHunts, discoveryRate]
+            );
+            
+            return { totalHunts, uniqueFruits, discoveryRate };
+        } catch (error) {
+            console.error('Error updating user stats:', error);
+            throw error;
+        }
+    }
 
+    // Devil Fruit collection
+    async saveUserFruit(userId, fruit) {
+        try {
+            const result = await this.query(
+                `INSERT INTO user_devil_fruits (user_id, fruit_id, name, type, rarity, power, previous_user, description, awakening, weakness, obtained_at)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
+                 RETURNING *`,
+                [userId, fruit.id, fruit.name, fruit.type, fruit.rarity, fruit.power, fruit.previousUser, fruit.description, fruit.awakening, fruit.weakness]
+            );
+            
+            // Update rarity and type stats
+            await this.updateRarityStats(userId, fruit.rarity);
+            await this.updateTypeStats(userId, fruit.type);
+            
+            return result.rows[0];
+        } catch (error) {
+            console.error('Error saving user fruit:', error);
+            throw error;
+        }
+    }
+
+    async getUserFruits(userId) {
+        try {
+            const result = await this.query(
+                'SELECT * FROM user_devil_fruits WHERE user_id = $1 ORDER BY obtained_at DESC',
+                [userId]
+            );
+            return result.rows;
+        } catch (error) {
+            console.error('Error getting user fruits:', error);
+            return [];
+        }
+    }
+
+    // Rarity stats
+    async updateRarityStats(userId, rarity) {
+        try {
+            await this.query(
+                `INSERT INTO user_rarity_stats (user_id, rarity, count)
+                 VALUES ($1, $2, 1)
+                 ON CONFLICT (user_id, rarity)
+                 DO UPDATE SET count = user_rarity_stats.count + 1`,
+                [userId, rarity]
+            );
+        } catch (error) {
+            console.error('Error updating rarity stats:', error);
+            throw error;
+        }
+    }
+
+    async getUserRarityStats(userId) {
+        try {
+            const result = await this.query(
+                'SELECT rarity, count FROM user_rarity_stats WHERE user_id = $1',
+                [userId]
+            );
+            
+            const stats = {};
+            result.rows.forEach(row => {
+                stats[row.rarity] = parseInt(row.count);
+            });
+            
+            return stats;
+        } catch (error) {
+            console.error('Error getting rarity stats:', error);
+            return {};
+        }
+    }
+
+    // Type stats
+    async updateTypeStats(userId, type) {
+        try {
+            await this.query(
+                `INSERT INTO user_type_stats (user_id, type, count)
+                 VALUES ($1, $2, 1)
+                 ON CONFLICT (user_id, type)
+                 DO UPDATE SET count = user_type_stats.count + 1`,
+                [userId, type]
+            );
+        } catch (error) {
+            console.error('Error updating type stats:', error);
+            throw error;
+        }
+    }
+
+    async getUserTypeStats(userId) {
+        try {
+            const result = await this.query(
+                'SELECT type, count FROM user_type_stats WHERE user_id = $1',
+                [userId]
+            );
+            
+            const stats = {};
+            result.rows.forEach(row => {
+                stats[row.type] = parseInt(row.count);
+            });
+            
+            return stats;
+        } catch (error) {
+            console.error('Error getting type stats:', error);
+            return {};
+        }
+    }
+
+    // Level management
+    async setUserLevel(userId, level) {
+        try {
+            await this.query(
+                `INSERT INTO user_levels (user_id, level, updated_at)
+                 VALUES ($1, $2, NOW())
+                 ON CONFLICT (user_id)
+                 DO UPDATE SET level = $2, updated_at = NOW()`,
+                [userId, level]
+            );
+            
+            // Also update in main users table
+            await this.query(
+                'UPDATE users SET level = $2 WHERE user_id = $1',
+                [userId, level]
+            );
+        } catch (error) {
+            console.error('Error setting user level:', error);
+            throw error;
+        }
+    }
+
+    async getUserLevel(userId) {
+        try {
+            const result = await this.query(
+                'SELECT level FROM user_levels WHERE user_id = $1',
+                [userId]
+            );
+            return result.rows[0] ? parseInt(result.rows[0].level) : 0;
+        } catch (error) {
+            console.error('Error getting user level:', error);
+            return 0;
+        }
+    }
+
+    // Cooldown management
+    async setCooldown(userId, type, endTime) {
+        try {
+            await this.query(
+                `INSERT INTO user_cooldowns (user_id, cooldown_type, end_time)
+                 VALUES ($1, $2, $3)
+                 ON CONFLICT (user_id, cooldown_type)
+                 DO UPDATE SET end_time = $3`,
+                [userId, type, new Date(endTime)]
+            );
         } catch (error) {
             console.error('Error setting cooldown:', error);
             throw error;
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    //                         UTILITY FUNCTIONS
-    // ═══════════════════════════════════════════════════════════════
-
-    static async updateDiscoveryRate(userId) {
+    async getCooldown(userId, type) {
         try {
-            await DatabaseSetup.query(`
-                UPDATE users 
-                SET discovery_rate = (
-                    CASE 
-                        WHEN total_hunts > 0 THEN (total_fruits::decimal / total_hunts::decimal) * 100
-                        ELSE 0
-                    END
-                )
-                WHERE user_id = $1
-            `, [userId]);
+            const result = await this.query(
+                'SELECT end_time FROM user_cooldowns WHERE user_id = $1 AND cooldown_type = $2',
+                [userId, type]
+            );
+            
+            if (result.rows[0]) {
+                return new Date(result.rows[0].end_time).getTime();
+            }
+            return null;
         } catch (error) {
-            console.error('Error updating discovery rate:', error);
+            console.error('Error getting cooldown:', error);
+            return null;
         }
     }
 
-    // Get leaderboard (for future use)
-    static async getLeaderboard(limit = 10, orderBy = 'total_combat_power') {
+    async clearExpiredCooldowns() {
         try {
-            const result = await DatabaseSetup.query(`
-                SELECT u.username, ul.discord_level, ul.rank_name, ul.total_combat_power, u.total_fruits
-                FROM users u
-                LEFT JOIN user_levels ul ON u.user_id = ul.user_id
-                ORDER BY ul.${orderBy} DESC NULLS LAST
-                LIMIT $1
-            `, [limit]);
-
-            return result.rows;
+            await this.query(
+                'DELETE FROM user_cooldowns WHERE end_time < NOW()'
+            );
         } catch (error) {
-            console.error('Error getting leaderboard:', error);
+            console.error('Error clearing expired cooldowns:', error);
+        }
+    }
+
+    // Battle system (for future PvP)
+    async saveBattleResult(attackerId, defenderId, result, stolenFruits = []) {
+        try {
+            const battleResult = await this.query(
+                `INSERT INTO battle_history (attacker_id, defender_id, result, stolen_fruits, battle_time)
+                 VALUES ($1, $2, $3, $4, NOW())
+                 RETURNING *`,
+                [attackerId, defenderId, result, JSON.stringify(stolenFruits)]
+            );
+            return battleResult.rows[0];
+        } catch (error) {
+            console.error('Error saving battle result:', error);
             throw error;
         }
     }
+
+    async getBattleHistory(userId, limit = 10) {
+        try {
+            const result = await this.query(
+                `SELECT * FROM battle_history 
+                 WHERE attacker_id = $1 OR defender_id = $1 
+                 ORDER BY battle_time DESC 
+                 LIMIT $2`,
+                [userId, limit]
+            );
+            return result.rows;
+        } catch (error) {
+            console.error('Error getting battle history:', error);
+            return [];
+        }
+    }
+
+    // Leaderboards
+    async getTopCollectors(limit = 10) {
+        try {
+            const result = await this.query(
+                `SELECT u.username, u.total_hunts, 
+                        COUNT(DISTINCT udf.fruit_id) as unique_fruits,
+                        u.discovery_rate, u.level
+                 FROM users u
+                 LEFT JOIN user_devil_fruits udf ON u.user_id = udf.user_id
+                 GROUP BY u.user_id, u.username, u.total_hunts, u.discovery_rate, u.level
+                 ORDER BY unique_fruits DESC, u.total_hunts DESC
+                 LIMIT $1`,
+                [limit]
+            );
+            return result.rows;
+        } catch (error) {
+            console.error('Error getting top collectors:', error);
+            return [];
+        }
+    }
+
+    async getTopByPower(limit = 10) {
+        try {
+            // This would calculate total combat power for leaderboards
+            const result = await this.query(
+                `SELECT u.username, u.level, u.total_hunts,
+                        COUNT(udf.id) as total_fruits
+                 FROM users u
+                 LEFT JOIN user_devil_fruits udf ON u.user_id = udf.user_id
+                 GROUP BY u.user_id, u.username, u.level, u.total_hunts
+                 ORDER BY u.level DESC, total_fruits DESC
+                 LIMIT $1`,
+                [limit]
+            );
+            return result.rows;
+        } catch (error) {
+            console.error('Error getting top by power:', error);
+            return [];
+        }
+    }
+
+    // Utility functions
+    async getServerStats() {
+        try {
+            const userCount = await this.query('SELECT COUNT(*) as count FROM users');
+            const fruitCount = await this.query('SELECT COUNT(*) as count FROM user_devil_fruits');
+            const battleCount = await this.query('SELECT COUNT(*) as count FROM battle_history');
+            
+            return {
+                totalUsers: parseInt(userCount.rows[0].count),
+                totalFruits: parseInt(fruitCount.rows[0].count),
+                totalBattles: parseInt(battleCount.rows[0].count)
+            };
+        } catch (error) {
+            console.error('Error getting server stats:', error);
+            return { totalUsers: 0, totalFruits: 0, totalBattles: 0 };
+        }
+    }
+
+    async cleanup() {
+        try {
+            // Clean up expired cooldowns
+            await this.clearExpiredCooldowns();
+            
+            // Could add more cleanup tasks here
+            console.log('✅ Database cleanup completed');
+        } catch (error) {
+            console.error('❌ Database cleanup error:', error);
+        }
+    }
+
+    // Close database connection
+    async close() {
+        await this.pool.end();
+    }
 }
 
-module.exports = { DatabaseManager };
+module.exports = new DatabaseManager();
