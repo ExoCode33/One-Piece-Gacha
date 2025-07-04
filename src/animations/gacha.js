@@ -304,6 +304,7 @@ ${finalParticles2}
             .setColor(rarityConfig.color)
             .setFooter({ text: `🏴‍☠️ ${interaction.user.username}'s Devil Fruit Hunt | ${new Date().toLocaleString()}` });
 
+        // UPDATED: Removed share button, only Hunt Again and Collection
         const actionRow = new ActionRowBuilder()
             .addComponents(
                 new ButtonBuilder()
@@ -313,11 +314,7 @@ ${finalParticles2}
                 new ButtonBuilder()
                     .setCustomId('view_collection')
                     .setLabel('📚 My Collection')
-                    .setStyle(ButtonStyle.Secondary),
-                new ButtonBuilder()
-                    .setCustomId('share_discovery')
-                    .setLabel('📢 Share Discovery')
-                    .setStyle(ButtonStyle.Success)
+                    .setStyle(ButtonStyle.Secondary)
             );
 
         await huntMessage.edit({ embeds: [finalEmbed], components: [actionRow] });
@@ -351,12 +348,28 @@ ${finalParticles2}
 
 async function handleHuntAgain(interaction) {
     try {
-        await interaction.deferUpdate();
-        await createUltimateCinematicExperience(interaction);
+        // Send a new pull command instead of re-rolling current message
+        await interaction.reply({
+            content: '/pull',
+            ephemeral: true
+        });
+        
+        // Follow up with a message explaining what happened
+        setTimeout(async () => {
+            try {
+                await interaction.followUp({
+                    content: '🍈 **Hunt Again activated!** Use the `/pull` command above to start a new hunt!',
+                    ephemeral: true
+                });
+            } catch (error) {
+                console.error('Follow-up message error:', error);
+            }
+        }, 1000);
+        
     } catch (error) {
         console.error('Hunt again error:', error);
-        await interaction.followUp({
-            content: '❌ Unable to start new hunt! Please use `/pull` command.',
+        await interaction.reply({
+            content: '❌ Use `/pull` command to start a new hunt!',
             ephemeral: true
         });
     }
@@ -372,19 +385,11 @@ async function handleViewCollection(interaction) {
     await interaction.reply({ embeds: [collectionEmbed], ephemeral: true });
 }
 
-async function handleShareDiscovery(interaction) {
-    const shareEmbed = new EmbedBuilder()
-        .setTitle('📢 **Amazing Devil Fruit Discovery!**')
-        .setDescription(`🎉 **${interaction.user.username}** just discovered an incredible Devil Fruit!\n\nCheck out their legendary find above! 🏴‍☠️`)
-        .setColor('#E67E22')
-        .setFooter({ text: '🍈 Join the hunt with /pull!' });
-
-    await interaction.reply({ embeds: [shareEmbed] });
-}
+// REMOVED: handleShareDiscovery function since we removed the share button
 
 module.exports = {
     createUltimateCinematicExperience,
     handleHuntAgain,
-    handleViewCollection,
-    handleShareDiscovery
+    handleViewCollection
+    // Removed handleShareDiscovery export
 };
