@@ -105,7 +105,7 @@ The seas whisper of legendary treasures...
                         currentColor = rainbowEmbedColors[leftmostColorIndex];
                     }
                     
-                    // CREATE COMPLETE BOX with FIXED POSITION vertical sides (but color changes)
+                    // CREATE CLEAN BOX without vertical sides
                     const rainbowColors = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪', '🟫'];
                     let topRainbow = '';
                     let bottomRainbow = '';
@@ -119,22 +119,18 @@ The seas whisper of legendary treasures...
                             bottomRainbow += ' ';
                         }
                     }
-                    
-                    // FIXED POSITION vertical sides - always position 0, but color follows rainbow
-                    const leftSideColorIndex = (0 - frame + rainbowColors.length * 100) % rainbowColors.length;
-                    const verticalBar = rainbowColors[leftSideColorIndex];
 
                     const searchEmbed = new EmbedBuilder()
                         .setTitle(frameData.title)
                         .setDescription(`
 ${topRainbow}
-${verticalBar}                                                   ${verticalBar}
-${verticalBar}                **${frameData.desc}**                ${verticalBar}
-${verticalBar}                                                   ${verticalBar}
-${verticalBar}        **🔮 AURA STATUS:** ${indicators.aura}         ${verticalBar}
-${verticalBar}        **✨ BLESSING LEVEL:** ${indicators.blessing}      ${verticalBar}
-${verticalBar}        **🌊 POWER TYPE:** ${indicators.type}        ${verticalBar}
-${verticalBar}                                                   ${verticalBar}
+
+**${frameData.desc}**
+
+**🔮 AURA STATUS:** ${indicators.aura}
+**✨ BLESSING LEVEL:** ${indicators.blessing}  
+**🌊 POWER TYPE:** ${indicators.type}
+
 ${bottomRainbow}
 
 ${particles}
@@ -200,7 +196,7 @@ ${particles}
                 // Use rarity color for progression phase
                 const currentColor = finalBarColors[oldRarity] || '#3498DB';
                 
-                // CREATE COMPLETE BOX with FIXED POSITION vertical sides (but color changes)
+                // CREATE CLEAN BOX without vertical sides
                 const progressFrame = totalFrames + progFrame;
                 const rainbowColors = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪', '🟫'];
                 let topRainbow = '';
@@ -215,22 +211,18 @@ ${particles}
                         bottomRainbow += ' ';
                     }
                 }
-                
-                // FIXED POSITION vertical sides - always position 0, but color follows rainbow
-                const leftSideColorIndex = (0 - progressFrame + rainbowColors.length * 100) % rainbowColors.length;
-                const verticalBar = rainbowColors[leftSideColorIndex];
 
                 const progressEmbed = new EmbedBuilder()
                     .setTitle('🎆 **ENERGIES CONVERGING** 🎆')
                     .setDescription(`
 ${topRainbow}
-${verticalBar}                                                   ${verticalBar}
-${verticalBar}       **The rainbow flows toward destiny...**       ${verticalBar}
-${verticalBar}                                                   ${verticalBar}
-${verticalBar}        **🔮 AURA STATUS:** ${indicators.aura}         ${verticalBar}
-${verticalBar}        **✨ BLESSING LEVEL:** ${indicators.blessing}      ${verticalBar}
-${verticalBar}        **🌊 POWER TYPE:** ${indicators.type}        ${verticalBar}
-${verticalBar}                                                   ${verticalBar}
+
+**The rainbow flows toward destiny...**
+
+**🔮 AURA STATUS:** ${indicators.aura}
+**✨ BLESSING LEVEL:** ${indicators.blessing}  
+**🌊 POWER TYPE:** ${indicators.type}
+
 ${bottomRainbow}
 
 ${particles}
@@ -355,9 +347,9 @@ ${particles}
                     .setTitle('🌟 **POWER CRYSTALLIZING** 🌟')
                     .setDescription(`
 ${topBar}
-${verticalBar}                                                   ${verticalBar}
-${verticalBar}   **The Devil Fruit's essence crystallizes from within...**   ${verticalBar}
-${verticalBar}                                                   ${verticalBar}
+
+**The Devil Fruit's essence crystallizes from within...**
+
 ${bottomBar}
 
 ${transitionParticles}
@@ -415,27 +407,22 @@ ${transitionParticles}
                     }
                 }
                 
-                // Build content up to current line with FIXED POSITION vertical sides
+                // Build content up to current line - CLEAN format
                 let revealContent = '';
-                const sideColor = finalSquareColor; // Use reward color for sides during reveal
                 
                 for (let i = 0; i < lineIndex; i++) {
                     if (revealLines[i] === '') {
-                        revealContent += `${sideColor}                                                   ${sideColor}\n`;
+                        revealContent += `\n`;
                     } else {
-                        // Center the text content
-                        const line = revealLines[i];
-                        const padding = Math.max(0, Math.floor((35 - line.length) / 2));
-                        const paddedLine = ' '.repeat(padding) + line + ' '.repeat(padding);
-                        revealContent += `${sideColor}${paddedLine}${sideColor}\n`;
+                        revealContent += `${revealLines[i]}\n`;
                     }
                 }
                 
-                // Add empty lines to maintain box height if needed with FIXED POSITION sides
+                // Add spacing for consistent height
                 const minLines = 8;
                 const currentLines = lineIndex;
                 for (let i = currentLines; i < minLines; i++) {
-                    revealContent += `${sideColor}                                                   ${sideColor}\n`;
+                    revealContent += `\n`;
                 }
                 
                 const stageParticles = ParticlesSystem.createOnePieceParticles(8 + lineIndex, 'celebration', oldRarity);
@@ -444,7 +431,8 @@ ${transitionParticles}
                     .setTitle(rarityTitles[oldRarity] || rarityTitles.common)
                     .setDescription(`
 ${topBar}
-${revealContent}${bottomBar}
+${revealContent}
+${bottomBar}
 
 ${stageParticles}
                     `)
@@ -481,23 +469,22 @@ ${stageParticles}
             }
         }
 
-        // Create final formatted content with FIXED POSITION vertical sides (reward color)
-        const sideColor = finalSquareColor;
-        const finalContent = `${sideColor}                                                   ${sideColor}
-${sideColor}    **${rarityDescriptions[oldRarity] || rarityDescriptions.common}**    ${sideColor}
-${sideColor}                                                   ${sideColor}
-${sideColor}      **🍈 Devil Fruit:** ${targetFruit.name}      ${sideColor}
-${sideColor}      **📋 Type:** ${typeEmojis[targetFruit.type] || '🔮'} ${targetFruit.type}      ${sideColor}
-${sideColor}      **👤 Previous User:** ${targetFruit.user}      ${sideColor}
-${sideColor}      **⚡ Power:** ${targetFruit.power}      ${sideColor}
-${sideColor}      **💎 Rarity:** ${rarityConfig.stars} ${rarityConfig.name}      ${sideColor}
-${sideColor}      **🌟 Power Level:** ${targetFruit.powerLevel.toLocaleString()}      ${sideColor}
-${sideColor}                                                   ${sideColor}
-${sideColor}      *${targetFruit.description}*      ${sideColor}
-${sideColor}                                                   ${sideColor}
-${sideColor}      **🔥 Awakening:** ${targetFruit.awakening}      ${sideColor}
-${sideColor}      **⚠️ Weakness:** ${targetFruit.weakness}      ${sideColor}
-${sideColor}                                                   ${sideColor}`;
+        // Create final formatted content - CLEAN format
+        const finalContent = `
+**${rarityDescriptions[oldRarity] || rarityDescriptions.common}**
+
+**🍈 Devil Fruit:** ${targetFruit.name}
+**📋 Type:** ${typeEmojis[targetFruit.type] || '🔮'} ${targetFruit.type}
+**👤 Previous User:** ${targetFruit.user}
+**⚡ Power:** ${targetFruit.power}
+**💎 Rarity:** ${rarityConfig.stars} ${rarityConfig.name}
+**🌟 Power Level:** ${targetFruit.powerLevel.toLocaleString()}
+
+*${targetFruit.description}*
+
+**🔥 Awakening:** ${targetFruit.awakening}
+**⚠️ Weakness:** ${targetFruit.weakness}
+`;
 
         const finalEmbed = new EmbedBuilder()
             .setTitle(rarityTitles[oldRarity] || rarityTitles.common)
