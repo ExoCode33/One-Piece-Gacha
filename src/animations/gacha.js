@@ -202,168 +202,8 @@ ${particles}
             }
         }
 
-        // Get the rarity config using old rarity name
+        // Get the rarity config and prepare display data
         const rarityConfig = DevilFruitDatabase.getRarityConfig(oldRarity);
-
-        // SMOOTH TRANSITION PHASE: Rainbow gradually becomes reward color
-        console.log('🎆 Smooth transition: Rainbow to reward color...');
-        
-        const finalBarColors = {
-            'common': '🟫',
-            'uncommon': '🟩',
-            'rare': '🟦',
-            'legendary': '🟨',
-            'mythical': '🟥',
-            'omnipotent': '🟪'
-        };
-        
-        const finalSquareColor = finalBarColors[oldRarity] || '🟩';
-        const transitionFrames = 8;
-        
-        // Gradual transition from rainbow to solid color
-        for (let transFrame = 0; transFrame < transitionFrames; transFrame++) {
-            try {
-                const transitionPercentage = (transFrame + 1) / transitionFrames;
-                
-                // Create mixed bar (rainbow becoming solid color from left to right)
-                let mixedProgressBar = '**CRYSTALLIZING**\n';
-                for (let i = 0; i < 20; i++) {
-                    const positionProgress = i / 19; // 0 to 1 across the bar
-                    
-                    if (positionProgress <= transitionPercentage) {
-                        // This position has turned to the reward color
-                        mixedProgressBar += finalSquareColor;
-                    } else {
-                        // Still showing rainbow
-                        const rainbowColors = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪', '🟫'];
-                        const finalFrame = totalFrames + progressFrames;
-                        const colorIndex = (i - finalFrame + rainbowColors.length * 100) % rainbowColors.length;
-                        mixedProgressBar += rainbowColors[colorIndex];
-                    }
-                    if (i < 19) mixedProgressBar += ' ';
-                }
-                
-                const transitionParticles = ParticlesSystem.createOnePieceParticles(5 + transFrame, 'energy', oldRarity);
-                
-                const transitionEmbed = new EmbedBuilder()
-                    .setTitle('🌟 **POWER CRYSTALLIZING** 🌟')
-                    .setDescription(`
-**The Devil Fruit's true nature emerges...**
-
-${mixedProgressBar}
-
-${transitionParticles}
-                    `)
-                    .setColor(rarityConfig.color)
-                    .setFooter({ text: `${rarityConfig.name} Power Manifesting...` });
-
-                const timeoutDuration = 4000;
-                const updatePromise = huntMessage.edit({ embeds: [transitionEmbed] });
-                const timeoutPromise = new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error('Discord API timeout')), timeoutDuration)
-                );
-                
-                await Promise.race([updatePromise, timeoutPromise]);
-                await new Promise(resolve => setTimeout(resolve, 400));
-                
-            } catch (error) {
-                console.error(`Transition frame ${transFrame} error:`, error.message);
-                await new Promise(resolve => setTimeout(resolve, 300));
-            }
-        }
-
-        // GRADUAL REVEAL PHASE: Show Devil Fruit info piece by piece
-        console.log('🎊 Gradual reveal: Devil Fruit information...');
-        
-        const revealStages = [
-            {
-                title: '🍈 **DEVIL FRUIT DISCOVERED** 🍈',
-                content: `
-${rarityDescriptions[oldRarity] || rarityDescriptions.common}
-
-**🍈 Devil Fruit:** ${targetFruit.name}
-**📋 Type:** ${typeEmojis[targetFruit.type] || '🔮'} ${targetFruit.type}
-
-*Analyzing power...*
-                `
-            },
-            {
-                title: rarityTitles[oldRarity] || rarityTitles.common,
-                content: `
-${rarityDescriptions[oldRarity] || rarityDescriptions.common}
-
-**🍈 Devil Fruit:** ${targetFruit.name}
-**📋 Type:** ${typeEmojis[targetFruit.type] || '🔮'} ${targetFruit.type}
-**👤 Previous User:** ${targetFruit.user}
-**⚡ Power:** ${targetFruit.power}
-
-*Revealing details...*
-                `
-            },
-            {
-                title: rarityTitles[oldRarity] || rarityTitles.common,
-                content: `
-${rarityDescriptions[oldRarity] || rarityDescriptions.common}
-
-**🍈 Devil Fruit:** ${targetFruit.name}
-**📋 Type:** ${typeEmojis[targetFruit.type] || '🔮'} ${targetFruit.type}
-**👤 Previous User:** ${targetFruit.user}
-**⚡ Power:** ${targetFruit.power}
-**💎 Rarity:** ${rarityConfig.stars} ${rarityConfig.name}
-**🌟 Power Level:** ${targetFruit.powerLevel.toLocaleString()}
-
-*${targetFruit.description}*
-
-*Awakening potential unlocked...*
-                `
-            }
-        ];
-
-        // Show each reveal stage
-        for (let stage = 0; stage < revealStages.length; stage++) {
-            try {
-                let stageProgressBar = '**REVEALED**\n';
-                for (let i = 0; i < 20; i++) {
-                    stageProgressBar += finalSquareColor;
-                    if (i < 19) stageProgressBar += ' ';
-                }
-                
-                const stageParticles = ParticlesSystem.createOnePieceParticles(8 + stage * 2, 'celebration', oldRarity);
-                
-                const stageEmbed = new EmbedBuilder()
-                    .setTitle(revealStages[stage].title)
-                    .setDescription(`
-${revealStages[stage].content}
-
-${stageProgressBar}
-
-${stageParticles}
-                    `)
-                    .setColor(rarityConfig.color)
-                    .setFooter({ text: `🏴‍☠️ ${interaction.user.username}'s Devil Fruit Hunt | ${new Date().toLocaleString()}` });
-
-                const timeoutDuration = 4000;
-                const updatePromise = huntMessage.edit({ embeds: [stageEmbed] });
-                const timeoutPromise = new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error('Discord API timeout')), timeoutDuration)
-                );
-                
-                await Promise.race([updatePromise, timeoutPromise]);
-                await new Promise(resolve => setTimeout(resolve, 1200));
-                
-            } catch (error) {
-                console.error(`Reveal stage ${stage} error:`, error.message);
-                await new Promise(resolve => setTimeout(resolve, 800));
-            }
-        }
-
-        // FINAL PHASE: Complete reveal with all information and buttons
-        const finalParticles2 = ParticlesSystem.createOnePieceParticles(12, 'celebration', oldRarity);
-        let finalProgressBar2 = '**CLAIMED**\n';
-        for (let i = 0; i < 20; i++) {
-            finalProgressBar2 += finalSquareColor;
-            if (i < 19) finalProgressBar2 += ' ';
-        }
 
         const rarityTitles = {
             common: '🍈 **DEVIL FRUIT DISCOVERED** 🍈',
@@ -392,22 +232,212 @@ ${stageParticles}
             'Special Paramecia': '✨'
         };
 
+        // SMOOTH TRANSITION PHASE: Rainbow gradually becomes reward color
+        console.log('🎆 Smooth transition: Rainbow to reward color...');
+        
+        const finalBarColors = {
+            'common': '🟫',
+            'uncommon': '🟩',
+            'rare': '🟦',
+            'legendary': '🟨',
+            'mythical': '🟥',
+            'omnipotent': '🟪'
+        };
+        
+        const finalSquareColor = finalBarColors[oldRarity] || '🟩';
+        const transitionFrames = 12; // Slower transition to prevent timeouts
+        
+        // Gradual transition from rainbow to solid color
+        for (let transFrame = 0; transFrame < transitionFrames; transFrame++) {
+            try {
+                const transitionPercentage = (transFrame + 1) / transitionFrames;
+                
+                // Create rainbow frame reference for consistent sync
+                const finalFrame = totalFrames + progressFrames;
+                
+                // Create top rainbow bar (same as bottom for box effect)
+                let topRainbow = '';
+                for (let i = 0; i < 20; i++) {
+                    const rainbowColors = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪', '🟫'];
+                    const colorIndex = (i - finalFrame + rainbowColors.length * 100) % rainbowColors.length;
+                    topRainbow += rainbowColors[colorIndex];
+                    if (i < 19) topRainbow += ' ';
+                }
+                
+                // Create mixed bar (rainbow becoming solid color from left to right)
+                let mixedProgressBar = '';
+                for (let i = 0; i < 20; i++) {
+                    const positionProgress = i / 19; // 0 to 1 across the bar
+                    
+                    if (positionProgress <= transitionPercentage) {
+                        // This position has turned to the reward color
+                        mixedProgressBar += finalSquareColor;
+                    } else {
+                        // Still showing rainbow
+                        const rainbowColors = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪', '🟫'];
+                        const colorIndex = (i - finalFrame + rainbowColors.length * 100) % rainbowColors.length;
+                        mixedProgressBar += rainbowColors[colorIndex];
+                    }
+                    if (i < 19) mixedProgressBar += ' ';
+                }
+                
+                const transitionParticles = ParticlesSystem.createOnePieceParticles(5 + transFrame, 'energy', oldRarity);
+                
+                const transitionEmbed = new EmbedBuilder()
+                    .setTitle('🌟 **POWER CRYSTALLIZING** 🌟')
+                    .setDescription(`
+${topRainbow}
+
+                    **The Devil Fruit's essence crystallizes...**
+
+${mixedProgressBar}
+
+${transitionParticles}
+                    `)
+                    .setColor(rarityConfig.color)
+                    .setFooter({ text: `${rarityConfig.name} Power Manifesting...` });
+
+                const timeoutDuration = 5000; // Longer timeout for stability
+                const updatePromise = huntMessage.edit({ embeds: [transitionEmbed] });
+                const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Discord API timeout')), timeoutDuration)
+                );
+                
+                await Promise.race([updatePromise, timeoutPromise]);
+                await new Promise(resolve => setTimeout(resolve, 600)); // Slower timing
+                
+            } catch (error) {
+                console.error(`Transition frame ${transFrame} error:`, error.message);
+                await new Promise(resolve => setTimeout(resolve, 400));
+            }
+        }
+
+        // GRADUAL REVEAL PHASE: Show Devil Fruit info piece by piece
+        console.log('🎊 Gradual reveal: Devil Fruit information...');
+        
+        const revealStages = [
+            {
+                title: '🍈 **DEVIL FRUIT DISCOVERED** 🍈',
+                content: `
+                    **${rarityDescriptions[oldRarity] || rarityDescriptions.common}**
+
+                    **🍈 Devil Fruit:** ${targetFruit.name}
+                    **📋 Type:** ${typeEmojis[targetFruit.type] || '🔮'} ${targetFruit.type}
+
+                    *Analyzing power...*
+                `
+            },
+            {
+                title: rarityTitles[oldRarity] || rarityTitles.common,
+                content: `
+                    **${rarityDescriptions[oldRarity] || rarityDescriptions.common}**
+
+                    **🍈 Devil Fruit:** ${targetFruit.name}
+                    **📋 Type:** ${typeEmojis[targetFruit.type] || '🔮'} ${targetFruit.type}
+                    **👤 Previous User:** ${targetFruit.user}
+                    **⚡ Power:** ${targetFruit.power}
+
+                    *Revealing details...*
+                `
+            },
+            {
+                title: rarityTitles[oldRarity] || rarityTitles.common,
+                content: `
+                    **${rarityDescriptions[oldRarity] || rarityDescriptions.common}**
+
+                    **🍈 Devil Fruit:** ${targetFruit.name}
+                    **📋 Type:** ${typeEmojis[targetFruit.type] || '🔮'} ${targetFruit.type}
+                    **👤 Previous User:** ${targetFruit.user}
+                    **⚡ Power:** ${targetFruit.power}
+                    **💎 Rarity:** ${rarityConfig.stars} ${rarityConfig.name}
+                    **🌟 Power Level:** ${targetFruit.powerLevel.toLocaleString()}
+
+                    *${targetFruit.description}*
+
+                    *Awakening potential unlocked...*
+                `
+            }
+        ];
+
+        // Show each reveal stage with slower timing
+        for (let stage = 0; stage < revealStages.length; stage++) {
+            try {
+                // Create top rainbow bar for box effect
+                let topRainbow = '';
+                for (let i = 0; i < 20; i++) {
+                    topRainbow += finalSquareColor;
+                    if (i < 19) topRainbow += ' ';
+                }
+                
+                let stageProgressBar = '';
+                for (let i = 0; i < 20; i++) {
+                    stageProgressBar += finalSquareColor;
+                    if (i < 19) stageProgressBar += ' ';
+                }
+                
+                const stageParticles = ParticlesSystem.createOnePieceParticles(8 + stage * 2, 'celebration', oldRarity);
+                
+                const stageEmbed = new EmbedBuilder()
+                    .setTitle(revealStages[stage].title)
+                    .setDescription(`
+${topRainbow}
+${revealStages[stage].content}
+${stageProgressBar}
+
+${stageParticles}
+                    `)
+                    .setColor(rarityConfig.color)
+                    .setFooter({ text: `🏴‍☠️ ${interaction.user.username}'s Devil Fruit Hunt | ${new Date().toLocaleString()}` });
+
+                const timeoutDuration = 5000; // Longer timeout
+                const updatePromise = huntMessage.edit({ embeds: [stageEmbed] });
+                const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Discord API timeout')), timeoutDuration)
+                );
+                
+                await Promise.race([updatePromise, timeoutPromise]);
+                await new Promise(resolve => setTimeout(resolve, 1800)); // Slower reveal timing
+                
+            } catch (error) {
+                console.error(`Reveal stage ${stage} error:`, error.message);
+                await new Promise(resolve => setTimeout(resolve, 1200));
+            }
+        }
+
+        // FINAL PHASE: Complete reveal with all information and buttons
+        const finalParticles2 = ParticlesSystem.createOnePieceParticles(12, 'celebration', oldRarity);
+        
+        // Create top rainbow bar for final box effect
+        let topFinalRainbow = '';
+        for (let i = 0; i < 20; i++) {
+            topFinalRainbow += finalSquareColor;
+            if (i < 19) topFinalRainbow += ' ';
+        }
+        
+        let finalProgressBar2 = '';
+        for (let i = 0; i < 20; i++) {
+            finalProgressBar2 += finalSquareColor;
+            if (i < 19) finalProgressBar2 += ' ';
+        }
+
         const finalEmbed = new EmbedBuilder()
             .setTitle(rarityTitles[oldRarity] || rarityTitles.common)
             .setDescription(`
-${rarityDescriptions[oldRarity] || rarityDescriptions.common}
+${topFinalRainbow}
 
-**🍈 Devil Fruit:** ${targetFruit.name}
-**📋 Type:** ${typeEmojis[targetFruit.type] || '🔮'} ${targetFruit.type}
-**👤 Previous User:** ${targetFruit.user}
-**⚡ Power:** ${targetFruit.power}
-**💎 Rarity:** ${rarityConfig.stars} ${rarityConfig.name}
-**🌟 Power Level:** ${targetFruit.powerLevel.toLocaleString()}
+                    **${rarityDescriptions[oldRarity] || rarityDescriptions.common}**
 
-*${targetFruit.description}*
+                    **🍈 Devil Fruit:** ${targetFruit.name}
+                    **📋 Type:** ${typeEmojis[targetFruit.type] || '🔮'} ${targetFruit.type}
+                    **👤 Previous User:** ${targetFruit.user}
+                    **⚡ Power:** ${targetFruit.power}
+                    **💎 Rarity:** ${rarityConfig.stars} ${rarityConfig.name}
+                    **🌟 Power Level:** ${targetFruit.powerLevel.toLocaleString()}
 
-**🔥 Awakening:** ${targetFruit.awakening}
-**⚠️ Weakness:** ${targetFruit.weakness}
+                    *${targetFruit.description}*
+
+                    **🔥 Awakening:** ${targetFruit.awakening}
+                    **⚠️ Weakness:** ${targetFruit.weakness}
 
 ${finalProgressBar2}
 
