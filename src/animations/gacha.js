@@ -68,10 +68,10 @@ The seas whisper of legendary treasures...
         let successfulFrames = 0;
         let totalAttempts = 0;
 
-        // OPTIMIZED: Better frame management and timing
-        const totalFrames = 18; // Slightly more frames for smoother sync
-        const maxRetries = 2;   // More retries for stability
-        const baseDelay = 750;  // Slower, more stable timing
+        // ULTRA-STABLE: Much longer timeouts and slower timing
+        const totalFrames = 18; 
+        const maxRetries = 3;   // More retries for ultra-stability
+        const baseDelay = 1000;  // Much slower timing to prevent overload
         
         for (let frame = 0; frame < totalFrames; frame++) {
             let success = false;
@@ -90,30 +90,40 @@ The seas whisper of legendary treasures...
                     const leftmostColorIndex = (-frame + rainbowEmbedColors.length * 100) % rainbowEmbedColors.length;
                     const currentColor = rainbowEmbedColors[leftmostColorIndex];
                     
-                    const progressBar = NextGenGachaEngine.createDynamicEnergyStatus(
-                        100,
-                        frame,
-                        'charging',
-                        currentColor
-                    );
+                    // CREATE DUAL RAINBOW BARS for box effect
+                    const rainbowColors = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪', '🟫'];
+                    let topRainbow = '';
+                    let bottomRainbow = '';
+                    
+                    for (let i = 0; i < 20; i++) {
+                        const colorIndex = (i - frame + rainbowColors.length * 100) % rainbowColors.length;
+                        topRainbow += rainbowColors[colorIndex];
+                        bottomRainbow += rainbowColors[colorIndex];
+                        if (i < 19) {
+                            topRainbow += ' ';
+                            bottomRainbow += ' ';
+                        }
+                    }
 
                     const searchEmbed = new EmbedBuilder()
                         .setTitle(frameData.title)
                         .setDescription(`
-**${frameData.desc}**
+${topRainbow}
 
-**🔮 AURA STATUS:** ${indicators.aura}
-**✨ BLESSING LEVEL:** ${indicators.blessing}  
-**🌊 POWER TYPE:** ${indicators.type}
+                        **${frameData.desc}**
 
-${progressBar}
+                        **🔮 AURA STATUS:** ${indicators.aura}
+                        **✨ BLESSING LEVEL:** ${indicators.blessing}  
+                        **🌊 POWER TYPE:** ${indicators.type}
+
+${bottomRainbow}
 
 ${particles}
                         `)
                         .setColor(currentColor)
                         .setFooter({ text: `Hunt in Progress...` });
 
-                    const timeoutDuration = 4000 + (retryCount * 1000); // More generous timeout
+                    const timeoutDuration = 6000 + (retryCount * 2000); // Ultra-generous timeout
                     const updatePromise = huntMessage.edit({ embeds: [searchEmbed] });
                     const timeoutPromise = new Promise((_, reject) => 
                         setTimeout(() => reject(new Error('Discord API timeout')), timeoutDuration)
@@ -122,7 +132,7 @@ ${particles}
                     await Promise.race([updatePromise, timeoutPromise]);
                     success = true;
                     
-                    const delay = retryCount > 0 ? baseDelay + (retryCount * 300) : baseDelay;
+                    const delay = retryCount > 0 ? baseDelay + (retryCount * 500) : baseDelay;
                     await new Promise(resolve => setTimeout(resolve, delay));
                     
                 } catch (error) {
@@ -149,56 +159,66 @@ ${particles}
         const successRate = (successfulFrames / totalFrames) * 100;
         console.log(`📊 Animation Performance: ${successfulFrames}/${totalFrames} frames (${successRate.toFixed(1)}%) - ${totalAttempts} total attempts`);
 
-        // PROGRESSION PHASE: Improved sync and timing
+        // PROGRESSION PHASE: Improved sync and timing with dual rainbows
         console.log('🌊 Starting progression phase...');
-        const progressFrames = 10; // Better progression timing
+        const progressFrames = 12; // Better progression timing
         
         for (let progFrame = 0; progFrame < progressFrames; progFrame++) {
             try {
                 const indicators = IndicatorsSystem.getChangingIndicators(totalFrames + progFrame, oldRarity, targetFruit.type);
                 const particles = ParticlesSystem.createOnePieceParticles(totalFrames + progFrame + 3, 'energy', oldRarity);
                 
-                // SYNC FIX: Match embed color to progression
+                // SYNC FIX: Match embed color to progression with dual rainbows
                 const rainbowEmbedColors = ['#FF0000', '#FF6000', '#FFCC00', '#00FF00', '#0080FF', '#8000FF', '#8B4513'];
                 const progressFrame = totalFrames + progFrame;
                 const leftmostColorIndex = (-progressFrame + rainbowEmbedColors.length * 100) % rainbowEmbedColors.length;
                 const currentColor = rainbowEmbedColors[leftmostColorIndex];
                 
-                const progressBar = NextGenGachaEngine.createDynamicEnergyStatus(
-                    100,
-                    progressFrame, // Use consistent frame reference
-                    'critical',
-                    currentColor
-                );
+                // CREATE DUAL RAINBOW BARS for progression phase
+                const rainbowColors = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪', '🟫'];
+                let topRainbow = '';
+                let bottomRainbow = '';
+                
+                for (let i = 0; i < 20; i++) {
+                    const colorIndex = (i - progressFrame + rainbowColors.length * 100) % rainbowColors.length;
+                    topRainbow += rainbowColors[colorIndex];
+                    bottomRainbow += rainbowColors[colorIndex];
+                    if (i < 19) {
+                        topRainbow += ' ';
+                        bottomRainbow += ' ';
+                    }
+                }
 
                 const progressEmbed = new EmbedBuilder()
                     .setTitle('🎆 **ENERGIES CONVERGING** 🎆')
                     .setDescription(`
-**The rainbow flows toward destiny...**
+${topRainbow}
 
-**🔮 AURA STATUS:** ${indicators.aura}
-**✨ BLESSING LEVEL:** ${indicators.blessing}  
-**🌊 POWER TYPE:** ${indicators.type}
+                    **The rainbow flows toward destiny...**
 
-${progressBar}
+                    **🔮 AURA STATUS:** ${indicators.aura}
+                    **✨ BLESSING LEVEL:** ${indicators.blessing}  
+                    **🌊 POWER TYPE:** ${indicators.type}
+
+${bottomRainbow}
 
 ${particles}
                     `)
                     .setColor(currentColor)
                     .setFooter({ text: 'Energies converging...' }); // Removed progress counter
 
-                const timeoutDuration = 4000; // More generous timeout
+                const timeoutDuration = 6000; // Ultra-generous timeout
                 const updatePromise = huntMessage.edit({ embeds: [progressEmbed] });
                 const timeoutPromise = new Promise((_, reject) => 
                     setTimeout(() => reject(new Error('Discord API timeout')), timeoutDuration)
                 );
                 
                 await Promise.race([updatePromise, timeoutPromise]);
-                await new Promise(resolve => setTimeout(resolve, 600)); // Consistent delay
+                await new Promise(resolve => setTimeout(resolve, 800)); // Slower, more stable delay
                 
             } catch (error) {
                 console.error(`Progression frame ${progFrame} error:`, error.message);
-                await new Promise(resolve => setTimeout(resolve, 200)); // Faster error recovery
+                await new Promise(resolve => setTimeout(resolve, 500)); // Better error recovery
             }
         }
 
@@ -232,8 +252,8 @@ ${particles}
             'Special Paramecia': '✨'
         };
 
-        // SMOOTH TRANSITION PHASE: Rainbow gradually becomes reward color
-        console.log('🎆 Smooth transition: Rainbow to reward color...');
+        // CENTER-OUTWARD TRANSITION: Rainbow becomes reward color from center outward
+        console.log('🎆 Center-outward transition: Rainbow to reward color...');
         
         const finalBarColors = {
             'common': '🟫',
@@ -245,40 +265,46 @@ ${particles}
         };
         
         const finalSquareColor = finalBarColors[oldRarity] || '🟩';
-        const transitionFrames = 12; // Slower transition to prevent timeouts
+        const transitionFrames = 10; // Center positions 9-10, expand outward
         
-        // Gradual transition from rainbow to solid color
+        // Center-outward transition from rainbow to solid color
         for (let transFrame = 0; transFrame < transitionFrames; transFrame++) {
             try {
-                const transitionPercentage = (transFrame + 1) / transitionFrames;
-                
                 // Create rainbow frame reference for consistent sync
                 const finalFrame = totalFrames + progressFrames;
+                const rainbowColors = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪', '🟫'];
                 
-                // Create top rainbow bar (same as bottom for box effect)
-                let topRainbow = '';
-                for (let i = 0; i < 20; i++) {
-                    const rainbowColors = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪', '🟫'];
-                    const colorIndex = (i - finalFrame + rainbowColors.length * 100) % rainbowColors.length;
-                    topRainbow += rainbowColors[colorIndex];
-                    if (i < 19) topRainbow += ' ';
-                }
+                // Calculate which positions should be converted (center outward)
+                const convertRadius = transFrame; // 0 = center only, 1 = center ±1, etc.
                 
-                // Create mixed bar (rainbow becoming solid color from left to right)
-                let mixedProgressBar = '';
+                // Create both rainbow bars with center-outward conversion
+                let topBar = '';
+                let bottomBar = '';
+                
                 for (let i = 0; i < 20; i++) {
-                    const positionProgress = i / 19; // 0 to 1 across the bar
+                    // Check if this position should be converted
+                    const centerPos1 = 9;  // Center position 1
+                    const centerPos2 = 10; // Center position 2
+                    const distanceFromCenter = Math.min(
+                        Math.abs(i - centerPos1),
+                        Math.abs(i - centerPos2)
+                    );
                     
-                    if (positionProgress <= transitionPercentage) {
-                        // This position has turned to the reward color
-                        mixedProgressBar += finalSquareColor;
+                    if (distanceFromCenter <= convertRadius) {
+                        // This position has been converted to reward color
+                        topBar += finalSquareColor;
+                        bottomBar += finalSquareColor;
                     } else {
                         // Still showing rainbow
-                        const rainbowColors = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪', '🟫'];
                         const colorIndex = (i - finalFrame + rainbowColors.length * 100) % rainbowColors.length;
-                        mixedProgressBar += rainbowColors[colorIndex];
+                        topBar += rainbowColors[colorIndex];
+                        bottomBar += rainbowColors[colorIndex];
                     }
-                    if (i < 19) mixedProgressBar += ' ';
+                    
+                    if (i < 19) {
+                        topBar += ' ';
+                        bottomBar += ' ';
+                    }
                 }
                 
                 const transitionParticles = ParticlesSystem.createOnePieceParticles(5 + transFrame, 'energy', oldRarity);
@@ -286,29 +312,29 @@ ${particles}
                 const transitionEmbed = new EmbedBuilder()
                     .setTitle('🌟 **POWER CRYSTALLIZING** 🌟')
                     .setDescription(`
-${topRainbow}
+${topBar}
 
-                    **The Devil Fruit's essence crystallizes...**
+                    **The Devil Fruit's essence crystallizes from within...**
 
-${mixedProgressBar}
+${bottomBar}
 
 ${transitionParticles}
                     `)
                     .setColor(rarityConfig.color)
                     .setFooter({ text: `${rarityConfig.name} Power Manifesting...` });
 
-                const timeoutDuration = 5000; // Longer timeout for stability
+                const timeoutDuration = 7000; // Ultra-generous timeout for transition
                 const updatePromise = huntMessage.edit({ embeds: [transitionEmbed] });
                 const timeoutPromise = new Promise((_, reject) => 
                     setTimeout(() => reject(new Error('Discord API timeout')), timeoutDuration)
                 );
                 
                 await Promise.race([updatePromise, timeoutPromise]);
-                await new Promise(resolve => setTimeout(resolve, 600)); // Slower timing
+                await new Promise(resolve => setTimeout(resolve, 900)); // Very slow timing for stability
                 
             } catch (error) {
                 console.error(`Transition frame ${transFrame} error:`, error.message);
-                await new Promise(resolve => setTimeout(resolve, 400));
+                await new Promise(resolve => setTimeout(resolve, 600));
             }
         }
 
@@ -389,18 +415,18 @@ ${stageParticles}
                     .setColor(rarityConfig.color)
                     .setFooter({ text: `🏴‍☠️ ${interaction.user.username}'s Devil Fruit Hunt | ${new Date().toLocaleString()}` });
 
-                const timeoutDuration = 5000; // Longer timeout
+                const timeoutDuration = 7000; // Ultra-generous timeout
                 const updatePromise = huntMessage.edit({ embeds: [stageEmbed] });
                 const timeoutPromise = new Promise((_, reject) => 
                     setTimeout(() => reject(new Error('Discord API timeout')), timeoutDuration)
                 );
                 
                 await Promise.race([updatePromise, timeoutPromise]);
-                await new Promise(resolve => setTimeout(resolve, 1800)); // Slower reveal timing
+                await new Promise(resolve => setTimeout(resolve, 2000)); // Much slower reveal timing
                 
             } catch (error) {
                 console.error(`Reveal stage ${stage} error:`, error.message);
-                await new Promise(resolve => setTimeout(resolve, 1200));
+                await new Promise(resolve => setTimeout(resolve, 1500));
             }
         }
 
