@@ -66,7 +66,7 @@ const RARITY_CONFIG = {
 };
 
 // Import counter system
-const { DEVIL_FRUIT_ELEMENTS, CombatSystem } = require('../animations/counter-system');
+const { DEVIL_FRUIT_ELEMENTS, CombatSystem } = require('./counter-system');
 
 const DEVILFRUIT_DATABASE = {
     // ═══════════════════════════════════════════════════════════════════
