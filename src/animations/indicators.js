@@ -1,297 +1,198 @@
-// Progressive indicators that change during the animation to hint at the final result
+// Progressive indicators that stay mysterious until the very end
 
-// Rarity-based aura descriptions
-const RARITY_AURAS = {
-    common: [
+// Generic mysterious indicators for ALL fruits until final reveal
+const MYSTERIOUS_INDICATORS = {
+    aura: [
         'Faint spiritual pressure...',
         'Weak energy detected...',
         'Modest power emerging...',
-        'Basic aura stabilizing...',
-        'Simple energy confirmed.'
+        'Energy readings rising...',
+        'Power signature strengthening...',
+        'Spiritual force building...',
+        'Mysterious energy intensifying...',
+        'Unknown power crystallizing...',
+        'Energy reaching critical mass...'
     ],
-    uncommon: [
-        'Notable energy building...',
-        'Decent power detected...',
-        'Solid aura forming...',
-        'Respectable force emerging...',
-        'Good energy confirmed.'
+    blessing: [
+        'Unknown blessing approaching...',
+        'Mysterious force detected...',
+        'Strange power manifesting...',
+        'Unidentified energy building...',
+        'Mystical presence growing...',
+        'Divine force awakening...',
+        'Sacred power emerging...',
+        'Legendary essence stirring...',
+        'Ultimate blessing descending...'
     ],
-    rare: [
-        'Strong energy surging...',
-        'Impressive power detected...',
-        'Powerful aura manifesting...',
-        'Significant force building...',
-        'Strong energy confirmed.'
-    ],
-    epic: [
-        'Intense energy blazing...',
-        'Remarkable power detected...',
-        'Epic aura radiating...',
-        'Exceptional force emerging...',
-        'Epic energy confirmed.'
-    ],
-    legendary: [
-        'Legendary energy roaring...',
-        'Incredible power detected...',
-        'Legendary aura overwhelming...',
-        'Mythic force awakening...',
-        'Legendary energy confirmed.'
-    ],
-    mythical: [
-        'Reality-bending energy...',
-        'World-shaking power...',
-        'Mythical aura transcending...',
-        'Godlike force manifesting...',
-        'Mythical energy confirmed.'
-    ],
-    omnipotent: [
-        'OMNIPOTENT ENERGY...',
-        'REALITY ITSELF TREMBLES...',
-        'DIVINE AURA ASCENDING...',
-        'ABSOLUTE POWER...',
-        'OMNIPOTENT CONFIRMED.'
-    ]
-};
-
-// Type-based blessing descriptions  
-const TYPE_BLESSINGS = {
-    'Paramecia': [
-        'Body transformation sensed...',
-        'Physical alteration detected...',
-        'Bodily powers manifesting...',
-        'Paramecia blessing emerging...',
-        'Paramecia power confirmed.'
-    ],
-    'Zoan': [
-        'Animal instincts stirring...',
-        'Beast transformation detected...',
-        'Primal powers awakening...',
-        'Zoan blessing manifesting...',
-        'Zoan power confirmed.'
-    ],
-    'Logia': [
-        'Elemental forces gathering...',
-        'Natural power detected...',
-        'Elemental mastery awakening...',
-        'Logia blessing descending...',
-        'Logia power confirmed.'
-    ],
-    'Ancient Zoan': [
-        'Ancient instincts awakening...',
-        'Prehistoric power detected...',
-        'Primordial forces stirring...',
-        'Ancient blessing manifesting...',
-        'Ancient Zoan confirmed.'
-    ],
-    'Mythical Zoan': [
-        'Legendary creature stirring...',
-        'Mythical power detected...',
-        'Divine beast awakening...',
-        'Mythical blessing descending...',
-        'Mythical Zoan confirmed.'
-    ],
-    'Special Paramecia': [
-        'Unique transformation sensed...',
-        'Special power detected...',
-        'Extraordinary ability awakening...',
-        'Special blessing manifesting...',
-        'Special Paramecia confirmed.'
-    ]
-};
-
-// Generic type hints that gradually become more specific
-const TYPE_HINTS = {
-    'Paramecia': [
+    typeHint: [
         'Strange energy signature...',
-        'Bodily enhancement detected...',
-        'Physical alteration incoming...',
-        'Paramecia type emerging...',
-        'Body-altering power!'
-    ],
-    'Zoan': [
-        'Wild energy signature...',
-        'Animalistic power detected...',
-        'Beast transformation incoming...',
-        'Zoan type emerging...',
-        'Animal transformation power!'
-    ],
-    'Logia': [
-        'Elemental energy signature...',
-        'Natural force detected...',
-        'Elemental mastery incoming...',
-        'Logia type emerging...',
-        'Elemental transformation power!'
-    ],
-    'Ancient Zoan': [
-        'Prehistoric energy signature...',
-        'Ancient power detected...',
-        'Primordial transformation...',
-        'Ancient Zoan emerging...',
-        'Ancient beast power!'
-    ],
-    'Mythical Zoan': [
-        'Legendary energy signature...',
-        'Mythical power detected...',
-        'Divine transformation incoming...',
-        'Mythical Zoan emerging...',
-        'Legendary creature power!'
-    ],
-    'Special Paramecia': [
-        'Unique energy signature...',
-        'Special power detected...',
-        'Extraordinary transformation...',
-        'Special Paramecia emerging...',
-        'Unique alteration power!'
+        'Unknown power type...',
+        'Mysterious fruit classification...',
+        'Unidentified Devil Fruit...',
+        'Power category unclear...',
+        'Fruit type manifesting...',
+        'Classification emerging...',
+        'True nature revealing...',
+        'Final form approaching...'
     ]
+};
+
+// Only reveal actual fruit info in the VERY final frames
+const REVEAL_INDICATORS = {
+    // Rarity-specific reveals (only used in final 2 frames)
+    aura: {
+        common: 'Simple energy confirmed.',
+        uncommon: 'Decent energy confirmed.',
+        rare: 'Strong energy confirmed.',
+        epic: 'Epic energy confirmed.',
+        legendary: 'Legendary energy confirmed.',
+        mythical: 'Mythical energy confirmed.',
+        omnipotent: 'OMNIPOTENT ENERGY CONFIRMED!'
+    },
+    
+    // Type-specific reveals (only used in final 2 frames)
+    blessing: {
+        'Paramecia': 'Paramecia blessing confirmed.',
+        'Zoan': 'Zoan blessing confirmed.',
+        'Logia': 'Logia blessing confirmed.',
+        'Ancient Zoan': 'Ancient Zoan blessing confirmed.',
+        'Mythical Zoan': 'Mythical Zoan blessing confirmed.',
+        'Special Paramecia': 'Special Paramecia blessing confirmed.'
+    },
+    
+    // Type hints (only used in final 2 frames)
+    typeHint: {
+        'Paramecia': 'Body-altering power confirmed!',
+        'Zoan': 'Animal transformation confirmed!',
+        'Logia': 'Elemental mastery confirmed!',
+        'Ancient Zoan': 'Ancient beast power confirmed!',
+        'Mythical Zoan': 'Mythical creature power confirmed!',
+        'Special Paramecia': 'Special alteration confirmed!'
+    }
 };
 
 /**
- * Get progressive indicators that change throughout the animation
+ * Get progressive indicators that stay mysterious until the very end
  * @param {number} frame - Current animation frame (0-17+)
  * @param {string} targetRarity - The rarity that will be revealed
  * @param {string} targetType - The type that will be revealed
  * @returns {Object} Contains aura, blessing, and typeHint text
  */
 function getChangingIndicators(frame, targetRarity, targetType) {
-    // Calculate progression through animation (0.0 to 1.0)
-    const maxFrames = 18; // Main animation has 18 frames
-    const progression = Math.min(frame / maxFrames, 1.0);
+    // Keep everything mysterious until the very final frames
+    const maxFrames = 18;
     
-    // Get arrays for target rarity and type
-    const auraArray = RARITY_AURAS[targetRarity] || RARITY_AURAS.common;
-    const blessingArray = TYPE_BLESSINGS[targetType] || TYPE_BLESSINGS['Paramecia'];
-    const hintArray = TYPE_HINTS[targetType] || TYPE_HINTS['Paramecia'];
+    // Only reveal actual info in the last 2 frames of main animation (frames 16-17)
+    if (frame >= 16) {
+        return {
+            aura: REVEAL_INDICATORS.aura[targetRarity] || 'Energy confirmed.',
+            blessing: REVEAL_INDICATORS.blessing[targetType] || 'Blessing confirmed.',
+            typeHint: REVEAL_INDICATORS.typeHint[targetType] || 'Power confirmed!'
+        };
+    }
     
-    // Calculate which index to use based on progression
-    const auraIndex = Math.min(Math.floor(progression * auraArray.length), auraArray.length - 1);
-    const blessingIndex = Math.min(Math.floor(progression * blessingArray.length), blessingArray.length - 1);
-    const hintIndex = Math.min(Math.floor(progression * hintArray.length), hintArray.length - 1);
+    // For all other frames (0-15), use generic mysterious text
+    const progression = Math.min(frame / maxFrames, 0.9); // Cap at 90% to stay mysterious
+    
+    // Calculate which mysterious text to use (gets more intense over time)
+    const auraIndex = Math.min(Math.floor(progression * MYSTERIOUS_INDICATORS.aura.length), MYSTERIOUS_INDICATORS.aura.length - 1);
+    const blessingIndex = Math.min(Math.floor(progression * MYSTERIOUS_INDICATORS.blessing.length), MYSTERIOUS_INDICATORS.blessing.length - 1);
+    const hintIndex = Math.min(Math.floor(progression * MYSTERIOUS_INDICATORS.typeHint.length), MYSTERIOUS_INDICATORS.typeHint.length - 1);
     
     return {
-        aura: auraArray[auraIndex],
-        blessing: blessingArray[blessingIndex],
-        typeHint: hintArray[hintIndex]
+        aura: MYSTERIOUS_INDICATORS.aura[auraIndex],
+        blessing: MYSTERIOUS_INDICATORS.blessing[blessingIndex],
+        typeHint: MYSTERIOUS_INDICATORS.typeHint[hintIndex]
     };
 }
 
 /**
- * Get indicators for progression phase (frames 18-29)
+ * Get indicators for progression phase (frames 18-29) - still mysterious but more intense
  * @param {number} progFrame - Progression frame (0-11)
  * @param {string} targetRarity - The rarity that will be revealed
  * @param {string} targetType - The type that will be revealed
- * @returns {Object} Contains more locked-in indicator text
+ * @returns {Object} Contains more intense but still mysterious indicators
  */
 function getProgressionIndicators(progFrame, targetRarity, targetType) {
-    // During progression, indicators become more locked
-    const auraArray = RARITY_AURAS[targetRarity] || RARITY_AURAS.common;
-    const blessingArray = TYPE_BLESSINGS[targetType] || TYPE_BLESSINGS['Paramecia'];
-    const hintArray = TYPE_HINTS[targetType] || TYPE_HINTS['Paramecia'];
+    // Even in progression phase, keep it mysterious but more intense
+    const intenseMysteriousIndicators = {
+        aura: [
+            'Massive energy building...',
+            'Incredible power rising...',
+            'Overwhelming force emerging...',
+            'Legendary energy approaching...',
+            'World-shaking power manifesting...',
+            'Reality-bending energy confirmed!'
+        ],
+        blessing: [
+            'Divine blessing intensifying...',
+            'Sacred power overwhelming...',
+            'Legendary blessing descending...',
+            'Ultimate force manifesting...',
+            'Transcendent power confirmed...',
+            'Supreme blessing acknowledged!'
+        ],
+        typeHint: [
+            'Incredible power type emerging...',
+            'Legendary classification appearing...',
+            'Ultimate fruit category manifesting...',
+            'Supreme power type confirmed...',
+            'World-changing ability acknowledged...',
+            'Legendary power classification sealed!'
+        ]
+    };
     
-    // Use later indices to show more certainty
-    const baseIndex = Math.max(0, auraArray.length - 3);
-    const progIndex = Math.min(baseIndex + Math.floor(progFrame / 4), auraArray.length - 1);
+    // Use intense mysterious text based on progression frame
+    const index = Math.min(Math.floor(progFrame / 2), intenseMysteriousIndicators.aura.length - 1);
     
     return {
-        aura: auraArray[progIndex],
-        blessing: blessingArray[progIndex],
-        typeHint: hintArray[progIndex]
+        aura: intenseMysteriousIndicators.aura[index],
+        blessing: intenseMysteriousIndicators.blessing[index],
+        typeHint: intenseMysteriousIndicators.typeHint[index]
     };
 }
 
 /**
- * Get final reveal indicators
+ * Get final reveal indicators (used only after transition completes)
  * @param {string} targetRarity - The rarity that will be revealed
  * @param {string} targetType - The type that will be revealed
  * @returns {Object} Contains final confirmed indicator text
  */
 function getFinalIndicators(targetRarity, targetType) {
-    const auraArray = RARITY_AURAS[targetRarity] || RARITY_AURAS.common;
-    const blessingArray = TYPE_BLESSINGS[targetType] || TYPE_BLESSINGS['Paramecia'];
-    const hintArray = TYPE_HINTS[targetType] || TYPE_HINTS['Paramecia'];
-    
-    // Use the final index for confirmed text
     return {
-        aura: auraArray[auraArray.length - 1],
-        blessing: blessingArray[blessingArray.length - 1],
-        typeHint: hintArray[hintArray.length - 1]
+        aura: REVEAL_INDICATORS.aura[targetRarity] || 'Energy confirmed.',
+        blessing: REVEAL_INDICATORS.blessing[targetType] || 'Blessing confirmed.',
+        typeHint: REVEAL_INDICATORS.typeHint[targetType] || 'Power confirmed!'
     };
 }
 
 /**
- * Get random early indicators (for when target is unknown)
+ * Get completely generic indicators (for when target is unknown)
  * @param {number} frame - Current frame
- * @returns {Object} Contains generic early-stage indicators
+ * @returns {Object} Contains completely generic indicators
  */
 function getGenericIndicators(frame) {
-    const genericAuras = [
-        'Mysterious energy building...',
-        'Unknown power stirring...',
-        'Strange forces gathering...',
-        'Mystical energy detected...',
-        'Power signature emerging...'
-    ];
-    
-    const genericBlessings = [
-        'Divine blessing approaching...',
-        'Spiritual force manifesting...',
-        'Mystical blessing descending...',
-        'Sacred power awakening...',
-        'Heavenly energy gathering...'
-    ];
-    
-    const genericHints = [
-        'Unknown fruit type...',
-        'Power classification unclear...',
-        'Devil Fruit category unknown...',
-        'Fruit type manifesting...',
-        'Classification emerging...'
-    ];
-    
-    const index = Math.min(Math.floor(frame / 4), 4);
+    const index = Math.min(Math.floor(frame / 3), MYSTERIOUS_INDICATORS.aura.length - 1);
     
     return {
-        aura: genericAuras[index],
-        blessing: genericBlessings[index],
-        typeHint: genericHints[index]
+        aura: MYSTERIOUS_INDICATORS.aura[index],
+        blessing: MYSTERIOUS_INDICATORS.blessing[index],
+        typeHint: MYSTERIOUS_INDICATORS.typeHint[index]
     };
 }
 
 /**
- * Get special omnipotent indicators with extra emphasis
+ * Get special omnipotent indicators with extra emphasis (only for final reveal)
  * @param {number} frame - Current frame
  * @returns {Object} Contains dramatic omnipotent-specific text
  */
 function getOmnipotentIndicators(frame) {
-    const omnipotentSequence = [
-        {
-            aura: 'REALITY BENDS...',
-            blessing: 'THE WORLD TREMBLES...',
-            typeHint: 'IMPOSSIBLE POWER...'
-        },
-        {
-            aura: 'TIME ITSELF STOPS...',
-            blessing: 'GODS TAKE NOTICE...',
-            typeHint: 'LEGENDARY FORCE...'
-        },
-        {
-            aura: 'SPACE WARPS...',
-            blessing: 'HEAVEN SHAKES...',
-            typeHint: 'DIVINE ARTIFACT...'
-        },
-        {
-            aura: 'EXISTENCE QUIVERS...',
-            blessing: 'CREATION ITSELF BOWS...',
-            typeHint: 'OMNIPOTENT RELIC...'
-        },
-        {
-            aura: 'OMNIPOTENT ENERGY!!!',
-            blessing: 'ULTIMATE BLESSING!!!',
-            typeHint: 'REALITY-SHAPING POWER!!!'
-        }
-    ];
-    
-    const index = Math.min(Math.floor(frame / 4), omnipotentSequence.length - 1);
-    return omnipotentSequence[index];
+    // Only use these for omnipotent fruits in the final reveal
+    return {
+        aura: 'OMNIPOTENT ENERGY CONFIRMED!!!',
+        blessing: 'ULTIMATE BLESSING ACKNOWLEDGED!!!',
+        typeHint: 'REALITY-SHAPING POWER SEALED!!!'
+    };
 }
 
 module.exports = {
@@ -300,7 +201,6 @@ module.exports = {
     getFinalIndicators,
     getGenericIndicators,
     getOmnipotentIndicators,
-    RARITY_AURAS,
-    TYPE_BLESSINGS,
-    TYPE_HINTS
+    MYSTERIOUS_INDICATORS,
+    REVEAL_INDICATORS
 };
