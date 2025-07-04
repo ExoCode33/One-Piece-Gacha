@@ -116,20 +116,34 @@ function getEmbedColorSyncedToFirst(frame) {
     return rainbowEmbedColors[firstSquareColorIndex];
 }
 
-// Function to create grey box with red text and cycling effects
+// Function to create grey box with red text and cycling effects synced to rainbow
 function createGreyBoxIndicators(frame, phase, rarity, fruitType) {
     let rarityText = "";
     let typeText = "";
     
     if (phase === 'animation' || phase === 'progression') {
-        // Cycle through all possible rarities and types during loading
+        // Sync rarity cycling with the rainbow colors (leftmost square)
         const allRarities = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythical', 'omnipotent'];
         const allTypes = ['Paramecia', 'Logia', 'Zoan'];
         
-        const cycleRarity = allRarities[frame % allRarities.length];
+        // Get the color index of the leftmost square (position 0)
+        const leftmostColorIndex = (0 - frame + rainbowColors.length * 100) % rainbowColors.length;
+        
+        // Map rainbow colors to rarities (using your system's mapping)
+        const colorToRarity = {
+            0: 'omnipotent',  // 🟥 Red
+            1: 'mythical',    // 🟧 Orange  
+            2: 'legendary',   // 🟨 Yellow
+            3: 'uncommon',    // 🟩 Green
+            4: 'rare',        // 🟦 Blue
+            5: 'epic',        // 🟪 Purple
+            6: 'common'       // 🟫 Brown
+        };
+        
+        const syncedRarity = colorToRarity[leftmostColorIndex];
         const cycleType = allTypes[frame % allTypes.length];
         
-        rarityText = `- RARITY: ${cycleRarity.toUpperCase()} -`;
+        rarityText = `- RARITY: ${syncedRarity.toUpperCase()} -`;
         typeText = `- TYPE: ${cycleType.toUpperCase()} -`;
         
     } else if (phase === 'transition') {
@@ -139,10 +153,17 @@ function createGreyBoxIndicators(frame, phase, rarity, fruitType) {
             const allRarities = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythical', 'omnipotent'];
             const allTypes = ['Paramecia', 'Logia', 'Zoan'];
             
-            const cycleRarity = allRarities[Math.floor(frame / 2) % allRarities.length];
+            // Sync with leftmost square during transition too
+            const leftmostColorIndex = (0 - (frame + 30) + rainbowColors.length * 100) % rainbowColors.length;
+            const colorToRarity = {
+                0: 'omnipotent', 1: 'mythical', 2: 'legendary', 3: 'uncommon', 
+                4: 'rare', 5: 'epic', 6: 'common'
+            };
+            
+            const syncedRarity = colorToRarity[leftmostColorIndex];
             const cycleType = allTypes[Math.floor(frame / 2) % allTypes.length];
             
-            rarityText = `- RARITY: ${cycleRarity.toUpperCase()} -`;
+            rarityText = `- RARITY: ${syncedRarity.toUpperCase()} -`;
             typeText = `- TYPE: ${cycleType.toUpperCase()} -`;
         } else {
             // Final frames - reveal actual information
