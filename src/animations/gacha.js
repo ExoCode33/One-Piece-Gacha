@@ -1,7 +1,5 @@
 // Enhanced Devil Fruit Gacha Animation System
-// Fixed: Perfect sync + Dynamic text + Hidden bottom transition
-
-const { updateIndicators } = require('./indicators');
+// Fixed: Perfect sync + Dynamic text + Hidden bottom transition + NO updateIndicators
 
 const rainbowColors = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪', '🟫'];
 const rainbowEmbedColors = [0xFF0000, 0xFF8000, 0xFFFF00, 0x00FF00, 0x0080FF, 0x8000FF, 0x654321];
@@ -236,7 +234,7 @@ function updateProgressionFrame(frame, rarity = 'common', fruitType = 'Paramecia
 }
 
 // Transition frame update function with perfect symmetry on BOTH lines
-function updateTransitionFrame(frame, rarity = 'common', rewardColor = 0x00FF00, fruitElement = 'Unknown') {
+function updateTransitionFrame(frame, rarity = 'common', rewardColor = 0x00FF00, fruitType = 'Paramecia') {
     const transitionFrame = frame - 30; // Adjust for transition phase
     const radius = transitionFrame;
     const barLength = 20;
@@ -265,8 +263,8 @@ function updateTransitionFrame(frame, rarity = 'common', rewardColor = 0x00FF00,
     
     const transitionText = TRANSITION_TEXTS[Math.floor(Math.random() * TRANSITION_TEXTS.length)];
     
-    // Get indicator text for transition phase
-    const indicators = updateIndicators(transitionFrame, 'transition', rarity, fruitElement);
+    // Get grey box indicators for transition phase
+    const indicators = createGreyBoxIndicators(transitionFrame, 'transition', rarity, fruitType);
     
     return {
         color: rewardColor,
@@ -291,14 +289,14 @@ function getRarityEmoji(rarity) {
 }
 
 // Button version functions (identical logic)
-function updateAnimationFrameButton(frame, rarity = 'common') {
+function updateAnimationFrameButton(frame, rarity = 'common', fruitType = 'Paramecia') {
     // Get synced rainbow pattern for both lines
     const rainbowPattern = getSyncedRainbowPattern(frame);
     const embedColor = getEmbedColorSyncedToFirst(frame);
     const dynamicText = getDynamicAnimationText(frame, rarity);
     
-    // Get indicator text
-    const indicators = updateIndicators(frame, 'animation', rarity, 'Unknown');
+    // Get grey box indicators with cycling rarity/type
+    const indicators = createGreyBoxIndicators(frame, 'animation', rarity, fruitType);
     
     return {
         color: embedColor,
@@ -308,15 +306,15 @@ function updateAnimationFrameButton(frame, rarity = 'common') {
     };
 }
 
-function updateProgressionFrameButton(frame, rarity = 'common') {
+function updateProgressionFrameButton(frame, rarity = 'common', fruitType = 'Paramecia') {
     const actualFrame = frame - 18;
     const rainbowPattern = getSyncedRainbowPattern(frame);
     const embedColor = getEmbedColorSyncedToFirst(frame);
     
     const progressionText = PROGRESSION_TEXTS[Math.floor(Math.random() * PROGRESSION_TEXTS.length)];
     
-    // Get indicator text for progression phase
-    const indicators = updateIndicators(actualFrame, 'progression', rarity, 'Unknown');
+    // Get grey box indicators for progression phase
+    const indicators = createGreyBoxIndicators(actualFrame, 'progression', rarity, fruitType);
     
     return {
         color: embedColor,
@@ -326,7 +324,7 @@ function updateProgressionFrameButton(frame, rarity = 'common') {
     };
 }
 
-function updateTransitionFrameButton(frame, rarity = 'common', rewardColor = 0x00FF00, fruitElement = 'Unknown') {
+function updateTransitionFrameButton(frame, rarity = 'common', rewardColor = 0x00FF00, fruitType = 'Paramecia') {
     const transitionFrame = frame - 30;
     const radius = transitionFrame;
     const barLength = 20;
@@ -356,7 +354,7 @@ function updateTransitionFrameButton(frame, rarity = 'common', rewardColor = 0x0
     const transitionText = TRANSITION_TEXTS[Math.floor(Math.random() * TRANSITION_TEXTS.length)];
     
     // Get grey box indicators for transition phase
-    const indicators = createGreyBoxIndicators(transitionFrame, 'transition', rarity, fruitElement);
+    const indicators = createGreyBoxIndicators(transitionFrame, 'transition', rarity, fruitType);
     
     return {
         color: rewardColor,
