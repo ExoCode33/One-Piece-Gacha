@@ -21,141 +21,153 @@ const rarityColors = {
 };
 
 // ═══════════════════════════════════════════════════════════════════
-//                    DYNAMIC ANIMATION TEXT SYSTEM
+//                    ENHANCED DYNAMIC TEXT SYSTEM
 // ═══════════════════════════════════════════════════════════════════
 
-// Dynamic middle text that changes throughout animation
+// Much more varied text that changes every 3 frames
 const DYNAMIC_ANIMATION_TEXT = [
-    // Early frames (0-5)
+    // Early frames (0-2)
     [
         "*A mysterious presence stirs in the depths of the Grand Line...*",
         "*Ancient powers awaken from their eternal slumber...*",
         "*The ocean currents whisper of hidden treasures...*",
         "*Legendary energies pulse through the mystical waters...*",
         "*The World Government's secret vaults tremble...*",
-        "*Pirates from across the seas sense a disturbance...*"
+        "*Pirates from across the seas sense a disturbance...*",
+        "*The sea kings themselves bow to this ancient power...*",
+        "*Whispers of destiny echo across the New World...*"
     ],
-    // Mid frames (6-11)
+    // Frames 3-5
     [
-        "*The Devil Fruit's aura begins to manifest...*",
-        "*Reality bends as the fruit's true nature emerges...*",
-        "*The sea itself holds its breath in anticipation...*",
-        "*Ancient prophecies speak of this very moment...*",
-        "*The fruit chooses its next worthy wielder...*",
-        "*Cosmic forces align to reveal destiny itself...*"
+        "*The Devil Fruit's presence grows stronger...*",
+        "*Reality begins to warp around the manifesting power...*",
+        "*The Marines' instruments detect massive energy readings...*",
+        "*Ancient seals placed by the Void Century crack...*",
+        "*The fruit's consciousness stirs after centuries of sleep...*",
+        "*Yonko across the world pause, sensing something awakening...*",
+        "*The Red Line itself trembles with anticipation...*",
+        "*Log pose needles spin wildly in response...*"
     ],
-    // Late frames (12-17)
+    // Frames 6-8
     [
-        "*The Devil Fruit's power crystallizes into reality...*",
-        "*Your fate as a Devil Fruit user is being decided...*",
-        "*The Grand Line's greatest secret reveals itself...*",
-        "*History is about to be rewritten by this discovery...*",
-        "*The fruit's legendary power surges toward you...*",
-        "*A new chapter in the Age of Pirates begins...*"
+        "*The Devil Fruit's aura begins to manifest physically...*",
+        "*Space-time distortions ripple through the Grand Line...*",
+        "*The World Tree Adam resonates with ancient power...*",
+        "*Even the Admirals feel an inexplicable unease...*",
+        "*The fruit chooses its moment to reveal itself...*",
+        "*Cosmic forces align in perfect synchronization...*",
+        "*The ocean's deepest secrets rise to the surface...*",
+        "*Reality prepares to welcome a new legend...*"
+    ],
+    // Frames 9-11
+    [
+        "*The fruit's true nature begins to crystallize...*",
+        "*Dimensional barriers thin as power bleeds through...*",
+        "*The Will of D resonates with this awakening force...*",
+        "*Ancient prophecies speak of this exact moment...*",
+        "*The fruit's legendary essence takes tangible form...*",
+        "*Even the Celestial Dragons sense a shift in power...*",
+        "*The Grand Line's magnetic fields fluctuate wildly...*",
+        "*History itself pauses to witness this birth...*"
+    ],
+    // Frames 12-14
+    [
+        "*Your destiny as a Devil Fruit user crystallizes...*",
+        "*The fruit's power surges toward its chosen wielder...*",
+        "*Reality bends to accommodate this new possibility...*",
+        "*The Age of Pirates enters a new chapter...*",
+        "*Legends are born in moments like these...*",
+        "*The fruit has made its choice - and chosen you...*",
+        "*Time itself seems to slow for this revelation...*",
+        "*The world will never be the same again...*"
+    ],
+    // Frames 15-17
+    [
+        "*The Devil Fruit's power reaches critical mass...*",
+        "*Your fate intertwines with forces beyond imagination...*",
+        "*The Grand Line's greatest secret prepares to reveal itself...*",
+        "*History books will record this moment for eternity...*",
+        "*The fruit's consciousness fully awakens...*",
+        "*A new era of piracy is about to dawn...*",
+        "*Reality finalizes your transformation into legend...*",
+        "*The ocean itself acknowledges your ascension...*"
     ]
 ];
 
-// Phase-specific text for progression and transition
-const PHASE_TEXTS = {
-    progression: [
-        "*The Devil Fruit's essence takes physical form...*",
-        "*Primordial energies coalesce into something tangible...*",
-        "*The fruit's consciousness awakens after centuries...*",
-        "*Reality warps as the fruit breaches dimensional barriers...*",
-        "*The ocean's deepest mysteries rise to the surface...*",
-        "*Time itself seems to slow as power manifests...*",
-        "*The fruit's legendary aura overwhelms all other energies...*",
-        "*Destiny itself guides the fruit toward its new master...*",
-        "*The World's balance shifts with this discovery...*",
-        "*Ancient seals break as the fruit chooses you...*",
-        "*The fruit's true form begins to solidify...*",
-        "*Your pirate legend is about to be born...*"
-    ],
-    
-    transition: [
-        "*The Devil Fruit's power takes its final form...*",
-        "*Reality stabilizes around your newfound destiny...*",
-        "*The fruit's legendary essence binds to your soul...*",
-        "*Your journey as a Devil Fruit user begins now...*",
-        "*The Grand Line welcomes its newest power holder...*",
-        "*History will remember this moment forever...*",
-        "*The fruit has chosen... and you are worthy...*",
-        "*A new legend is born in the Age of Pirates...*",
-        "*The ocean itself acknowledges your new power...*",
-        "*Your destiny as a Devil Fruit user is sealed...*"
-    ]
-};
-
-// Rarity-specific dramatic text
-const RARITY_SPECIFIC_TEXT = {
-    common: [
-        "*A humble power stirs, but every journey begins with a single step...*",
-        "*Not all treasures shine bright, but all have their purpose...*",
-        "*The fruit may be common, but your potential is limitless...*"
-    ],
-    uncommon: [
-        "*An intriguing power emerges from the depths...*",
-        "*This fruit holds more promise than meets the eye...*",
-        "*Uncommon powers often surprise even the greatest pirates...*"
-    ],
-    rare: [
-        "*A significant force awakens in the Grand Line...*",
-        "*This power has changed the course of many battles...*",
-        "*The Marines would pay handsomely for this discovery...*"
-    ],
-    epic: [
-        "*An extraordinary power breaks free from legend...*",
-        "*Even the Yonko would covet this incredible force...*",
-        "*This fruit's power has toppled kingdoms before...*"
-    ],
-    legendary: [
-        "*A world-shaking power emerges from the abyss...*",
-        "*Legends speak of this fruit in hushed, reverent tones...*",
-        "*The World Government's greatest fear has been realized...*"
-    ],
-    mythical: [
-        "*Reality itself trembles before this godlike power...*",
-        "*A force that could reshape the very world awakens...*",
-        "*Even the ancient weapons pale before this might...*"
-    ],
-    omnipotent: [
-        "*THE IMPOSSIBLE HAS HAPPENED! REALITY BENDS TO YOUR WILL!*",
-        "*THE GODS THEMSELVES ACKNOWLEDGE YOUR SUPREME DESTINY!*",
-        "*THE VERY FABRIC OF EXISTENCE REWRITES ITSELF FOR YOU!*"
-    ]
-};
-
-// Function to get dynamic text based on frame and fruit info
+// Function to get dynamic text - changes every 3 frames for much more variety
 function getDynamicAnimationText(frame, targetFruit = null, phase = 'main') {
     if (phase === 'progression') {
-        const randomIndex = Math.floor(Math.random() * PHASE_TEXTS.progression.length);
-        return PHASE_TEXTS.progression[randomIndex];
+        const progressionTexts = [
+            "*Primordial energies coalesce into physical reality...*",
+            "*The fruit's essence breaches dimensional barriers...*",
+            "*Ancient powers manifest in the material world...*",
+            "*Reality warps to accommodate impossible forces...*",
+            "*The fruit's consciousness fully materializes...*",
+            "*Cosmic energies stabilize into tangible form...*",
+            "*Your destiny solidifies with each passing moment...*",
+            "*The fruit's legendary aura overwhelms all else...*",
+            "*Time bends around the crystallizing power...*",
+            "*The World's balance shifts irreversibly...*",
+            "*Your legend begins to write itself...*",
+            "*The fruit's final form approaches completion...*"
+        ];
+        return progressionTexts[Math.floor(Math.random() * progressionTexts.length)];
     }
     
     if (phase === 'transition') {
-        const randomIndex = Math.floor(Math.random() * PHASE_TEXTS.transition.length);
-        return PHASE_TEXTS.transition[randomIndex];
+        const transitionTexts = [
+            "*The Devil Fruit's power assumes its ultimate form...*",
+            "*Reality stabilizes around your newfound destiny...*",
+            "*The fruit's essence permanently bonds to your soul...*",
+            "*Your transformation into legend reaches completion...*",
+            "*The Grand Line welcomes its newest power holder...*",
+            "*This moment will echo through history forever...*",
+            "*The fruit has chosen... and you are worthy...*",
+            "*A new chapter in the Age of Pirates begins...*",
+            "*The ocean itself bows to your ascension...*",
+            "*Your destiny as a Devil Fruit user is sealed...*"
+        ];
+        return transitionTexts[Math.floor(Math.random() * transitionTexts.length)];
     }
     
-    // Main animation phase
-    let textArray;
-    if (frame <= 5) {
-        textArray = DYNAMIC_ANIMATION_TEXT[0];
-    } else if (frame <= 11) {
-        textArray = DYNAMIC_ANIMATION_TEXT[1];
-    } else {
-        textArray = DYNAMIC_ANIMATION_TEXT[2];
+    // Main animation phase - text changes every 3 frames for maximum variety
+    let textArrayIndex;
+    if (frame <= 2) textArrayIndex = 0;
+    else if (frame <= 5) textArrayIndex = 1;
+    else if (frame <= 8) textArrayIndex = 2;
+    else if (frame <= 11) textArrayIndex = 3;
+    else if (frame <= 14) textArrayIndex = 4;
+    else textArrayIndex = 5;
+    
+    const textArray = DYNAMIC_ANIMATION_TEXT[textArrayIndex];
+    
+    // Add rarity-specific text in very late frames
+    if (frame >= 16 && targetFruit) {
+        const rarityTexts = {
+            omnipotent: [
+                "*THE IMPOSSIBLE HAS BEEN ACHIEVED! REALITY ITSELF KNEELS!*",
+                "*OMNIPOTENT POWER COURSES THROUGH YOUR VERY BEING!*",
+                "*THE GODS ACKNOWLEDGE YOUR SUPREME TRANSCENDENCE!*"
+            ],
+            mythical: [
+                "*World-shaking power erupts from legend into reality!*",
+                "*Even ancient weapons pale before this might!*",
+                "*Reality trembles before your godlike ascension!*"
+            ],
+            legendary: [
+                "*Legendary power that reshapes the very world awakens!*",
+                "*The World Government's greatest fears are realized!*",
+                "*Power that topples empires flows through you!*"
+            ]
+        };
+        
+        if (rarityTexts[targetFruit.rarity]) {
+            const rarityArray = rarityTexts[targetFruit.rarity];
+            return rarityArray[Math.floor(Math.random() * rarityArray.length)];
+        }
     }
     
-    // Add rarity-specific text in later frames if we know the target
-    if (frame >= 15 && targetFruit && RARITY_SPECIFIC_TEXT[targetFruit.rarity]) {
-        const rarityTexts = RARITY_SPECIFIC_TEXT[targetFruit.rarity];
-        const randomRarityText = rarityTexts[Math.floor(Math.random() * rarityTexts.length)];
-        return randomRarityText;
-    }
-    
-    const randomIndex = Math.floor(Math.random() * textArray.length);
-    return textArray[randomIndex];
+    return textArray[Math.floor(Math.random() * textArray.length)];
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -280,7 +292,7 @@ async function updateAnimationFrame(interaction, frame, targetFruit, metrics) {
             // Get particles
             const particles = generateParticles();
             
-            // Get dynamic animation text
+            // Get dynamic animation text (changes every 3 frames)
             const dynamicText = getDynamicAnimationText(frame, targetFruit, 'main');
             
             // Create animation content with dynamic text
@@ -389,21 +401,19 @@ async function updateTransitionFrame(interaction, transFrame, targetFruit, metri
             const barLength = 20;
             const radius = transFrame;
             
-            // FIXED: Proper center positions for 20-wide bar (0-19 indexing)
-            // For a 20-wide bar, positions 9 and 10 are the center
-            // We'll convert both simultaneously in the first frame
+            // FIXED: Symmetric expansion from true center
+            // For 20 positions (0-19), true center is at 9.5
+            // This ensures perfect symmetry
             const positions = [];
             
             for (let i = 0; i < barLength; i++) {
                 let useRewardColor = false;
                 
-                // Calculate distance from center (treating positions 9 and 10 as center)
-                const distanceFromCenter9 = Math.abs(i - 9);
-                const distanceFromCenter10 = Math.abs(i - 10);
-                const minDistanceFromCenter = Math.min(distanceFromCenter9, distanceFromCenter10);
+                // Calculate distance from true center (9.5)
+                const distanceFromCenter = Math.abs(i - 9.5);
                 
-                // If this position should be converted (within radius from either center point)
-                if (minDistanceFromCenter <= radius) {
+                // Convert if within radius (this ensures perfect symmetry)
+                if (distanceFromCenter <= radius + 0.5) {
                     useRewardColor = true;
                 }
                 
