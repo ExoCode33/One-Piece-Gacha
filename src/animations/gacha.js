@@ -81,8 +81,8 @@ The seas whisper of legendary treasures...
                     const indicators = IndicatorsSystem.getChangingIndicators(frame, targetRarity, targetFruit.type);
                     const particles = ParticlesSystem.createOnePieceParticles(frame + 3, 'energy', targetRarity);
                     
-                    // RAINBOW EMBED COLORS - Matches the newest square color
-                    const rainbowEmbedColors = ['#FF0000', '#FF6000', '#FFCC00', '#00FF00', '#0080FF', '#8000FF'];
+                    // RAINBOW EMBED COLORS - Matches the newest square color (7 colors with brown)
+                    const rainbowEmbedColors = ['#FF0000', '#FF6000', '#FFCC00', '#00FF00', '#0080FF', '#8000FF', '#8B4513'];
                     const currentColor = rainbowEmbedColors[frame % rainbowEmbedColors.length];
                     
                     // Create full rainbow progress bar (always full)
@@ -153,26 +153,26 @@ ${particles}
         console.log('🌊 Starting progression phase...');
         const progressFrames = NextGenGachaEngine.getProgressFrames(targetRarity);
         
-        if (targetRarity === 'common') {
-            // COMMON: Immediate white-out from center
-            console.log('⬜ Common rarity: Starting white-out effect...');
+        if (targetRarity === 'cursed') {
+            // CURSED: Immediate brown-out from center
+            console.log('🟫 Cursed rarity: Starting brown-out effect...');
             
             for (let whiteFrame = 0; whiteFrame <= 10; whiteFrame++) {
                 try {
                     const indicators = IndicatorsSystem.getChangingIndicators(totalFrames + whiteFrame, targetRarity, targetFruit.type);
                     const particles = ParticlesSystem.createOnePieceParticles(totalFrames + whiteFrame + 3, 'energy', targetRarity);
                     
-                    const currentColor = '#95A5A6'; // Gray for common
+                    const currentColor = '#8B4513'; // Brown for cursed
                     
                     const progressBar = NextGenGachaEngine.createCommonWhiteOut(
                         totalFrames - 1, // Stopped rainbow frame
                         whiteFrame
                     );
 
-                    const whiteOutEmbed = new EmbedBuilder()
-                        .setTitle('⬜ **POWER FADING** ⬜')
+                    const brownOutEmbed = new EmbedBuilder()
+                        .setTitle('🟫 **DEVIL\'S CURSE WEAKENING** 🟫')
                         .setDescription(`
-**The energies disperse into the ordinary...**
+**The cursed power fades to mundane...**
 
 **🔮 AURA STATUS:** ${indicators.aura}
 **✨ BLESSING LEVEL:** ${indicators.blessing}  
@@ -183,10 +183,10 @@ ${progressBar}
 ${particles}
                         `)
                         .setColor(currentColor)
-                        .setFooter({ text: `Common Rarity | White-out Progress: ${Math.round((whiteFrame / 10) * 100)}%` });
+                        .setFooter({ text: `Cursed Rarity | Brown-out Progress: ${Math.round((whiteFrame / 10) * 100)}%` });
 
                     const timeoutDuration = 3500;
-                    const updatePromise = huntMessage.edit({ embeds: [whiteOutEmbed] });
+                    const updatePromise = huntMessage.edit({ embeds: [brownOutEmbed] });
                     const timeoutPromise = new Promise((_, reject) => 
                         setTimeout(() => reject(new Error('Discord API timeout')), timeoutDuration)
                     );
@@ -195,7 +195,7 @@ ${particles}
                     await new Promise(resolve => setTimeout(resolve, 400));
                     
                 } catch (error) {
-                    console.error(`White-out frame ${whiteFrame} error:`, error.message);
+                    console.error(`Brown-out frame ${whiteFrame} error:`, error.message);
                     await new Promise(resolve => setTimeout(resolve, 300));
                 }
             }
@@ -208,7 +208,8 @@ ${particles}
                     const indicators = IndicatorsSystem.getChangingIndicators(totalFrames + progFrame, targetRarity, targetFruit.type);
                     const particles = ParticlesSystem.createOnePieceParticles(totalFrames + progFrame + 3, 'energy', targetRarity);
                     
-                    const rainbowEmbedColors = ['#FF0000', '#FF6000', '#FFCC00', '#00FF00', '#0080FF', '#8000FF'];
+                    // Continue rainbow embed colors for suspense (7 colors with brown)
+                    const rainbowEmbedColors = ['#FF0000', '#FF6000', '#FFCC00', '#00FF00', '#0080FF', '#8000FF', '#8B4513'];
                     const currentColor = rainbowEmbedColors[(totalFrames + progFrame) % rainbowEmbedColors.length];
                     
                     const progressBar = NextGenGachaEngine.createDynamicEnergyStatus(
@@ -249,16 +250,16 @@ ${particles}
                 }
             }
             
-            // SPECIAL OMNIPOTENT HANDLING
-            if (targetRarity === 'omnipotent') {
-                console.log('🌌 Starting OMNIPOTENT grid sequence...');
+            // SPECIAL GODLIKE HANDLING
+            if (targetRarity === 'godlike') {
+                console.log('🌈 Starting GODLIKE grid sequence...');
                 
                 for (let gridFrame = 0; gridFrame < 8; gridFrame++) {
                     try {
                         const indicators = IndicatorsSystem.getChangingIndicators(totalFrames + progressFrames + gridFrame, targetRarity, targetFruit.type);
                         const particles = ParticlesSystem.createOnePieceParticles(totalFrames + progressFrames + gridFrame + 3, 'energy', targetRarity);
                         
-                        const currentColor = '#9B59B6'; // Purple for omnipotent
+                        const currentColor = '#FF6000'; // Orange for godlike
                         
                         const progressBar = NextGenGachaEngine.createBlinkingRarityBar(
                             targetRarity,
@@ -266,8 +267,8 @@ ${particles}
                             false // Always show the grid pattern
                         );
 
-                        const omnipotentEmbed = new EmbedBuilder()
-                            .setTitle('🌌 **OMNIPOTENT TRANSCENDENCE** 🌌')
+                        const godlikeEmbed = new EmbedBuilder()
+                            .setTitle('🌈 **GODLIKE TRANSCENDENCE** 🌈')
                             .setDescription(`
 **Reality itself bends to your will...**
 
@@ -280,10 +281,10 @@ ${progressBar}
 ${particles}
                             `)
                             .setColor(currentColor)
-                            .setFooter({ text: `OMNIPOTENT manifestation... ${gridFrame + 1}/8` });
+                            .setFooter({ text: `GODLIKE manifestation... ${gridFrame + 1}/8` });
 
                         const timeoutDuration = 3500;
-                        const updatePromise = huntMessage.edit({ embeds: [omnipotentEmbed] });
+                        const updatePromise = huntMessage.edit({ embeds: [godlikeEmbed] });
                         const timeoutPromise = new Promise((_, reject) => 
                             setTimeout(() => reject(new Error('Discord API timeout')), timeoutDuration)
                         );
@@ -292,7 +293,7 @@ ${particles}
                         await new Promise(resolve => setTimeout(resolve, 700));
                         
                     } catch (error) {
-                        console.error(`Omnipotent grid frame ${gridFrame} error:`, error.message);
+                        console.error(`Godlike grid frame ${gridFrame} error:`, error.message);
                         await new Promise(resolve => setTimeout(resolve, 500));
                     }
                 }
@@ -309,10 +310,11 @@ ${particles}
                         
                         // Get rarity color for embed
                         const rarityEmbedColors = {
-                            uncommon: '#00FF00',
-                            rare: '#0080FF', 
-                            legendary: '#FFCC00',
-                            mythical: '#FF0000'
+                            manifested: '#00FF00',    // Green
+                            potent: '#0080FF',       // Blue
+                            ancient: '#FFCC00',     // Yellow
+                            mythical: '#FF0000',    // Red
+                            transcendent: '#8000FF' // Purple
                         };
                         const currentColor = rarityEmbedColors[targetRarity] || '#0080FF';
                         
