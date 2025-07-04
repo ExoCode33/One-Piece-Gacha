@@ -261,16 +261,24 @@ async function updateAnimationFrame(interaction, frame, targetFruit, metrics) {
             
             // Calculate rainbow positions and colors for 20-square bars
             const barLength = 20;
-            const positions = [];
+            const topPositions = [];
+            const bottomPositions = [];
             
+            // TOP BAR: Normal left-to-right flow
             for (let i = 0; i < barLength; i++) {
                 const colorIndex = (i - frame + rainbowColors.length * 100) % rainbowColors.length;
-                positions.push(rainbowColors[colorIndex]);
+                topPositions.push(rainbowColors[colorIndex]);
             }
             
-            // Create dual rainbow bars
-            const topBar = positions.join(' ');
-            const bottomBar = positions.join(' ');
+            // BOTTOM BAR: DIFFERENT pattern to ensure it's never the same
+            for (let i = 0; i < barLength; i++) {
+                // Add offset of 3 to make it different + reverse direction
+                const colorIndex = (i + frame + 3 + rainbowColors.length * 100) % rainbowColors.length;
+                bottomPositions.push(rainbowColors[colorIndex]);
+            }
+            
+            const topBar = topPositions.join(' ');
+            const bottomBar = bottomPositions.join(' ');
             
             // Calculate embed color (rainbow for most of animation)
             let embedColor;
@@ -338,15 +346,23 @@ async function updateProgressionFrame(interaction, progFrame, targetFruit, metri
             
             // Calculate rainbow positions for 20-square bars
             const barLength = 20;
-            const positions = [];
+            const topPositions = [];
+            const bottomPositions = [];
             
+            // TOP BAR: Continue the pattern from main animation
             for (let i = 0; i < barLength; i++) {
                 const colorIndex = (i - (18 + progFrame) + rainbowColors.length * 100) % rainbowColors.length;
-                positions.push(rainbowColors[colorIndex]);
+                topPositions.push(rainbowColors[colorIndex]);
             }
             
-            const topBar = positions.join(' ');
-            const bottomBar = positions.join(' ');
+            // BOTTOM BAR: Different pattern (offset + reverse)
+            for (let i = 0; i < barLength; i++) {
+                const colorIndex = (i + (18 + progFrame) + 3 + rainbowColors.length * 100) % rainbowColors.length;
+                bottomPositions.push(rainbowColors[colorIndex]);
+            }
+            
+            const topBar = topPositions.join(' ');
+            const bottomBar = bottomPositions.join(' ');
             
             // Rainbow embed color
             const embedColorIndex = (0 - (18 + progFrame) + rainbowEmbedColors.length * 100) % rainbowEmbedColors.length;
@@ -397,37 +413,43 @@ async function updateTransitionFrame(interaction, transFrame, targetFruit, metri
         try {
             metrics.frameAttempts++;
             
-            // Center-outward conversion for 20-square bars
+            // FIXED: Perfect center-outward conversion for 20-square bars
             const barLength = 20;
             const radius = transFrame;
             
-            // FIXED: Symmetric expansion from true center
-            // For 20 positions (0-19), true center is at 9.5
-            // This ensures perfect symmetry
-            const positions = [];
+            const topPositions = [];
+            const bottomPositions = [];
             
             for (let i = 0; i < barLength; i++) {
                 let useRewardColor = false;
                 
-                // Calculate distance from true center (9.5)
-                const distanceFromCenter = Math.abs(i - 9.5);
+                // FIXED: Use integer center positions for perfect symmetry
+                // For 20 positions (0-19), center positions are 9 and 10
+                const distanceFromCenter9 = Math.abs(i - 9);
+                const distanceFromCenter10 = Math.abs(i - 10);
+                const minDistanceFromCenter = Math.min(distanceFromCenter9, distanceFromCenter10);
                 
-                // Convert if within radius (this ensures perfect symmetry)
-                if (distanceFromCenter <= radius + 0.5) {
+                // Convert if within radius from either center point
+                if (minDistanceFromCenter <= radius) {
                     useRewardColor = true;
                 }
                 
                 if (useRewardColor) {
-                    positions.push(rarityColors[targetFruit.rarity]?.emoji || '🟫');
+                    // Both bars use the same reward color
+                    topPositions.push(rarityColors[targetFruit.rarity]?.emoji || '🟫');
+                    bottomPositions.push(rarityColors[targetFruit.rarity]?.emoji || '🟫');
                 } else {
-                    // Still rainbow
-                    const colorIndex = (i - (30 + transFrame) + rainbowColors.length * 100) % rainbowColors.length;
-                    positions.push(rainbowColors[colorIndex]);
+                    // Still rainbow - but different patterns
+                    const topColorIndex = (i - (30 + transFrame) + rainbowColors.length * 100) % rainbowColors.length;
+                    const bottomColorIndex = (i + (30 + transFrame) + 3 + rainbowColors.length * 100) % rainbowColors.length;
+                    
+                    topPositions.push(rainbowColors[topColorIndex]);
+                    bottomPositions.push(rainbowColors[bottomColorIndex]);
                 }
             }
             
-            const topBar = positions.join(' ');
-            const bottomBar = positions.join(' ');
+            const topBar = topPositions.join(' ');
+            const bottomBar = bottomPositions.join(' ');
             
             // Transition embed color
             const embedColor = transFrame > 5 ? 
