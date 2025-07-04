@@ -472,9 +472,9 @@ ${rarityDescriptions[oldRarity] || rarityDescriptions.common}
 **🔥 Awakening:** ${targetFruit.awakening}
 **⚠️ Weakness:** ${targetFruit.weakness}
 
-${finalProgressBar}
+${finalProgressBar2}
 
-${finalParticles}
+${finalParticles2}
             `)
             .setColor(rarityConfig.color)
             .setFooter({ text: `🏴‍☠️ ${interaction.user.username}'s Devil Fruit Hunt | ${new Date().toLocaleString()}` });
