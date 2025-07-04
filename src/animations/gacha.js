@@ -85,12 +85,26 @@ The seas whisper of legendary treasures...
                     const indicators = IndicatorsSystem.getChangingIndicators(frame, oldRarity, targetFruit.type);
                     const particles = ParticlesSystem.createOnePieceParticles(frame + 3, 'energy', oldRarity);
                     
-                    // SYNC FIX: Match embed color to leftmost rainbow square
-                    const rainbowEmbedColors = ['#FF0000', '#FF6000', '#FFCC00', '#00FF00', '#0080FF', '#8000FF', '#8B4513'];
-                    const leftmostColorIndex = (-frame + rainbowEmbedColors.length * 100) % rainbowEmbedColors.length;
-                    const currentColor = rainbowEmbedColors[leftmostColorIndex];
+                    // FIXED: Sync embed color to match the squares, not just rainbow position
+                    const finalBarColors = {
+                        'common': '#8B4513',      // Brown
+                        'uncommon': '#2ECC71',    // Green
+                        'rare': '#3498DB',        // Blue
+                        'legendary': '#F1C40F',   // Yellow
+                        'mythical': '#E74C3C',    // Red
+                        'omnipotent': '#9B59B6'   // Purple
+                    };
                     
-                    // CREATE DUAL RAINBOW BARS for box effect
+                    // Use rarity-based color if we're past the lock frame, otherwise use rainbow
+                    let currentColor;
+                    if (frame >= 15) { // Late in animation, start hinting at rarity
+                        currentColor = finalBarColors[oldRarity] || rainbowEmbedColors[leftmostColorIndex];
+                    } else {
+                        const leftmostColorIndex = (-frame + rainbowEmbedColors.length * 100) % rainbowEmbedColors.length;
+                        currentColor = rainbowEmbedColors[leftmostColorIndex];
+                    }
+                    
+                    // CREATE COMPLETE BOX with FIXED POSITION vertical sides (but color changes)
                     const rainbowColors = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪', '🟫'];
                     let topRainbow = '';
                     let bottomRainbow = '';
@@ -104,18 +118,22 @@ The seas whisper of legendary treasures...
                             bottomRainbow += ' ';
                         }
                     }
+                    
+                    // FIXED POSITION vertical sides - always position 0, but color follows rainbow
+                    const leftSideColorIndex = (0 - frame + rainbowColors.length * 100) % rainbowColors.length;
+                    const verticalBar = rainbowColors[leftSideColorIndex];
 
                     const searchEmbed = new EmbedBuilder()
                         .setTitle(frameData.title)
                         .setDescription(`
 ${topRainbow}
-
-                        **${frameData.desc}**
-
-                        **🔮 AURA STATUS:** ${indicators.aura}
-                        **✨ BLESSING LEVEL:** ${indicators.blessing}  
-                        **🌊 POWER TYPE:** ${indicators.type}
-
+${verticalBar}                                                   ${verticalBar}
+${verticalBar}                **${frameData.desc}**                ${verticalBar}
+${verticalBar}                                                   ${verticalBar}
+${verticalBar}        **🔮 AURA STATUS:** ${indicators.aura}         ${verticalBar}
+${verticalBar}        **✨ BLESSING LEVEL:** ${indicators.blessing}      ${verticalBar}
+${verticalBar}        **🌊 POWER TYPE:** ${indicators.type}        ${verticalBar}
+${verticalBar}                                                   ${verticalBar}
 ${bottomRainbow}
 
 ${particles}
@@ -168,13 +186,21 @@ ${particles}
                 const indicators = IndicatorsSystem.getChangingIndicators(totalFrames + progFrame, oldRarity, targetFruit.type);
                 const particles = ParticlesSystem.createOnePieceParticles(totalFrames + progFrame + 3, 'energy', oldRarity);
                 
-                // SYNC FIX: Match embed color to progression with dual rainbows
-                const rainbowEmbedColors = ['#FF0000', '#FF6000', '#FFCC00', '#00FF00', '#0080FF', '#8000FF', '#8B4513'];
-                const progressFrame = totalFrames + progFrame;
-                const leftmostColorIndex = (-progressFrame + rainbowEmbedColors.length * 100) % rainbowEmbedColors.length;
-                const currentColor = rainbowEmbedColors[leftmostColorIndex];
+                // FIXED: Sync embed color to match squares in progression
+                const finalBarColors = {
+                    'common': '#8B4513',      // Brown
+                    'uncommon': '#2ECC71',    // Green
+                    'rare': '#3498DB',        // Blue
+                    'legendary': '#F1C40F',   // Yellow
+                    'mythical': '#E74C3C',    // Red
+                    'omnipotent': '#9B59B6'   // Purple
+                };
                 
-                // CREATE DUAL RAINBOW BARS for progression phase
+                // Use rarity color for progression phase
+                const currentColor = finalBarColors[oldRarity] || '#3498DB';
+                
+                // CREATE COMPLETE BOX with FIXED POSITION vertical sides (but color changes)
+                const progressFrame = totalFrames + progFrame;
                 const rainbowColors = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪', '🟫'];
                 let topRainbow = '';
                 let bottomRainbow = '';
@@ -188,18 +214,22 @@ ${particles}
                         bottomRainbow += ' ';
                     }
                 }
+                
+                // FIXED POSITION vertical sides - always position 0, but color follows rainbow
+                const leftSideColorIndex = (0 - progressFrame + rainbowColors.length * 100) % rainbowColors.length;
+                const verticalBar = rainbowColors[leftSideColorIndex];
 
                 const progressEmbed = new EmbedBuilder()
                     .setTitle('🎆 **ENERGIES CONVERGING** 🎆')
                     .setDescription(`
 ${topRainbow}
-
-                    **The rainbow flows toward destiny...**
-
-                    **🔮 AURA STATUS:** ${indicators.aura}
-                    **✨ BLESSING LEVEL:** ${indicators.blessing}  
-                    **🌊 POWER TYPE:** ${indicators.type}
-
+${verticalBar}                                                   ${verticalBar}
+${verticalBar}       **The rainbow flows toward destiny...**       ${verticalBar}
+${verticalBar}                                                   ${verticalBar}
+${verticalBar}        **🔮 AURA STATUS:** ${indicators.aura}         ${verticalBar}
+${verticalBar}        **✨ BLESSING LEVEL:** ${indicators.blessing}      ${verticalBar}
+${verticalBar}        **🌊 POWER TYPE:** ${indicators.type}        ${verticalBar}
+${verticalBar}                                                   ${verticalBar}
 ${bottomRainbow}
 
 ${particles}
@@ -277,7 +307,7 @@ ${particles}
                 // Calculate which positions should be converted (center outward)
                 const convertRadius = transFrame; // 0 = center only, 1 = center ±1, etc.
                 
-                // Create both rainbow bars with center-outward conversion
+                // Create both rainbow bars with center-outward conversion and vertical sides
                 let topBar = '';
                 let bottomBar = '';
                 
@@ -307,15 +337,26 @@ ${particles}
                     }
                 }
                 
+                // Get FIXED POSITION vertical bar color - follows rainbow but position 0
+                const leftSideColorIndex = (0 - finalFrame + rainbowColors.length * 100) % rainbowColors.length;
+                let verticalBar;
+                
+                // During transition, check if position 0 has been converted
+                if (convertRadius >= 9) { // Position 0 is 9 away from center, so convert when radius >= 9
+                    verticalBar = finalSquareColor;
+                } else {
+                    verticalBar = rainbowColors[leftSideColorIndex];
+                }
+                
                 const transitionParticles = ParticlesSystem.createOnePieceParticles(5 + transFrame, 'energy', oldRarity);
                 
                 const transitionEmbed = new EmbedBuilder()
                     .setTitle('🌟 **POWER CRYSTALLIZING** 🌟')
                     .setDescription(`
 ${topBar}
-
-                    **The Devil Fruit's essence crystallizes from within...**
-
+${verticalBar}                                                   ${verticalBar}
+${verticalBar}   **The Devil Fruit's essence crystallizes from within...**   ${verticalBar}
+${verticalBar}                                                   ${verticalBar}
 ${bottomBar}
 
 ${transitionParticles}
@@ -338,77 +379,71 @@ ${transitionParticles}
             }
         }
 
-        // GRADUAL REVEAL PHASE: Show Devil Fruit info piece by piece
-        console.log('🎊 Gradual reveal: Devil Fruit information...');
+        // LINE-BY-LINE REVEAL PHASE: Show Devil Fruit info one line at a time
+        console.log('🎊 Line-by-line reveal: Devil Fruit information...');
         
-        const revealStages = [
-            {
-                title: '🍈 **DEVIL FRUIT DISCOVERED** 🍈',
-                content: `
-                    **${rarityDescriptions[oldRarity] || rarityDescriptions.common}**
-
-                    **🍈 Devil Fruit:** ${targetFruit.name}
-                    **📋 Type:** ${typeEmojis[targetFruit.type] || '🔮'} ${targetFruit.type}
-
-                    *Analyzing power...*
-                `
-            },
-            {
-                title: rarityTitles[oldRarity] || rarityTitles.common,
-                content: `
-                    **${rarityDescriptions[oldRarity] || rarityDescriptions.common}**
-
-                    **🍈 Devil Fruit:** ${targetFruit.name}
-                    **📋 Type:** ${typeEmojis[targetFruit.type] || '🔮'} ${targetFruit.type}
-                    **👤 Previous User:** ${targetFruit.user}
-                    **⚡ Power:** ${targetFruit.power}
-
-                    *Revealing details...*
-                `
-            },
-            {
-                title: rarityTitles[oldRarity] || rarityTitles.common,
-                content: `
-                    **${rarityDescriptions[oldRarity] || rarityDescriptions.common}**
-
-                    **🍈 Devil Fruit:** ${targetFruit.name}
-                    **📋 Type:** ${typeEmojis[targetFruit.type] || '🔮'} ${targetFruit.type}
-                    **👤 Previous User:** ${targetFruit.user}
-                    **⚡ Power:** ${targetFruit.power}
-                    **💎 Rarity:** ${rarityConfig.stars} ${rarityConfig.name}
-                    **🌟 Power Level:** ${targetFruit.powerLevel.toLocaleString()}
-
-                    *${targetFruit.description}*
-
-                    *Awakening potential unlocked...*
-                `
-            }
+        // All possible reveal lines in order
+        const revealLines = [
+            `**${rarityDescriptions[oldRarity] || rarityDescriptions.common}**`,
+            '',
+            `**🍈 Devil Fruit:** ${targetFruit.name}`,
+            `**📋 Type:** ${typeEmojis[targetFruit.type] || '🔮'} ${targetFruit.type}`,
+            `**👤 Previous User:** ${targetFruit.user}`,
+            `**⚡ Power:** ${targetFruit.power}`,
+            `**💎 Rarity:** ${rarityConfig.stars} ${rarityConfig.name}`,
+            `**🌟 Power Level:** ${targetFruit.powerLevel.toLocaleString()}`,
+            '',
+            `*${targetFruit.description}*`,
+            '',
+            `**🔥 Awakening:** ${targetFruit.awakening}`,
+            `**⚠️ Weakness:** ${targetFruit.weakness}`
         ];
 
-        // Show each reveal stage with slower timing
-        for (let stage = 0; stage < revealStages.length; stage++) {
+        // Show each line one by one
+        for (let lineIndex = 0; lineIndex <= revealLines.length; lineIndex++) {
             try {
-                // Create top rainbow bar for box effect
-                let topRainbow = '';
+                // Create solid color bars
+                let topBar = '';
+                let bottomBar = '';
                 for (let i = 0; i < 20; i++) {
-                    topRainbow += finalSquareColor;
-                    if (i < 19) topRainbow += ' ';
+                    topBar += finalSquareColor;
+                    bottomBar += finalSquareColor;
+                    if (i < 19) {
+                        topBar += ' ';
+                        bottomBar += ' ';
+                    }
                 }
                 
-                let stageProgressBar = '';
-                for (let i = 0; i < 20; i++) {
-                    stageProgressBar += finalSquareColor;
-                    if (i < 19) stageProgressBar += ' ';
+                // Build content up to current line with FIXED POSITION vertical sides
+                let revealContent = '';
+                const sideColor = finalSquareColor; // Use reward color for sides during reveal
+                
+                for (let i = 0; i < lineIndex; i++) {
+                    if (revealLines[i] === '') {
+                        revealContent += `${sideColor}                                                   ${sideColor}\n`;
+                    } else {
+                        // Center the text content
+                        const line = revealLines[i];
+                        const padding = Math.max(0, Math.floor((35 - line.length) / 2));
+                        const paddedLine = ' '.repeat(padding) + line + ' '.repeat(padding);
+                        revealContent += `${sideColor}${paddedLine}${sideColor}\n`;
+                    }
                 }
                 
-                const stageParticles = ParticlesSystem.createOnePieceParticles(8 + stage * 2, 'celebration', oldRarity);
+                // Add empty lines to maintain box height if needed with FIXED POSITION sides
+                const minLines = 8;
+                const currentLines = lineIndex;
+                for (let i = currentLines; i < minLines; i++) {
+                    revealContent += `${sideColor}                                                   ${sideColor}\n`;
+                }
+                
+                const stageParticles = ParticlesSystem.createOnePieceParticles(8 + lineIndex, 'celebration', oldRarity);
                 
                 const stageEmbed = new EmbedBuilder()
-                    .setTitle(revealStages[stage].title)
+                    .setTitle(rarityTitles[oldRarity] || rarityTitles.common)
                     .setDescription(`
-${topRainbow}
-${revealStages[stage].content}
-${stageProgressBar}
+${topBar}
+${revealContent}${bottomBar}
 
 ${stageParticles}
                     `)
@@ -422,50 +457,53 @@ ${stageParticles}
                 );
                 
                 await Promise.race([updatePromise, timeoutPromise]);
-                await new Promise(resolve => setTimeout(resolve, 2000)); // Much slower reveal timing
+                await new Promise(resolve => setTimeout(resolve, 800)); // Line-by-line timing
                 
             } catch (error) {
-                console.error(`Reveal stage ${stage} error:`, error.message);
-                await new Promise(resolve => setTimeout(resolve, 1500));
+                console.error(`Reveal line ${lineIndex} error:`, error.message);
+                await new Promise(resolve => setTimeout(resolve, 600));
             }
         }
 
-        // FINAL PHASE: Complete reveal with all information and buttons
+        // FINAL PHASE: Complete reveal with buttons (keep box formatting)
         const finalParticles2 = ParticlesSystem.createOnePieceParticles(12, 'celebration', oldRarity);
         
-        // Create top rainbow bar for final box effect
-        let topFinalRainbow = '';
+        // Create final solid color bars
+        let topFinalBar = '';
+        let bottomFinalBar = '';
         for (let i = 0; i < 20; i++) {
-            topFinalRainbow += finalSquareColor;
-            if (i < 19) topFinalRainbow += ' ';
+            topFinalBar += finalSquareColor;
+            bottomFinalBar += finalSquareColor;
+            if (i < 19) {
+                topFinalBar += ' ';
+                bottomFinalBar += ' ';
+            }
         }
-        
-        let finalProgressBar2 = '';
-        for (let i = 0; i < 20; i++) {
-            finalProgressBar2 += finalSquareColor;
-            if (i < 19) finalProgressBar2 += ' ';
-        }
+
+        // Create final formatted content with FIXED POSITION vertical sides (reward color)
+        const sideColor = finalSquareColor;
+        const finalContent = `${sideColor}                                                   ${sideColor}
+${sideColor}    **${rarityDescriptions[oldRarity] || rarityDescriptions.common}**    ${sideColor}
+${sideColor}                                                   ${sideColor}
+${sideColor}      **🍈 Devil Fruit:** ${targetFruit.name}      ${sideColor}
+${sideColor}      **📋 Type:** ${typeEmojis[targetFruit.type] || '🔮'} ${targetFruit.type}      ${sideColor}
+${sideColor}      **👤 Previous User:** ${targetFruit.user}      ${sideColor}
+${sideColor}      **⚡ Power:** ${targetFruit.power}      ${sideColor}
+${sideColor}      **💎 Rarity:** ${rarityConfig.stars} ${rarityConfig.name}      ${sideColor}
+${sideColor}      **🌟 Power Level:** ${targetFruit.powerLevel.toLocaleString()}      ${sideColor}
+${sideColor}                                                   ${sideColor}
+${sideColor}      *${targetFruit.description}*      ${sideColor}
+${sideColor}                                                   ${sideColor}
+${sideColor}      **🔥 Awakening:** ${targetFruit.awakening}      ${sideColor}
+${sideColor}      **⚠️ Weakness:** ${targetFruit.weakness}      ${sideColor}
+${sideColor}                                                   ${sideColor}`;
 
         const finalEmbed = new EmbedBuilder()
             .setTitle(rarityTitles[oldRarity] || rarityTitles.common)
             .setDescription(`
-${topFinalRainbow}
-
-                    **${rarityDescriptions[oldRarity] || rarityDescriptions.common}**
-
-                    **🍈 Devil Fruit:** ${targetFruit.name}
-                    **📋 Type:** ${typeEmojis[targetFruit.type] || '🔮'} ${targetFruit.type}
-                    **👤 Previous User:** ${targetFruit.user}
-                    **⚡ Power:** ${targetFruit.power}
-                    **💎 Rarity:** ${rarityConfig.stars} ${rarityConfig.name}
-                    **🌟 Power Level:** ${targetFruit.powerLevel.toLocaleString()}
-
-                    *${targetFruit.description}*
-
-                    **🔥 Awakening:** ${targetFruit.awakening}
-                    **⚠️ Weakness:** ${targetFruit.weakness}
-
-${finalProgressBar2}
+${topFinalBar}
+${finalContent}
+${bottomFinalBar}
 
 ${finalParticles2}
             `)
