@@ -68,10 +68,10 @@ The seas whisper of legendary treasures...
         let successfulFrames = 0;
         let totalAttempts = 0;
 
-        // BALANCED: Better timing to avoid timeouts
-        const totalFrames = 15; // Increased slightly for stability
-        const maxRetries = 1;   
-        const baseDelay = 650;  // Balanced timing
+        // OPTIMIZED: Better frame management and timing
+        const totalFrames = 18; // Slightly more frames for smoother sync
+        const maxRetries = 2;   // More retries for stability
+        const baseDelay = 750;  // Slower, more stable timing
         
         for (let frame = 0; frame < totalFrames; frame++) {
             let success = false;
@@ -85,8 +85,10 @@ The seas whisper of legendary treasures...
                     const indicators = IndicatorsSystem.getChangingIndicators(frame, oldRarity, targetFruit.type);
                     const particles = ParticlesSystem.createOnePieceParticles(frame + 3, 'energy', oldRarity);
                     
+                    // SYNC FIX: Match embed color to leftmost rainbow square
                     const rainbowEmbedColors = ['#FF0000', '#FF6000', '#FFCC00', '#00FF00', '#0080FF', '#8000FF', '#8B4513'];
-                    const currentColor = rainbowEmbedColors[frame % rainbowEmbedColors.length];
+                    const leftmostColorIndex = (-frame + rainbowEmbedColors.length * 100) % rainbowEmbedColors.length;
+                    const currentColor = rainbowEmbedColors[leftmostColorIndex];
                     
                     const progressBar = NextGenGachaEngine.createDynamicEnergyStatus(
                         100,
@@ -111,7 +113,7 @@ ${particles}
                         .setColor(currentColor)
                         .setFooter({ text: `Hunt in Progress...` });
 
-                    const timeoutDuration = 3000 + (retryCount * 500); // More generous timeout
+                    const timeoutDuration = 4000 + (retryCount * 1000); // More generous timeout
                     const updatePromise = huntMessage.edit({ embeds: [searchEmbed] });
                     const timeoutPromise = new Promise((_, reject) => 
                         setTimeout(() => reject(new Error('Discord API timeout')), timeoutDuration)
@@ -120,7 +122,7 @@ ${particles}
                     await Promise.race([updatePromise, timeoutPromise]);
                     success = true;
                     
-                    const delay = retryCount > 0 ? baseDelay + (retryCount * 200) : baseDelay;
+                    const delay = retryCount > 0 ? baseDelay + (retryCount * 300) : baseDelay;
                     await new Promise(resolve => setTimeout(resolve, delay));
                     
                 } catch (error) {
@@ -147,21 +149,24 @@ ${particles}
         const successRate = (successfulFrames / totalFrames) * 100;
         console.log(`📊 Animation Performance: ${successfulFrames}/${totalFrames} frames (${successRate.toFixed(1)}%) - ${totalAttempts} total attempts`);
 
-        // PROGRESSION PHASE: Balanced timing
+        // PROGRESSION PHASE: Improved sync and timing
         console.log('🌊 Starting progression phase...');
-        const progressFrames = 8; // Balanced frame count
+        const progressFrames = 10; // Better progression timing
         
         for (let progFrame = 0; progFrame < progressFrames; progFrame++) {
             try {
                 const indicators = IndicatorsSystem.getChangingIndicators(totalFrames + progFrame, oldRarity, targetFruit.type);
                 const particles = ParticlesSystem.createOnePieceParticles(totalFrames + progFrame + 3, 'energy', oldRarity);
                 
+                // SYNC FIX: Match embed color to progression
                 const rainbowEmbedColors = ['#FF0000', '#FF6000', '#FFCC00', '#00FF00', '#0080FF', '#8000FF', '#8B4513'];
-                const currentColor = rainbowEmbedColors[(totalFrames + progFrame) % rainbowEmbedColors.length];
+                const progressFrame = totalFrames + progFrame;
+                const leftmostColorIndex = (-progressFrame + rainbowEmbedColors.length * 100) % rainbowEmbedColors.length;
+                const currentColor = rainbowEmbedColors[leftmostColorIndex];
                 
                 const progressBar = NextGenGachaEngine.createDynamicEnergyStatus(
                     100,
-                    totalFrames + progFrame,
+                    progressFrame, // Use consistent frame reference
                     'critical',
                     currentColor
                 );
@@ -182,14 +187,14 @@ ${particles}
                     .setColor(currentColor)
                     .setFooter({ text: 'Energies converging...' }); // Removed progress counter
 
-                const timeoutDuration = 3000; // More generous timeout
+                const timeoutDuration = 4000; // More generous timeout
                 const updatePromise = huntMessage.edit({ embeds: [progressEmbed] });
                 const timeoutPromise = new Promise((_, reject) => 
                     setTimeout(() => reject(new Error('Discord API timeout')), timeoutDuration)
                 );
                 
                 await Promise.race([updatePromise, timeoutPromise]);
-                await new Promise(resolve => setTimeout(resolve, 500)); // Balanced delay
+                await new Promise(resolve => setTimeout(resolve, 600)); // Consistent delay
                 
             } catch (error) {
                 console.error(`Progression frame ${progFrame} error:`, error.message);
@@ -200,8 +205,8 @@ ${particles}
         // Get the rarity config using old rarity name
         const rarityConfig = DevilFruitDatabase.getRarityConfig(oldRarity);
 
-        // FINAL PHASE: Whole bar becomes reward color
-        console.log('🎆 Final phase: Bar becoming reward color...');
+        // SMOOTH TRANSITION PHASE: Rainbow gradually becomes reward color
+        console.log('🎆 Smooth transition: Rainbow to reward color...');
         
         const finalBarColors = {
             'common': '🟫',
@@ -213,45 +218,152 @@ ${particles}
         };
         
         const finalSquareColor = finalBarColors[oldRarity] || '🟩';
+        const transitionFrames = 8;
         
-        let finalProgressBar = '**TRANSCENDENT**\n';
+        // Gradual transition from rainbow to solid color
+        for (let transFrame = 0; transFrame < transitionFrames; transFrame++) {
+            try {
+                const transitionPercentage = (transFrame + 1) / transitionFrames;
+                
+                // Create mixed bar (rainbow becoming solid color from left to right)
+                let mixedProgressBar = '**CRYSTALLIZING**\n';
+                for (let i = 0; i < 20; i++) {
+                    const positionProgress = i / 19; // 0 to 1 across the bar
+                    
+                    if (positionProgress <= transitionPercentage) {
+                        // This position has turned to the reward color
+                        mixedProgressBar += finalSquareColor;
+                    } else {
+                        // Still showing rainbow
+                        const rainbowColors = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪', '🟫'];
+                        const finalFrame = totalFrames + progressFrames;
+                        const colorIndex = (i - finalFrame + rainbowColors.length * 100) % rainbowColors.length;
+                        mixedProgressBar += rainbowColors[colorIndex];
+                    }
+                    if (i < 19) mixedProgressBar += ' ';
+                }
+                
+                const transitionParticles = ParticlesSystem.createOnePieceParticles(5 + transFrame, 'energy', oldRarity);
+                
+                const transitionEmbed = new EmbedBuilder()
+                    .setTitle('🌟 **POWER CRYSTALLIZING** 🌟')
+                    .setDescription(`
+**The Devil Fruit's true nature emerges...**
+
+${mixedProgressBar}
+
+${transitionParticles}
+                    `)
+                    .setColor(rarityConfig.color)
+                    .setFooter({ text: `${rarityConfig.name} Power Manifesting...` });
+
+                const timeoutDuration = 4000;
+                const updatePromise = huntMessage.edit({ embeds: [transitionEmbed] });
+                const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Discord API timeout')), timeoutDuration)
+                );
+                
+                await Promise.race([updatePromise, timeoutPromise]);
+                await new Promise(resolve => setTimeout(resolve, 400));
+                
+            } catch (error) {
+                console.error(`Transition frame ${transFrame} error:`, error.message);
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
+        }
+
+        // GRADUAL REVEAL PHASE: Show Devil Fruit info piece by piece
+        console.log('🎊 Gradual reveal: Devil Fruit information...');
+        
+        const revealStages = [
+            {
+                title: '🍈 **DEVIL FRUIT DISCOVERED** 🍈',
+                content: `
+${rarityDescriptions[oldRarity] || rarityDescriptions.common}
+
+**🍈 Devil Fruit:** ${targetFruit.name}
+**📋 Type:** ${typeEmojis[targetFruit.type] || '🔮'} ${targetFruit.type}
+
+*Analyzing power...*
+                `
+            },
+            {
+                title: rarityTitles[oldRarity] || rarityTitles.common,
+                content: `
+${rarityDescriptions[oldRarity] || rarityDescriptions.common}
+
+**🍈 Devil Fruit:** ${targetFruit.name}
+**📋 Type:** ${typeEmojis[targetFruit.type] || '🔮'} ${targetFruit.type}
+**👤 Previous User:** ${targetFruit.user}
+**⚡ Power:** ${targetFruit.power}
+
+*Revealing details...*
+                `
+            },
+            {
+                title: rarityTitles[oldRarity] || rarityTitles.common,
+                content: `
+${rarityDescriptions[oldRarity] || rarityDescriptions.common}
+
+**🍈 Devil Fruit:** ${targetFruit.name}
+**📋 Type:** ${typeEmojis[targetFruit.type] || '🔮'} ${targetFruit.type}
+**👤 Previous User:** ${targetFruit.user}
+**⚡ Power:** ${targetFruit.power}
+**💎 Rarity:** ${rarityConfig.stars} ${rarityConfig.name}
+**🌟 Power Level:** ${targetFruit.powerLevel.toLocaleString()}
+
+*${targetFruit.description}*
+
+*Awakening potential unlocked...*
+                `
+            }
+        ];
+
+        // Show each reveal stage
+        for (let stage = 0; stage < revealStages.length; stage++) {
+            try {
+                let stageProgressBar = '**REVEALED**\n';
+                for (let i = 0; i < 20; i++) {
+                    stageProgressBar += finalSquareColor;
+                    if (i < 19) stageProgressBar += ' ';
+                }
+                
+                const stageParticles = ParticlesSystem.createOnePieceParticles(8 + stage * 2, 'celebration', oldRarity);
+                
+                const stageEmbed = new EmbedBuilder()
+                    .setTitle(revealStages[stage].title)
+                    .setDescription(`
+${revealStages[stage].content}
+
+${stageProgressBar}
+
+${stageParticles}
+                    `)
+                    .setColor(rarityConfig.color)
+                    .setFooter({ text: `🏴‍☠️ ${interaction.user.username}'s Devil Fruit Hunt | ${new Date().toLocaleString()}` });
+
+                const timeoutDuration = 4000;
+                const updatePromise = huntMessage.edit({ embeds: [stageEmbed] });
+                const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Discord API timeout')), timeoutDuration)
+                );
+                
+                await Promise.race([updatePromise, timeoutPromise]);
+                await new Promise(resolve => setTimeout(resolve, 1200));
+                
+            } catch (error) {
+                console.error(`Reveal stage ${stage} error:`, error.message);
+                await new Promise(resolve => setTimeout(resolve, 800));
+            }
+        }
+
+        // FINAL PHASE: Complete reveal with all information and buttons
+        const finalParticles2 = ParticlesSystem.createOnePieceParticles(12, 'celebration', oldRarity);
+        let finalProgressBar2 = '**CLAIMED**\n';
         for (let i = 0; i < 20; i++) {
-            finalProgressBar += finalSquareColor;
-            if (i < 19) finalProgressBar += ' ';
+            finalProgressBar2 += finalSquareColor;
+            if (i < 19) finalProgressBar2 += ' ';
         }
-        
-        try {
-            const finalParticles = ParticlesSystem.createOnePieceParticles(10, 'celebration', oldRarity);
-            
-            const finalColorEmbed = new EmbedBuilder()
-                .setTitle('🌟 **POWER CRYSTALLIZED** 🌟')
-                .setDescription(`
-**The Devil Fruit's true nature is revealed!**
-
-${finalProgressBar}
-
-${finalParticles}
-                `)
-                .setColor(rarityConfig.color)
-                .setFooter({ text: `${rarityConfig.name} Power Manifested` });
-
-            const timeoutDuration = 3000; // More generous timeout
-            const updatePromise = huntMessage.edit({ embeds: [finalColorEmbed] });
-            const timeoutPromise = new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('Discord API timeout')), timeoutDuration)
-            );
-            
-            await Promise.race([updatePromise, timeoutPromise]);
-            await new Promise(resolve => setTimeout(resolve, 1500)); // Balanced delay
-            
-        } catch (error) {
-            console.error(`Final color phase error:`, error.message);
-            await new Promise(resolve => setTimeout(resolve, 500)); // Faster error recovery
-        }
-
-        // PHASE 5: Final reveal
-        const finalParticles2 = ParticlesSystem.createOnePieceParticles(10, 'celebration', oldRarity);
-        const finalProgressBar2 = NextGenGachaEngine.createRarityRevealBar(oldRarity, 0);
 
         const rarityTitles = {
             common: '🍈 **DEVIL FRUIT DISCOVERED** 🍈',
