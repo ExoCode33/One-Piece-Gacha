@@ -344,7 +344,7 @@ Start your journey on the Grand Line by hunting for Devil Fruits!
                 legendary: { emoji: '🟨', name: 'Legendary' },
                 rare: { emoji: '🟦', name: 'Rare' },
                 uncommon: { emoji: '🟩', name: 'Uncommon' },
-                common: { emoji: '⬜', name: 'Common' }
+                common: { emoji: '🟫', name: 'Common' }
             };
             const config = rarityNames[rarity];
             rarityBreakdown += `${config.emoji} **${config.name}:** ${stats.rarityCount[rarity]}x\n`;
