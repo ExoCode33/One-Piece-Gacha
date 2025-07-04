@@ -2,7 +2,7 @@ const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, Butt
 const { createUltimateCinematicExperience } = require('../animations/gacha');
 const DatabaseManager = require('../database/manager');
 const { CombatSystem, DEVIL_FRUIT_ELEMENTS } = require('../data/counter-system');
-const { generateRandomDevilFruit, getTotalFruits } = require('../data/devilfruit');
+const { generateRandomDevilFruit } = require('../data/devilfruit');
 const { generateParticles } = require('../animations/particles');
 const { getChangingIndicators } = require('../animations/indicators');
 
@@ -158,7 +158,7 @@ async function analyzeEnhancedCollection(userFruits, userLevel = 0) {
     const analysis = {
         totalFruits: userFruits.length,
         uniqueFruits: new Set(userFruits.map(f => f.fruit_id)).size,
-        totalAvailableFruits: 50, // Fixed number since getTotalFruits might not exist
+        totalAvailableFruits: 150, // Updated to match your 150 fruits database
         totalHunts: userFruits.length, // Each fruit is a hunt
         rarityDistribution: {},
         duplicateInfo: {},
