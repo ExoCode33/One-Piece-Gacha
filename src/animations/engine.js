@@ -1,4 +1,5 @@
-const { DevilFruitDatabase } = require('../data/devilfruit');
+// Import the correct function from devilfruit.js
+const { generateRandomDevilFruit, RARITY_RATES } = require('../data/devilfruit');
 
 // ═══════════════════════════════════════════════════════════════════
 //                     DEBUG SYSTEM FOR TESTING
@@ -43,6 +44,26 @@ function setForcedRarity(rarity) {
     return true;
 }
 
+// Function to calculate rarity based on probabilities (moved from devilfruit.js)
+function calculateDropRarity() {
+    // Generate random number between 0-100
+    const roll = Math.random() * 100;
+    
+    // Determine rarity based on probabilities
+    let cumulativeRate = 0;
+    let selectedRarity = 'common';
+    
+    for (const [rarity, rate] of Object.entries(RARITY_RATES)) {
+        cumulativeRate += rate;
+        if (roll <= cumulativeRate) {
+            selectedRarity = rarity;
+            break;
+        }
+    }
+    
+    return selectedRarity;
+}
+
 function getTestRarity() {
     // If debug mode is enabled and a rarity is forced, use it
     if (DEBUG_CONFIG.enabled && DEBUG_CONFIG.forcedRarity) {
@@ -53,7 +74,7 @@ function getTestRarity() {
     }
     
     // Otherwise use normal rarity calculation
-    const rarity = DevilFruitDatabase.calculateDropRarity();
+    const rarity = calculateDropRarity();
     if (DEBUG_CONFIG.logMessages && DEBUG_CONFIG.enabled) {
         console.log(`🎲 Debug Mode: Random rarity rolled: ${rarity}`);
     }
