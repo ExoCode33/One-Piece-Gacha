@@ -248,14 +248,14 @@ function updateTransitionFrame(frame, targetFruit = null, rewardColor = 0x00FF00
     const radius = transitionFrame;
     const barLength = 20;
     
-    // Create the beautiful outward transition (keeping your original logic)
+    // Create the beautiful outward transition (fixing the off-by-1 issue)
     const positions = [];
     for (let i = 0; i < barLength; i++) {
-        const distanceFromCenter9 = Math.abs(i - 9);
-        const distanceFromCenter10 = Math.abs(i - 10);
-        const minDistanceFromCenter = Math.min(distanceFromCenter9, distanceFromCenter10);
+        // Fix: Use exact center calculation for perfect symmetry
+        const centerLeft = 9.5;  // Exact center between positions 9 and 10
+        const distanceFromCenter = Math.abs(i - centerLeft);
         
-        if (minDistanceFromCenter <= radius) {
+        if (distanceFromCenter <= radius) {
             const rewardEmoji = getRarityEmoji(targetFruit?.rarity || 'common');
             positions.push(rewardEmoji);
         } else {
@@ -562,17 +562,24 @@ async function createUltimateCinematicExperience(interaction, userLevel, isIniti
             }
         }
         
-        // Calculate user stats for final reveal
+        // IMPORTANT: Save to database BEFORE calculating user stats
+        console.log(`💾 Saving fruit to database: ${targetFruit.name}`);
+        await DatabaseManager.ensureUser(interaction.user.id, interaction.user.username);
+        await DatabaseManager.saveUserFruit(interaction.user.id, targetFruit);
+        await DatabaseManager.updateUserStats(interaction.user.id);
+        console.log(`✅ Fruit saved successfully to database`);
+        
+        // Calculate user stats for final reveal AFTER saving
         const userData = await DatabaseManager.getUser(interaction.user.id);
         const userFruits = await DatabaseManager.getUserFruits(interaction.user.id);
         
-        // Check for duplicates of this specific fruit
-        const existingFruit = userFruits.find(fruit => fruit.fruit_id === targetFruit.id);
-        const duplicateCount = userFruits.filter(fruit => fruit.fruit_id === targetFruit.id).length;
-        const isNewFruit = !existingFruit;
+        // Check for duplicates of this specific fruit (now including the one we just saved)
+        const duplicatesOfThisFruit = userFruits.filter(fruit => fruit.fruit_id === targetFruit.id);
+        const duplicateCount = duplicatesOfThisFruit.length - 1; // Subtract 1 because we just added it
+        const isNewFruit = duplicateCount === 0;
         
         let userStats = {
-            totalFruits: userFruits.length + 1, // +1 for the fruit we're about to add
+            totalFruits: userFruits.length, // Now this includes the fruit we just saved
             totalPower: 0,
             duplicateCount: duplicateCount,
             isNewFruit: isNewFruit
@@ -599,11 +606,10 @@ async function createUltimateCinematicExperience(interaction, userLevel, isIniti
                 userStats.totalPower += totalFruitPower * fruitData.count;
             });
             
-            // Add current fruit power (with its duplicate bonus)
+            // Add current fruit power (it's already included in userFruits now)
             const currentFruitBasePower = CombatSystem.calculateBasePower(targetFruit.rarity);
-            const currentDuplicateBonus = 1 + duplicateCount * 0.01; // Include the new duplicate
+            const currentDuplicateBonus = 1 + duplicateCount * 0.01; // Bonus based on duplicates
             const currentFruitPower = Math.floor(currentFruitBasePower * levelMultiplier * currentDuplicateBonus);
-            userStats.totalPower += currentFruitPower;
             userStats.currentFruitPower = currentFruitPower;
         }
         
@@ -628,13 +634,10 @@ async function createUltimateCinematicExperience(interaction, userLevel, isIniti
             components: [actionRow]
         });
         
-        // Save to database
-        await DatabaseManager.saveUserFruit(interaction.user.id, targetFruit);
-        await DatabaseManager.updateUserStats(interaction.user.id);
-        
         const connectionTime = Date.now() - connectionStart;
         console.log(`📡 Connection quality: ${Math.round(connectionTime/attempts)}ms`);
         console.log(`🎊 Single hunt success: ${targetFruit.name} (${targetFruit.rarity}) for ${interaction.user.username}`);
+        console.log(`📊 Total fruits in collection: ${userStats.totalFruits}`);
         
     } catch (error) {
         console.error('🚨 Animation Error:', error);
