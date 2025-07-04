@@ -185,8 +185,6 @@ function updateAnimationFrame(frame, targetFruit = null, targetType = 'Paramecia
         "",
         `*${description}*`,
         "",
-        `${particles}`,
-        "",
         `${rainbowPattern}`
     ].join('\n');
     
@@ -195,7 +193,7 @@ function updateAnimationFrame(frame, targetFruit = null, targetType = 'Paramecia
         title: "🏴‍☠️ Devil Fruit Hunt - Scanning Phase",
         description: content,
         footer: { 
-            text: `🌊 Scan ${frame + 1}/18 | Grand Line Energy: ${Math.floor(Math.random() * 40 + 60)}%` 
+            text: "🌊 Hunting in progress..." 
         },
         timestamp: new Date()
     };
@@ -231,8 +229,6 @@ function updateProgressionFrame(frame, targetFruit = null, targetType = 'Paramec
         "",
         `*${description}*`,
         "",
-        `${particles}`,
-        "",
         `${rainbowPattern}`
     ].join('\n');
     
@@ -241,7 +237,7 @@ function updateProgressionFrame(frame, targetFruit = null, targetType = 'Paramec
         title: "⚡ Devil Fruit Hunt - Crystallization Phase",
         description: content,
         footer: { 
-            text: `⚡ Crystallization ${actualFrame + 1}/12 | Power Surge: ${Math.floor(Math.random() * 30 + 70)}%` 
+            text: "⚡ Power crystallizing..." 
         },
         timestamp: new Date()
     };
@@ -306,8 +302,6 @@ function updateTransitionFrame(frame, targetFruit = null, rewardColor = 0x00FF00
         "",
         `*${description}*`,
         "",
-        `${particles}`,
-        "",
         `${transitionBar}`
     ].join('\n');
     
@@ -316,7 +310,7 @@ function updateTransitionFrame(frame, targetFruit = null, rewardColor = 0x00FF00
         title: "💎 Devil Fruit Hunt - Manifestation Phase",
         description: content,
         footer: { 
-            text: `💎 Manifestation ${transitionFrame + 1}/10 | Reality Anchor: ${Math.floor(Math.random() * 20 + 80)}%` 
+            text: "💎 Manifestation in progress..." 
         },
         timestamp: new Date()
     };
