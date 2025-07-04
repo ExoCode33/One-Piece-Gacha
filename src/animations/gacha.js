@@ -1,104 +1,83 @@
-// Enhanced Devil Fruit Gacha Animation System
-// Fixed: Perfect sync + Dynamic text + Hidden bottom transition + NO updateIndicators
+// Enhanced Devil Fruit Gacha Animation System - Professional Grade
+// Keeps rainbow sync + outward transition, but with premium presentation
 
 const rainbowColors = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪', '🟫'];
 const rainbowEmbedColors = [0xFF0000, 0xFF8000, 0xFFFF00, 0x00FF00, 0x0080FF, 0x8000FF, 0x654321];
 
-// Dynamic animation text pools (48 total texts)
-const DYNAMIC_ANIMATION_TEXT = {
-    pool1: [
-        "🌊 The Grand Line's energy stirs...",
-        "⚡ Devil Fruit powers awakening...",
-        "🌪️ Mysterious forces gathering...",
-        "🔮 Ancient energies converging...",
-        "🌟 Legendary power approaching...",
-        "⚔️ The sea trembles with anticipation...",
-        "🏴‍☠️ Pirate destiny manifesting...",
-        "💫 Cosmic forces aligning..."
+// ═══════════════════════════════════════════════════════════════════
+//                    PROFESSIONAL TEXT SYSTEMS
+// ═══════════════════════════════════════════════════════════════════
+
+// Main descriptive text that progresses through the hunt
+const HUNT_DESCRIPTIONS = {
+    // Phase 1: Mystery Building (Frames 0-5)
+    mystery: [
+        "The Grand Line's mysterious energies swirl through the depths...",
+        "Ancient Devil Fruit essence stirs in the ocean's heart...",
+        "Whispers of legendary power echo across the waves...",
+        "The sea itself trembles with anticipation...",
+        "Reality begins to bend around an emerging force...",
+        "Destiny threads weave together in the cosmic tapestry..."
     ],
-    pool2: [
-        "🌀 Power spirals intensifying...",
-        "⚡ Energy readings off the charts...",
-        "🔥 Flames of destiny igniting...",
-        "🌊 Oceanic forces building...",
-        "💎 Crystalline power forming...",
-        "🌟 Starlight energy gathering...",
-        "⚔️ Battle aura expanding...",
-        "🏴‍☠️ Pirate legend emerging..."
+    
+    // Phase 2: Power Rising (Frames 6-11)
+    rising: [
+        "Tremendous energy cascades through dimensional barriers...",
+        "The fruit's true nature fights to break through...",
+        "Waves of power ripple across space and time...",
+        "The ocean's blessing intensifies beyond mortal comprehension...",
+        "Reality crystallizes around a world-changing force...",
+        "The Devil Fruit's legend begins to take physical form..."
     ],
-    pool3: [
-        "🌪️ Manifestation accelerating...",
-        "⚡ Lightning crackling with power...",
-        "🔮 Mystic energies coalescing...",
-        "🌊 Tidal forces converging...",
-        "🔥 Infernal power rising...",
-        "💫 Celestial alignment perfect...",
-        "⚔️ Warrior spirit awakening...",
-        "🏴‍☠️ Legendary crew assembling..."
-    ],
-    pool4: [
-        "💎 Crystallization process active...",
-        "⚡ Electrical storms brewing...",
-        "🌀 Vortex energy stabilizing...",
-        "🌟 Stellar power concentrating...",
-        "🔥 Phoenix flames ascending...",
-        "🌊 Tsunami of power building...",
-        "⚔️ Ancient weapons resonating...",
-        "🏴‍☠️ Yonko-level energy detected..."
-    ],
-    pool5: [
-        "🌪️ Destiny threads weaving...",
-        "💫 Cosmic destiny approaching...",
-        "⚡ Thunder god's blessing...",
-        "🔮 Prophecy fulfillment imminent...",
-        "🌊 Ocean's chosen one...",
-        "🔥 Dragon's breath awakening...",
-        "💎 Diamond will manifesting...",
-        "⚔️ Supreme blade choosing..."
-    ],
-    pool6: [
-        "🌟 Final convergence beginning...",
-        "⚡ Ultimate power crystallizing...",
-        "🌪️ Destiny storm reaching peak...",
-        "🔥 Phoenix rebirth commencing...",
-        "🌊 Leviathan's gift bestowing...",
-        "💫 Stellar coronation starting...",
-        "⚔️ Legend's birth witnessed...",
-        "🏴‍☠️ Pirate King's blessing..."
+    
+    // Phase 3: Manifestation (Frames 12-17)
+    manifestation: [
+        "The legendary power reaches critical manifestation threshold...",
+        "Cosmic forces align to birth a new chapter in history...",
+        "The Grand Line itself acknowledges this moment of destiny...",
+        "Your legend as a Devil Fruit user begins to unfold...",
+        "The sea grants you a power beyond imagination...",
+        "A force that will reshape your very existence emerges..."
     ]
 };
 
-// Progression text pool (12 texts)
-const PROGRESSION_TEXTS = [
-    "🌊 Power crystallization accelerating...",
-    "⚡ Energy matrices aligning perfectly...",
-    "🔥 Destiny flames burning brighter...",
-    "🌪️ Legendary aura intensifying...",
-    "💫 Cosmic forces reaching crescendo...",
-    "⚔️ Ancient power awakening fully...",
-    "🌟 Divine blessing manifesting...",
-    "🏴‍☠️ Pirate legend being born...",
-    "🔮 Mystical transformation completing...",
-    "💎 Ultimate power taking shape...",
-    "🌊 Ocean's will being revealed...",
-    "⚡ Thunder god's final judgment..."
-];
+// Professional status indicators (replaces the red diff blocks)
+const STATUS_INDICATORS = {
+    // Scanning phase - builds mystery without revealing anything
+    scanning: [
+        { energy: "FAINT", aura: "UNKNOWN", potential: "STIRRING" },
+        { energy: "WEAK", aura: "MYSTERIOUS", potential: "BUILDING" },
+        { energy: "MODEST", aura: "ENIGMATIC", potential: "RISING" },
+        { energy: "GROWING", aura: "POWERFUL", potential: "SURGING" },
+        { energy: "STRONG", aura: "LEGENDARY", potential: "CRITICAL" },
+        { energy: "INTENSE", aura: "MYTHICAL", potential: "TRANSCENDENT" }
+    ],
+    
+    // Crystallization phase - more dramatic but still mysterious
+    crystallizing: [
+        { energy: "OVERWHELMING", aura: "DIVINE", potential: "REALITY-BENDING" },
+        { energy: "WORLD-SHAKING", aura: "OMNIPOTENT", potential: "UNIVERSE-ALTERING" },
+        { energy: "TRANSCENDENT", aura: "ABSOLUTE", potential: "LEGEND-FORGING" }
+    ],
+    
+    // Final reveal phase - actual information starts showing
+    revealing: [
+        { energy: "CONFIRMED", aura: "ANALYZED", potential: "MANIFESTATION COMPLETE" }
+    ]
+};
 
-// Transition text pool (10 texts)
-const TRANSITION_TEXTS = [
-    "🌊 Reality crystallizing into form...",
-    "⚡ Power taking physical shape...",
-    "🔥 Legendary essence materializing...",
-    "🌪️ Destiny vortex stabilizing...",
-    "💫 Cosmic energy solidifying...",
-    "⚔️ Ancient force awakening...",
-    "🌟 Divine power manifesting...",
-    "🏴‍☠️ Pirate legend crystallizing...",
-    "🔮 Mystical transformation completing...",
-    "💎 Ultimate ability forming..."
-];
+// Elegant particle effects for different phases
+const PHASE_PARTICLES = {
+    mystery: ['✨', '🌟', '💫', '⭐', '🌌', '💎', '🔮', '⚡'],
+    rising: ['🌊', '⚡', '🔥', '❄️', '🌪️', '💥', '✨', '🌟'],
+    manifestation: ['👑', '💎', '🏆', '⚡', '🌟', '💫', '🔥', '⭐'],
+    transition: ['🎆', '🎇', '✨', '💫', '🌟', '👑', '💎', '🏆']
+};
 
-// Function to get synced rainbow pattern
+// ═══════════════════════════════════════════════════════════════════
+//                    ENHANCED ANIMATION FUNCTIONS
+// ═══════════════════════════════════════════════════════════════════
+
 function getSyncedRainbowPattern(frame, barLength = 20) {
     const positions = [];
     for (let i = 0; i < barLength; i++) {
@@ -108,177 +87,246 @@ function getSyncedRainbowPattern(frame, barLength = 20) {
     return positions.join(' ');
 }
 
-// Function to get embed color synced to first square
 function getEmbedColorSyncedToFirst(frame) {
     const firstSquareColorIndex = (0 - frame + rainbowColors.length * 100) % rainbowColors.length;
     return rainbowEmbedColors[firstSquareColorIndex];
 }
 
-// Function to create grey box with red text and cycling effects synced to rainbow
-function createGreyBoxIndicators(frame, phase, rarity, fruitType) {
-    let rarityText = "";
-    let typeText = "";
+// Professional status display (replaces the ugly red diff blocks)
+function createProfessionalStatusDisplay(frame, phase = 'scanning') {
+    let statusSet;
     
-    if (phase === 'animation' || phase === 'progression') {
-        // Sync rarity cycling with the rainbow colors (leftmost square)
-        const allTypes = ['Paramecia', 'Logia', 'Zoan'];
-        
-        // Get the color index of the leftmost square (position 0)
-        const leftmostColorIndex = (0 - frame + rainbowColors.length * 100) % rainbowColors.length;
-        
-        // Map rainbow colors to rarities (using your getRarityEmoji mapping)
-        const colorToRarity = {
-            0: 'omnipotent',  // 🟥 Red
-            1: 'mythical',    // 🟧 Orange  
-            2: 'legendary',   // 🟨 Yellow
-            3: 'uncommon',    // 🟩 Green
-            4: 'rare',        // 🟦 Blue
-            5: 'epic',        // 🟪 Purple
-            6: 'common'       // 🟫 Brown
-        };
-        
-        const syncedRarity = colorToRarity[leftmostColorIndex];
-        const cycleType = allTypes[frame % allTypes.length];
-        
-        rarityText = `- RARITY: ${syncedRarity.toUpperCase()} -`;
-        typeText = `- TYPE: ${cycleType.toUpperCase()} -`;
-        
-    } else if (phase === 'transition') {
-        // Transition phase - start revealing actual information in later frames
-        if (frame < 5) {
-            // Still cycling but slower
-            const allTypes = ['Paramecia', 'Logia', 'Zoan'];
-            
-            // Sync with leftmost square during transition too
-            const leftmostColorIndex = (0 - (frame + 30) + rainbowColors.length * 100) % rainbowColors.length;
-            const colorToRarity = {
-                0: 'omnipotent', 1: 'mythical', 2: 'legendary', 3: 'uncommon', 
-                4: 'rare', 5: 'epic', 6: 'common'
-            };
-            
-            const syncedRarity = colorToRarity[leftmostColorIndex];
-            const cycleType = allTypes[Math.floor(frame / 2) % allTypes.length];
-            
-            rarityText = `- RARITY: ${syncedRarity.toUpperCase()} -`;
-            typeText = `- TYPE: ${cycleType.toUpperCase()} -`;
-        } else {
-            // Final frames - reveal actual information
-            rarityText = `- RARITY: ${rarity.toUpperCase()} CONFIRMED -`;
-            typeText = `- TYPE: ${fruitType.toUpperCase()} CONFIRMED -`;
-        }
+    if (phase === 'scanning' && frame < 18) {
+        const index = Math.min(Math.floor(frame / 3), STATUS_INDICATORS.scanning.length - 1);
+        statusSet = STATUS_INDICATORS.scanning[index];
+    } else if (phase === 'crystallizing') {
+        const index = Math.min(Math.floor(frame / 4), STATUS_INDICATORS.crystallizing.length - 1);
+        statusSet = STATUS_INDICATORS.crystallizing[index];
+    } else {
+        statusSet = STATUS_INDICATORS.revealing[0];
     }
     
-    // Create grey box format with red text
-    return `\`\`\`diff
-${rarityText}
-${typeText}
-\`\`\``;
-}
-
-// Enhanced dynamic text function with 6 text pools
-function getDynamicAnimationText(frame, rarity = 'common') {
-    const poolIndex = Math.floor(frame / 3) % 6 + 1;
-    const pool = DYNAMIC_ANIMATION_TEXT[`pool${poolIndex}`];
-    
-    // Special dramatic text for high rarity fruits in later frames
-    if (frame >= 15 && (rarity === 'omnipotent' || rarity === 'legendary')) {
-        const dramaticTexts = [
-            "🌟 OMNIPOTENT ENERGY DETECTED!",
-            "⚡ REALITY-BENDING POWER!",
-            "🔥 WORLD-SHAKING FORCE!",
-            "🌊 OCEAN-SPLITTING MIGHT!",
-            "💫 COSMIC-LEVEL ENERGY!",
-            "⚔️ GOD-TIER POWER EMERGING!"
-        ];
-        return dramaticTexts[Math.floor(Math.random() * dramaticTexts.length)];
-    }
-    
-    return pool[Math.floor(Math.random() * pool.length)];
-}
-
-// Main animation frame update function
-function updateAnimationFrame(frame, rarity = 'common', fruitType = 'Paramecia') {
-    // Get synced rainbow pattern for both lines
-    const rainbowPattern = getSyncedRainbowPattern(frame);
-    const embedColor = getEmbedColorSyncedToFirst(frame);
-    const dynamicText = getDynamicAnimationText(frame, rarity);
-    
-    // Get grey box indicators with cycling rarity/type
-    const indicators = createGreyBoxIndicators(frame, 'animation', rarity, fruitType);
-    
+    // Clean, professional layout using Discord's embed field system
     return {
-        color: embedColor,
-        title: "🏴‍☠️ Devil Fruit Hunt",
-        description: `${rainbowPattern}\n\n${dynamicText}\n\n${indicators}\n\n${rainbowPattern}`,
-        footer: { text: `🌊 Frame ${frame + 1}/18 | Grand Line Energy Flowing` }
+        energy: statusSet.energy,
+        aura: statusSet.aura,
+        potential: statusSet.potential
     };
 }
 
-// Progression frame update function
-function updateProgressionFrame(frame, rarity = 'common', fruitType = 'Paramecia') {
-    const actualFrame = frame - 18; // Adjust for progression phase
+// Dynamic description based on hunt phase
+function getHuntDescription(frame) {
+    let phase, descriptions;
+    
+    if (frame < 6) {
+        phase = 'mystery';
+        descriptions = HUNT_DESCRIPTIONS.mystery;
+    } else if (frame < 12) {
+        phase = 'rising';
+        descriptions = HUNT_DESCRIPTIONS.rising;
+    } else {
+        phase = 'manifestation';
+        descriptions = HUNT_DESCRIPTIONS.manifestation;
+    }
+    
+    const index = Math.min(frame % descriptions.length, descriptions.length - 1);
+    return descriptions[index];
+}
+
+// Elegant particle generation
+function getPhaseParticles(frame, intensity = 'normal') {
+    let particleSet;
+    
+    if (frame < 6) {
+        particleSet = PHASE_PARTICLES.mystery;
+    } else if (frame < 12) {
+        particleSet = PHASE_PARTICLES.rising;
+    } else if (frame < 18) {
+        particleSet = PHASE_PARTICLES.manifestation;
+    } else {
+        particleSet = PHASE_PARTICLES.transition;
+    }
+    
+    const count = intensity === 'high' ? 8 : intensity === 'low' ? 4 : 6;
+    const particles = [];
+    
+    for (let i = 0; i < count; i++) {
+        particles.push(particleSet[Math.floor(Math.random() * particleSet.length)]);
+    }
+    
+    return particles.join(' ');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//                    MAIN ANIMATION FRAME FUNCTIONS
+// ═══════════════════════════════════════════════════════════════════
+
+function updateAnimationFrame(frame, targetFruit = null, targetType = 'Paramecia') {
+    // Get synced rainbow pattern and embed color
     const rainbowPattern = getSyncedRainbowPattern(frame);
     const embedColor = getEmbedColorSyncedToFirst(frame);
     
-    const progressionText = PROGRESSION_TEXTS[Math.floor(Math.random() * PROGRESSION_TEXTS.length)];
+    // Get professional status indicators
+    const status = createProfessionalStatusDisplay(frame, 'scanning');
     
-    // Get grey box indicators for progression phase
-    const indicators = createGreyBoxIndicators(actualFrame, 'progression', rarity, fruitType);
+    // Get dynamic description and particles
+    const description = getHuntDescription(frame);
+    const particles = getPhaseParticles(frame);
+    
+    // Create clean, professional embed content
+    const content = [
+        `${rainbowPattern}`,
+        "",
+        `🌊 **GRAND LINE EXPEDITION STATUS** 🌊`,
+        "",
+        `⚡ **Energy Reading:** ${status.energy}`,
+        `🔮 **Aura Analysis:** ${status.aura}`,  
+        `🍈 **Power Potential:** ${status.potential}`,
+        "",
+        `*${description}*`,
+        "",
+        `${particles}`,
+        "",
+        `${rainbowPattern}`
+    ].join('\n');
     
     return {
         color: embedColor,
-        title: "🏴‍☠️ Devil Fruit Hunt - Power Surge",
-        description: `${rainbowPattern}\n\n${progressionText}\n\n${indicators}\n\n${rainbowPattern}`,
-        footer: { text: `🌊 Progression ${actualFrame + 1}/12 | Energy Crystallizing` }
+        title: "🏴‍☠️ Devil Fruit Hunt - Scanning Phase",
+        description: content,
+        footer: { 
+            text: `🌊 Scan ${frame + 1}/18 | Grand Line Energy: ${Math.floor(Math.random() * 40 + 60)}%` 
+        },
+        timestamp: new Date()
     };
 }
 
-// Transition frame update function with perfect symmetry on BOTH lines
-function updateTransitionFrame(frame, rarity = 'common', rewardColor = 0x00FF00, fruitType = 'Paramecia') {
-    const transitionFrame = frame - 30; // Adjust for transition phase
+function updateProgressionFrame(frame, targetFruit = null, targetType = 'Paramecia') {
+    const actualFrame = frame - 18;
+    const rainbowPattern = getSyncedRainbowPattern(frame);
+    const embedColor = getEmbedColorSyncedToFirst(frame);
+    
+    // More intense status for progression phase
+    const status = createProfessionalStatusDisplay(actualFrame, 'crystallizing');
+    
+    // Dramatic progression descriptions
+    const progressionTexts = [
+        "The Devil Fruit's essence breaks through dimensional barriers...",
+        "Reality warps as legendary power takes physical form...",
+        "The ocean itself bows to the emerging force...",
+        "Your destiny as a legend crystallizes before your eyes..."
+    ];
+    
+    const description = progressionTexts[Math.min(actualFrame % progressionTexts.length, progressionTexts.length - 1)];
+    const particles = getPhaseParticles(frame, 'high');
+    
+    const content = [
+        `${rainbowPattern}`,
+        "",
+        `⚡ **POWER CRYSTALLIZATION PROTOCOL** ⚡`,
+        "",
+        `🌟 **Energy State:** ${status.energy}`,
+        `👑 **Divine Aura:** ${status.aura}`,
+        `💎 **Reality Impact:** ${status.potential}`,
+        "",
+        `*${description}*`,
+        "",
+        `${particles}`,
+        "",
+        `${rainbowPattern}`
+    ].join('\n');
+    
+    return {
+        color: embedColor,
+        title: "⚡ Devil Fruit Hunt - Crystallization Phase",
+        description: content,
+        footer: { 
+            text: `⚡ Crystallization ${actualFrame + 1}/12 | Power Surge: ${Math.floor(Math.random() * 30 + 70)}%` 
+        },
+        timestamp: new Date()
+    };
+}
+
+function updateTransitionFrame(frame, targetFruit = null, rewardColor = 0x00FF00, targetType = 'Paramecia') {
+    const transitionFrame = frame - 30;
     const radius = transitionFrame;
     const barLength = 20;
     
-    // Create the transition pattern (same for both top and bottom)
+    // Create the beautiful outward transition (keeping your original logic)
     const positions = [];
     for (let i = 0; i < barLength; i++) {
-        // Calculate distance from both center positions (9 and 10)
         const distanceFromCenter9 = Math.abs(i - 9);
         const distanceFromCenter10 = Math.abs(i - 10);
         const minDistanceFromCenter = Math.min(distanceFromCenter9, distanceFromCenter10);
         
         if (minDistanceFromCenter <= radius) {
-            // Use reward color emojis based on rarity
-            const rewardEmoji = getRarityEmoji(rarity);
+            const rewardEmoji = getRarityEmoji(targetFruit?.rarity || 'common');
             positions.push(rewardEmoji);
         } else {
-            // Use rainbow colors (synced pattern)
             const colorIndex = (i - frame + rainbowColors.length * 100) % rainbowColors.length;
             positions.push(rainbowColors[colorIndex]);
         }
     }
     
-    // BOTH lines show the exact same transition pattern
     const transitionBar = positions.join(' ');
     
-    const transitionText = TRANSITION_TEXTS[Math.floor(Math.random() * TRANSITION_TEXTS.length)];
+    // Transition phase text
+    const transitionTexts = [
+        "The Devil Fruit's power materializes into reality...",
+        "Your legend as a Devil Fruit user begins this moment...",
+        "The Grand Line grants you a power beyond imagination...",
+        "Destiny itself reshapes around your newfound strength..."
+    ];
     
-    // Get grey box indicators for transition phase
-    const indicators = createGreyBoxIndicators(transitionFrame, 'transition', rarity, fruitType);
+    const description = transitionTexts[Math.min(transitionFrame % transitionTexts.length, transitionTexts.length - 1)];
+    const particles = getPhaseParticles(frame, 'high');
+    
+    // Start revealing some actual info in later transition frames
+    let statusDisplay;
+    if (transitionFrame < 6) {
+        statusDisplay = [
+            `🌟 **Materialization:** IN PROGRESS`,
+            `👑 **Legend Status:** EMERGING`,
+            `💎 **Power Class:** MANIFESTING`
+        ].join('\n');
+    } else {
+        statusDisplay = [
+            `🍈 **Devil Fruit:** ${targetFruit?.name || 'CLASSIFIED'}`,
+            `⭐ **Rarity Level:** ${(targetFruit?.rarity || 'unknown').toUpperCase()}`,
+            `🌟 **Fruit Type:** ${targetType.toUpperCase()}`
+        ].join('\n');
+    }
+    
+    const content = [
+        `${transitionBar}`,
+        "",
+        `💎 **LEGENDARY MANIFESTATION SEQUENCE** 💎`,
+        "",
+        statusDisplay,
+        "",
+        `*${description}*`,
+        "",
+        `${particles}`,
+        "",
+        `${transitionBar}`
+    ].join('\n');
     
     return {
-        color: rewardColor,
-        title: "🏴‍☠️ Devil Fruit Hunt - Manifestation",
-        description: `${transitionBar}\n\n${transitionText}\n\n${indicators}\n\n${transitionBar}`,
-        footer: { text: `🌊 Transition ${transitionFrame + 1}/10 | Power Materializing` }
+        color: transitionFrame > 5 ? rewardColor : getEmbedColorSyncedToFirst(frame),
+        title: "💎 Devil Fruit Hunt - Manifestation Phase",
+        description: content,
+        footer: { 
+            text: `💎 Manifestation ${transitionFrame + 1}/10 | Reality Anchor: ${Math.floor(Math.random() * 20 + 80)}%` 
+        },
+        timestamp: new Date()
     };
 }
 
-// Helper function to get rarity emoji
+// Helper function for rarity emojis
 function getRarityEmoji(rarity) {
     const rarityEmojis = {
         'common': '🟫',
-        'uncommon': '🟩',
+        'uncommon': '🟩', 
         'rare': '🟦',
         'epic': '🟪',
         'legendary': '🟨',
@@ -288,267 +336,127 @@ function getRarityEmoji(rarity) {
     return rarityEmojis[rarity] || '🟫';
 }
 
-// Button version functions (identical logic)
-function updateAnimationFrameButton(frame, rarity = 'common', fruitType = 'Paramecia') {
-    // Get synced rainbow pattern for both lines
-    const rainbowPattern = getSyncedRainbowPattern(frame);
-    const embedColor = getEmbedColorSyncedToFirst(frame);
-    const dynamicText = getDynamicAnimationText(frame, rarity);
+// ═══════════════════════════════════════════════════════════════════
+//                    FINAL REVEAL SYSTEM
+// ═══════════════════════════════════════════════════════════════════
+
+function createFinalRevealEmbed(fruit, userStats) {
+    const rewardEmoji = getRarityEmoji(fruit.rarity);
+    const rewardBar = Array(20).fill(rewardEmoji).join(' ');
     
-    // Get grey box indicators with cycling rarity/type
-    const indicators = createGreyBoxIndicators(frame, 'animation', rarity, fruitType);
+    const rarityTitles = {
+        common: "Common Discovery",
+        uncommon: "Uncommon Treasure",
+        rare: "Rare Artifact", 
+        epic: "Epic Legend",
+        legendary: "Legendary Relic",
+        mythical: "Mythical Wonder",
+        omnipotent: "Omnipotent Force"
+    };
+    
+    const typeEmojis = {
+        'Paramecia': '🔮',
+        'Zoan': '🐺', 
+        'Logia': '🌪️',
+        'Ancient Zoan': '🦕',
+        'Mythical Zoan': '🐉',
+        'Special Paramecia': '✨'
+    };
+    
+    const content = [
+        `${rewardBar}`,
+        "",
+        `🎉 **${rarityTitles[fruit.rarity] || 'Mysterious Discovery'}**`,
+        "",
+        `🍈 **${fruit.name}**`,
+        `${typeEmojis[fruit.type] || '🍈'} **Type:** ${fruit.type}`,
+        `👤 **Previous User:** ${fruit.previousUser}`,
+        `⭐ **Rarity:** ${fruit.rarity.charAt(0).toUpperCase() + fruit.rarity.slice(1)}`,
+        "",
+        `📖 **Power Description:**`,
+        `*${fruit.description}*`,
+        "",
+        `🔥 **Awakening:** ${fruit.awakening}`,
+        `💧 **Weakness:** ${fruit.weakness}`,
+        "",
+        `📊 **Collection Progress:**`,
+        `🏆 **Total Fruits:** ${userStats?.totalFruits || 1}`,
+        `⚡ **Total Power:** ${(userStats?.totalPower || 0).toLocaleString()} CP`,
+        "",
+        `${rewardBar}`
+    ].join('\n');
     
     return {
-        color: embedColor,
-        title: "🏴‍☠️ Devil Fruit Hunt",
-        description: `${rainbowPattern}\n\n${dynamicText}\n\n${indicators}\n\n${rainbowPattern}`,
-        footer: { text: `🌊 Frame ${frame + 1}/18 | Grand Line Energy Flowing` }
+        color: getRarityColor(fruit.rarity),
+        title: "🏴‍☠️ Devil Fruit Claimed!",
+        description: content,
+        footer: { 
+            text: "🌊 Your legend grows stronger | Set sail with your new power!" 
+        },
+        timestamp: new Date()
     };
 }
 
-function updateProgressionFrameButton(frame, rarity = 'common', fruitType = 'Paramecia') {
-    const actualFrame = frame - 18;
-    const rainbowPattern = getSyncedRainbowPattern(frame);
-    const embedColor = getEmbedColorSyncedToFirst(frame);
-    
-    const progressionText = PROGRESSION_TEXTS[Math.floor(Math.random() * PROGRESSION_TEXTS.length)];
-    
-    // Get grey box indicators for progression phase
-    const indicators = createGreyBoxIndicators(actualFrame, 'progression', rarity, fruitType);
-    
-    return {
-        color: embedColor,
-        title: "🏴‍☠️ Devil Fruit Hunt - Power Surge",
-        description: `${rainbowPattern}\n\n${progressionText}\n\n${indicators}\n\n${rainbowPattern}`,
-        footer: { text: `🌊 Progression ${actualFrame + 1}/12 | Energy Crystallizing` }
-    };
-}
-
-function updateTransitionFrameButton(frame, rarity = 'common', rewardColor = 0x00FF00, fruitType = 'Paramecia') {
-    const transitionFrame = frame - 30;
-    const radius = transitionFrame;
-    const barLength = 20;
-    
-    // Create the transition pattern (same for both top and bottom)
-    const positions = [];
-    for (let i = 0; i < barLength; i++) {
-        // Calculate distance from both center positions (9 and 10)
-        const distanceFromCenter9 = Math.abs(i - 9);
-        const distanceFromCenter10 = Math.abs(i - 10);
-        const minDistanceFromCenter = Math.min(distanceFromCenter9, distanceFromCenter10);
-        
-        if (minDistanceFromCenter <= radius) {
-            // Use reward color emojis based on rarity
-            const rewardEmoji = getRarityEmoji(rarity);
-            positions.push(rewardEmoji);
-        } else {
-            // Use rainbow colors (synced pattern)
-            const colorIndex = (i - frame + rainbowColors.length * 100) % rainbowColors.length;
-            positions.push(rainbowColors[colorIndex]);
-        }
-    }
-    
-    // BOTH lines show the exact same transition pattern
-    const transitionBar = positions.join(' ');
-    
-    const transitionText = TRANSITION_TEXTS[Math.floor(Math.random() * TRANSITION_TEXTS.length)];
-    
-    // Get grey box indicators for transition phase
-    const indicators = createGreyBoxIndicators(transitionFrame, 'transition', rarity, fruitType);
-    
-    return {
-        color: rewardColor,
-        title: "🏴‍☠️ Devil Fruit Hunt - Manifestation",
-        description: `${transitionBar}\n\n${transitionText}\n\n${indicators}\n\n${transitionBar}`,
-        footer: { text: `🌊 Transition ${transitionFrame + 1}/10 | Power Materializing` }
-    };
-}
-
-// Main animation creation function
-async function createUltimateCinematicExperience(interaction, fruit, userStats, isInitialReply = true) {
-    const frameDelay = 1000; // 1 second per frame
-    const rewardColor = getRarityColor(fruit.rarity);
-    let frame = 0;
-    let currentMessage;
-    let attempts = 0;
-    const maxAttempts = 50;
-    
-    try {
-        console.log(`🎯 Animation Starting: ${fruit.name} (${fruit.rarity})`);
-        const connectionStart = Date.now();
-        
-        // Phase 1: Main Animation (18 frames)
-        for (frame = 0; frame < 18; frame++) {
-            attempts++;
-            if (attempts > maxAttempts) {
-                console.log(`🚨 Max attempts reached, skipping to reveal`);
-                break;
-            }
-            
-            const embed = updateAnimationFrame(frame, fruit.rarity, fruit.type);
-            
-            if (frame === 0) {
-                if (isInitialReply) {
-                    currentMessage = await interaction.reply({
-                        embeds: [embed],
-                        fetchReply: true
-                    });
-                } else {
-                    currentMessage = await interaction.editReply({
-                        embeds: [embed],
-                        components: []
-                    });
-                }
-            } else {
-                await interaction.editReply({
-                    embeds: [embed],
-                    components: []
-                });
-            }
-            
-            await new Promise(resolve => setTimeout(resolve, frameDelay));
-        }
-        
-        const animationFrames = frame;
-        console.log(`📊 Animation Performance: ${animationFrames}/18 frames (${(animationFrames/18*100).toFixed(1)}%) - ${attempts} total attempts`);
-        
-        // Phase 2: Progression (12 frames)
-        if (attempts <= maxAttempts) {
-            console.log(`🌊 Starting progression phase...`);
-            
-            for (let progFrame = 0; progFrame < 12; progFrame++) {
-                attempts++;
-                if (attempts > maxAttempts) break;
-                
-                const embed = updateProgressionFrame(frame, fruit.rarity, fruit.type);
-                
-                await interaction.editReply({
-                    embeds: [embed],
-                    components: []
-                });
-                
-                frame++;
-                await new Promise(resolve => setTimeout(resolve, frameDelay));
-            }
-        }
-        
-        // Phase 3: Transition (10 frames)
-        if (attempts <= maxAttempts) {
-            console.log(`🎆 Smooth transition: Rainbow to reward color...`);
-            
-            for (let transFrame = 0; transFrame < 10; transFrame++) {
-                attempts++;
-                if (attempts > maxAttempts) break;
-                
-                const embed = updateTransitionFrame(frame, fruit.rarity, rewardColor, fruit.type);
-                
-                await interaction.editReply({
-                    embeds: [embed],
-                    components: []
-                });
-                
-                frame++;
-                await new Promise(resolve => setTimeout(resolve, frameDelay));
-            }
-        }
-        
-        // Final reveal
-        console.log(`🎊 Gradual reveal: Devil Fruit information...`);
-        
-        const finalEmbed = createFinalRevealEmbed(fruit, userStats);
-        const actionRow = createActionButtons();
-        
-        await interaction.editReply({
-            embeds: [finalEmbed],
-            components: [actionRow]
-        });
-        
-        const connectionTime = Date.now() - connectionStart;
-        console.log(`📡 Connection quality: ${Math.round(connectionTime/attempts)}ms`);
-        console.log(`🎊 Single hunt success: ${fruit.name} (${fruit.rarity}) for ${interaction.user.username}`);
-        
-    } catch (error) {
-        console.error('🚨 Animation Error:', error);
-        
-        const errorEmbed = {
-            color: 0xFF0000,
-            title: "🚨 Animation Error",
-            description: "Something went wrong with the animation. Here's your fruit anyway!",
-            fields: [
-                { name: "🍎 Devil Fruit", value: fruit.name || 'Unknown Fruit', inline: true },
-                { name: "⭐ Rarity", value: fruit.rarity || 'unknown', inline: true },
-                { name: "💪 Combat Power", value: (fruit.combatPower || 0).toLocaleString(), inline: true }
-            ]
-        };
-        
-        const actionRow = createActionButtons();
-        
-        await interaction.editReply({
-            embeds: [errorEmbed],
-            components: [actionRow]
-        });
-    }
-}
-
-// Helper functions
 function getRarityColor(rarity) {
     const colors = {
-        'common': 0x8B4513,
-        'uncommon': 0x00FF00,
-        'rare': 0x0080FF,
-        'epic': 0x8000FF,
-        'legendary': 0xFFD700,
-        'mythical': 0xFF8000,
-        'omnipotent': 0xFF0000
+        'common': 0x8B4513,     // Brown
+        'uncommon': 0x00FF00,   // Green  
+        'rare': 0x0080FF,       // Blue
+        'epic': 0x8000FF,       // Purple
+        'legendary': 0xFFD700,  // Gold
+        'mythical': 0xFF8000,   // Orange
+        'omnipotent': 0xFF0000  // Red
     };
     return colors[rarity] || 0x8B4513;
 }
 
-function createFinalRevealEmbed(fruit, userStats) {
-    return {
-        color: getRarityColor(fruit.rarity),
-        title: `🏴‍☠️ Devil Fruit Obtained!`,
-        description: `🎉 **${fruit.name}** has been added to your collection!`,
-        fields: [
-            { name: "🍎 Devil Fruit", value: fruit.name, inline: true },
-            { name: "⭐ Rarity", value: fruit.rarity, inline: true },
-            { name: "🌟 Type", value: fruit.type, inline: true },
-            { name: "💪 Combat Power", value: fruit.combatPower.toLocaleString(), inline: true },
-            { name: "🏆 Total Fruits", value: userStats.totalFruits.toString(), inline: true },
-            { name: "⚡ Total Power", value: userStats.totalPower.toLocaleString(), inline: true }
-        ],
-        footer: { text: `🌊 Set sail and master your new power!` }
-    };
+// ═══════════════════════════════════════════════════════════════════
+//                    BUTTON VERSIONS (FOR HUNT AGAIN)
+// ═══════════════════════════════════════════════════════════════════
+
+function updateAnimationFrameButton(frame, targetFruit = null, targetType = 'Paramecia') {
+    return updateAnimationFrame(frame, targetFruit, targetType);
 }
 
-function createActionButtons() {
-    const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-    
-    return new ActionRowBuilder()
-        .addComponents(
-            new ButtonBuilder()
-                .setCustomId('huntAgain')
-                .setLabel('🍈 Hunt Again')
-                .setStyle(ButtonStyle.Primary),
-            new ButtonBuilder()
-                .setCustomId('viewCollection')
-                .setLabel('📚 My Collection')
-                .setStyle(ButtonStyle.Secondary)
-        );
+function updateProgressionFrameButton(frame, targetFruit = null, targetType = 'Paramecia') {
+    return updateProgressionFrame(frame, targetFruit, targetType);
 }
+
+function updateTransitionFrameButton(frame, targetFruit = null, rewardColor = 0x00FF00, targetType = 'Paramecia') {
+    return updateTransitionFrame(frame, targetFruit, rewardColor, targetType);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//                    EXPORT ALL FUNCTIONS
+// ═══════════════════════════════════════════════════════════════════
 
 module.exports = {
-    createUltimateCinematicExperience,
+    // Main animation functions
     updateAnimationFrame,
-    updateProgressionFrame,
+    updateProgressionFrame, 
     updateTransitionFrame,
+    
+    // Button versions
     updateAnimationFrameButton,
     updateProgressionFrameButton,
     updateTransitionFrameButton,
-    getDynamicAnimationText,
+    
+    // Final reveal
+    createFinalRevealEmbed,
+    
+    // Utility functions
     getSyncedRainbowPattern,
     getEmbedColorSyncedToFirst,
     getRarityColor,
-    createFinalRevealEmbed,
-    createActionButtons
+    getRarityEmoji,
+    
+    // Professional systems
+    createProfessionalStatusDisplay,
+    getHuntDescription,
+    getPhaseParticles,
+    
+    // Data exports
+    HUNT_DESCRIPTIONS,
+    STATUS_INDICATORS,
+    PHASE_PARTICLES
 };
