@@ -277,17 +277,32 @@ function updateTransitionFrame(frame, targetFruit = null, rewardColor = 0x00FF00
     const description = transitionTexts[Math.min(transitionFrame % transitionTexts.length, transitionTexts.length - 1)];
     const particles = getPhaseParticles(frame, 'high');
     
-    // Start revealing some actual info in later transition frames
+    // Keep everything mysterious until the very end
     let statusDisplay;
-    if (transitionFrame < 6) {
+    if (transitionFrame < 9) {
+        // Stay mysterious for almost the entire transition
+        const mysteriousStatus = [
+            { phase: "MATERIALIZATION", status: "IN PROGRESS", essence: "MANIFESTING" },
+            { phase: "CONVERGENCE", status: "CRITICAL", essence: "STABILIZING" },
+            { phase: "CRYSTALLIZATION", status: "ACTIVE", essence: "BINDING" },
+            { phase: "REALITY ANCHOR", status: "ENGAGED", essence: "SOLIDIFYING" },
+            { phase: "DIMENSIONAL LOCK", status: "SECURED", essence: "COMPLETING" },
+            { phase: "LEGEND BIRTH", status: "IMMINENT", essence: "FINALIZING" },
+            { phase: "DESTINY SEAL", status: "ACTIVATING", essence: "TRANSCENDING" },
+            { phase: "POWER BIRTH", status: "ULTIMATE", essence: "ASCENDING" },
+            { phase: "FINAL PHASE", status: "LEGENDARY", essence: "MYTHICAL" }
+        ];
+        
+        const currentStatus = mysteriousStatus[Math.min(transitionFrame, mysteriousStatus.length - 1)];
         statusDisplay = [
-            `🌟 **Materialization:** IN PROGRESS`,
-            `👑 **Legend Status:** EMERGING`,
-            `💎 **Power Class:** MANIFESTING`
+            `🌟 **${currentStatus.phase}:** ${currentStatus.status}`,
+            `👑 **Legend Status:** ${currentStatus.essence}`,
+            `💎 **Power Class:** TRANSCENDENT`
         ].join('\n');
     } else {
+        // Only reveal in the very final frame (frame 9)
         statusDisplay = [
-            `🍈 **Devil Fruit:** ${targetFruit?.name || 'CLASSIFIED'}`,
+            `🍈 **Devil Fruit:** ${targetFruit?.name || 'LEGENDARY POWER'}`,
             `⭐ **Rarity Level:** ${(targetFruit?.rarity || 'unknown').toUpperCase()}`,
             `🌟 **Fruit Type:** ${targetType.toUpperCase()}`
         ].join('\n');
@@ -357,6 +372,25 @@ function createFinalRevealEmbed(fruit, userStats) {
         'Special Paramecia': '✨'
     };
     
+    // Handle duplicate display
+    let duplicateInfo = '';
+    let powerInfo = '';
+    
+    if (userStats?.duplicateCount > 0) {
+        const duplicateBonus = userStats.duplicateCount * 1; // 1% per duplicate
+        duplicateInfo = `🔄 **Duplicate #${userStats.duplicateCount + 1}** (+${duplicateBonus}% CP Bonus!)\n`;
+        
+        if (userStats.currentFruitPower) {
+            powerInfo = `⚔️ **Combat Power:** ${userStats.currentFruitPower.toLocaleString()} CP\n`;
+        }
+    } else {
+        duplicateInfo = `✨ **New Discovery!** First time obtaining this fruit!\n`;
+        
+        if (userStats?.currentFruitPower) {
+            powerInfo = `⚔️ **Combat Power:** ${userStats.currentFruitPower.toLocaleString()} CP\n`;
+        }
+    }
+    
     const content = [
         `${rewardBar}`,
         "",
@@ -367,6 +401,8 @@ function createFinalRevealEmbed(fruit, userStats) {
         `👤 **Previous User:** ${fruit.previousUser}`,
         `⭐ **Rarity:** ${fruit.rarity.charAt(0).toUpperCase() + fruit.rarity.slice(1)}`,
         "",
+        duplicateInfo,
+        powerInfo,
         `📖 **Power Description:**`,
         `*${fruit.description}*`,
         "",
@@ -382,10 +418,12 @@ function createFinalRevealEmbed(fruit, userStats) {
     
     return {
         color: getRarityColor(fruit.rarity),
-        title: "🏴‍☠️ Devil Fruit Claimed!",
+        title: userStats?.isNewFruit ? "🏴‍☠️ New Devil Fruit Discovered!" : "🏴‍☠️ Devil Fruit Enhanced!",
         description: content,
         footer: { 
-            text: "🌊 Your legend grows stronger | Set sail with your new power!" 
+            text: userStats?.duplicateCount > 0 ? 
+                "🌊 Duplicate mastery increases your power! | Set sail stronger than before!" :
+                "🌊 Your legend grows stronger | Set sail with your new power!" 
         },
         timestamp: new Date()
     };
@@ -528,22 +566,45 @@ async function createUltimateCinematicExperience(interaction, userLevel, isIniti
         const userData = await DatabaseManager.getUser(interaction.user.id);
         const userFruits = await DatabaseManager.getUserFruits(interaction.user.id);
         
+        // Check for duplicates of this specific fruit
+        const existingFruit = userFruits.find(fruit => fruit.fruit_id === targetFruit.id);
+        const duplicateCount = userFruits.filter(fruit => fruit.fruit_id === targetFruit.id).length;
+        const isNewFruit = !existingFruit;
+        
         let userStats = {
             totalFruits: userFruits.length + 1, // +1 for the fruit we're about to add
-            totalPower: 0
+            totalPower: 0,
+            duplicateCount: duplicateCount,
+            isNewFruit: isNewFruit
         };
         
-        // Calculate total power if user has level
+        // Calculate total power with duplicate bonuses
         if (userLevel > 0) {
             const levelMultiplier = CombatSystem.getLevelMultiplier(userLevel);
+            
+            // Calculate power for existing fruits with their duplicate bonuses
+            const fruitPowerMap = {};
             userFruits.forEach(fruit => {
-                const basePower = CombatSystem.calculateBasePower(fruit.rarity);
-                userStats.totalPower += Math.floor(basePower * levelMultiplier);
+                if (!fruitPowerMap[fruit.fruit_id]) {
+                    fruitPowerMap[fruit.fruit_id] = { count: 0, rarity: fruit.rarity };
+                }
+                fruitPowerMap[fruit.fruit_id].count++;
             });
             
-            // Add current fruit power
-            const currentFruitPower = CombatSystem.calculateBasePower(targetFruit.rarity);
-            userStats.totalPower += Math.floor(currentFruitPower * levelMultiplier);
+            // Calculate total power including duplicate bonuses
+            Object.values(fruitPowerMap).forEach(fruitData => {
+                const basePower = CombatSystem.calculateBasePower(fruitData.rarity);
+                const duplicateBonus = 1 + (fruitData.count - 1) * 0.01; // 1% per duplicate
+                const totalFruitPower = Math.floor(basePower * levelMultiplier * duplicateBonus);
+                userStats.totalPower += totalFruitPower * fruitData.count;
+            });
+            
+            // Add current fruit power (with its duplicate bonus)
+            const currentFruitBasePower = CombatSystem.calculateBasePower(targetFruit.rarity);
+            const currentDuplicateBonus = 1 + duplicateCount * 0.01; // Include the new duplicate
+            const currentFruitPower = Math.floor(currentFruitBasePower * levelMultiplier * currentDuplicateBonus);
+            userStats.totalPower += currentFruitPower;
+            userStats.currentFruitPower = currentFruitPower;
         }
         
         // Final reveal with enhanced embed
