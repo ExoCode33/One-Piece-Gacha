@@ -20,6 +20,148 @@ const rarityColors = {
     omnipotent: { emoji: '⬜', embed: 0xFFFFFF }
 };
 
+// ═══════════════════════════════════════════════════════════════════
+//                    DYNAMIC ANIMATION TEXT SYSTEM
+// ═══════════════════════════════════════════════════════════════════
+
+// Dynamic middle text that changes throughout animation
+const DYNAMIC_ANIMATION_TEXT = [
+    // Early frames (0-5)
+    [
+        "*A mysterious presence stirs in the depths of the Grand Line...*",
+        "*Ancient powers awaken from their eternal slumber...*",
+        "*The ocean currents whisper of hidden treasures...*",
+        "*Legendary energies pulse through the mystical waters...*",
+        "*The World Government's secret vaults tremble...*",
+        "*Pirates from across the seas sense a disturbance...*"
+    ],
+    // Mid frames (6-11)
+    [
+        "*The Devil Fruit's aura begins to manifest...*",
+        "*Reality bends as the fruit's true nature emerges...*",
+        "*The sea itself holds its breath in anticipation...*",
+        "*Ancient prophecies speak of this very moment...*",
+        "*The fruit chooses its next worthy wielder...*",
+        "*Cosmic forces align to reveal destiny itself...*"
+    ],
+    // Late frames (12-17)
+    [
+        "*The Devil Fruit's power crystallizes into reality...*",
+        "*Your fate as a Devil Fruit user is being decided...*",
+        "*The Grand Line's greatest secret reveals itself...*",
+        "*History is about to be rewritten by this discovery...*",
+        "*The fruit's legendary power surges toward you...*",
+        "*A new chapter in the Age of Pirates begins...*"
+    ]
+];
+
+// Phase-specific text for progression and transition
+const PHASE_TEXTS = {
+    progression: [
+        "*The Devil Fruit's essence takes physical form...*",
+        "*Primordial energies coalesce into something tangible...*",
+        "*The fruit's consciousness awakens after centuries...*",
+        "*Reality warps as the fruit breaches dimensional barriers...*",
+        "*The ocean's deepest mysteries rise to the surface...*",
+        "*Time itself seems to slow as power manifests...*",
+        "*The fruit's legendary aura overwhelms all other energies...*",
+        "*Destiny itself guides the fruit toward its new master...*",
+        "*The World's balance shifts with this discovery...*",
+        "*Ancient seals break as the fruit chooses you...*",
+        "*The fruit's true form begins to solidify...*",
+        "*Your pirate legend is about to be born...*"
+    ],
+    
+    transition: [
+        "*The Devil Fruit's power takes its final form...*",
+        "*Reality stabilizes around your newfound destiny...*",
+        "*The fruit's legendary essence binds to your soul...*",
+        "*Your journey as a Devil Fruit user begins now...*",
+        "*The Grand Line welcomes its newest power holder...*",
+        "*History will remember this moment forever...*",
+        "*The fruit has chosen... and you are worthy...*",
+        "*A new legend is born in the Age of Pirates...*",
+        "*The ocean itself acknowledges your new power...*",
+        "*Your destiny as a Devil Fruit user is sealed...*"
+    ]
+};
+
+// Rarity-specific dramatic text
+const RARITY_SPECIFIC_TEXT = {
+    common: [
+        "*A humble power stirs, but every journey begins with a single step...*",
+        "*Not all treasures shine bright, but all have their purpose...*",
+        "*The fruit may be common, but your potential is limitless...*"
+    ],
+    uncommon: [
+        "*An intriguing power emerges from the depths...*",
+        "*This fruit holds more promise than meets the eye...*",
+        "*Uncommon powers often surprise even the greatest pirates...*"
+    ],
+    rare: [
+        "*A significant force awakens in the Grand Line...*",
+        "*This power has changed the course of many battles...*",
+        "*The Marines would pay handsomely for this discovery...*"
+    ],
+    epic: [
+        "*An extraordinary power breaks free from legend...*",
+        "*Even the Yonko would covet this incredible force...*",
+        "*This fruit's power has toppled kingdoms before...*"
+    ],
+    legendary: [
+        "*A world-shaking power emerges from the abyss...*",
+        "*Legends speak of this fruit in hushed, reverent tones...*",
+        "*The World Government's greatest fear has been realized...*"
+    ],
+    mythical: [
+        "*Reality itself trembles before this godlike power...*",
+        "*A force that could reshape the very world awakens...*",
+        "*Even the ancient weapons pale before this might...*"
+    ],
+    omnipotent: [
+        "*THE IMPOSSIBLE HAS HAPPENED! REALITY BENDS TO YOUR WILL!*",
+        "*THE GODS THEMSELVES ACKNOWLEDGE YOUR SUPREME DESTINY!*",
+        "*THE VERY FABRIC OF EXISTENCE REWRITES ITSELF FOR YOU!*"
+    ]
+};
+
+// Function to get dynamic text based on frame and fruit info
+function getDynamicAnimationText(frame, targetFruit = null, phase = 'main') {
+    if (phase === 'progression') {
+        const randomIndex = Math.floor(Math.random() * PHASE_TEXTS.progression.length);
+        return PHASE_TEXTS.progression[randomIndex];
+    }
+    
+    if (phase === 'transition') {
+        const randomIndex = Math.floor(Math.random() * PHASE_TEXTS.transition.length);
+        return PHASE_TEXTS.transition[randomIndex];
+    }
+    
+    // Main animation phase
+    let textArray;
+    if (frame <= 5) {
+        textArray = DYNAMIC_ANIMATION_TEXT[0];
+    } else if (frame <= 11) {
+        textArray = DYNAMIC_ANIMATION_TEXT[1];
+    } else {
+        textArray = DYNAMIC_ANIMATION_TEXT[2];
+    }
+    
+    // Add rarity-specific text in later frames if we know the target
+    if (frame >= 15 && targetFruit && RARITY_SPECIFIC_TEXT[targetFruit.rarity]) {
+        const rarityTexts = RARITY_SPECIFIC_TEXT[targetFruit.rarity];
+        const randomRarityText = rarityTexts[Math.floor(Math.random() * rarityTexts.length)];
+        return randomRarityText;
+    }
+    
+    const randomIndex = Math.floor(Math.random() * textArray.length);
+    return textArray[randomIndex];
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//                    MAIN ANIMATION FUNCTIONS
+// ═══════════════════════════════════════════════════════════════════
+
 async function createUltimateCinematicExperience(interaction, userLevel = 0) {
     try {
         // Generate target fruit
@@ -138,13 +280,16 @@ async function updateAnimationFrame(interaction, frame, targetFruit, metrics) {
             // Get particles
             const particles = generateParticles();
             
-            // Create animation content
+            // Get dynamic animation text
+            const dynamicText = getDynamicAnimationText(frame, targetFruit, 'main');
+            
+            // Create animation content with dynamic text
             const animationContent = `${topBar}\n\n` +
                 `🌊 **GRAND LINE EXPLORATION** 🌊\n\n` +
                 `⚡ **FRUIT ENERGY:** ${indicators.aura}\n` +
                 `🔮 **RARITY SENSE:** ${indicators.blessing}\n` +
                 `🍈 **DEVIL FRUIT:** ${indicators.typeHint}\n\n` +
-                `*The mystical energies swirl around you...*\n\n` +
+                `${dynamicText}\n\n` +
                 `${bottomBar}\n\n` +
                 `${particles}`;
             
@@ -200,12 +345,15 @@ async function updateProgressionFrame(interaction, progFrame, targetFruit, metri
             
             const particles = generateParticles('intense');
             
+            // Get dynamic progression text
+            const dynamicText = getDynamicAnimationText(progFrame, targetFruit, 'progression');
+            
             const progressContent = `${topBar}\n\n` +
                 `🌊 **POWER CRYSTALLIZING** 🌊\n\n` +
                 `⚡ **FRUIT ENERGY:** ${indicators.aura}\n` +
                 `🔮 **RARITY SENSE:** ${indicators.blessing}\n` +
                 `🍈 **DEVIL FRUIT:** ${indicators.typeHint}\n\n` +
-                `*The Devil Fruit's true nature begins to emerge...*\n\n` +
+                `${dynamicText}\n\n` +
                 `${bottomBar}\n\n` +
                 `${particles}`;
             
@@ -278,9 +426,12 @@ async function updateTransitionFrame(interaction, transFrame, targetFruit, metri
             
             const particles = generateParticles('crystallizing');
             
+            // Get dynamic transition text
+            const dynamicText = getDynamicAnimationText(transFrame, targetFruit, 'transition');
+            
             const transitionContent = `${topBar}\n\n` +
                 `⚡ **CRYSTALLIZING INTO REALITY** ⚡\n\n` +
-                `*The Devil Fruit's power takes its final form...*\n\n` +
+                `${dynamicText}\n\n` +
                 `${bottomBar}\n\n` +
                 `${particles}`;
             
