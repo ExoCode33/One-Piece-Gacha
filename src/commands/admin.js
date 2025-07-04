@@ -23,12 +23,12 @@ module.exports = {
                         .setDescription('Force a specific rarity (requires debug mode)')
                         .setRequired(false)
                         .addChoices(
-                            { name: '⬜ Common', value: 'common' },
+                            { name: '🟫 Common', value: 'common' },
                             { name: '🟩 Uncommon', value: 'uncommon' },
                             { name: '🟦 Rare', value: 'rare' },
                             { name: '🟨 Legendary', value: 'legendary' },
                             { name: '🟥 Mythical', value: 'mythical' },
-                            { name: '🌈 Omnipotent', value: 'omnipotent' },
+                            { name: '🌈 Divine', value: 'omnipotent' },
                             { name: '🎲 Random (Off)', value: 'off' }
                         ))
         ),
@@ -50,7 +50,7 @@ module.exports = {
                         const success = setForcedRarity(rarity);
                         if (success) {
                             const rarityEmojis = {
-                                common: '⬜',
+                                common: '🟫',
                                 uncommon: '🟩', 
                                 rare: '🟦',
                                 legendary: '🟨',
@@ -99,7 +99,7 @@ module.exports = {
                                 inline: false 
                             }
                         )
-                        .setFooter({ text: 'Admin Debug System | Use /admin debug enable to activate testing mode' });
+                        .setFooter({ text: 'Admin Debug System | Use /gacha-admin debug enable to activate testing mode' });
                     
                     await interaction.reply({ embeds: [statusEmbed], ephemeral: true });
                 }
@@ -110,7 +110,7 @@ module.exports = {
                     
                     if (!status.enabled) {
                         await interaction.reply({ 
-                            content: '⚠️ **Debug mode must be enabled first!**\n\nUse `/admin debug enable` to activate debug mode before setting rarities.', 
+                            content: '⚠️ **Debug mode must be enabled first!**\n\nUse `/gacha-admin debug enable` to activate debug mode before setting rarities.', 
                             ephemeral: true 
                         });
                         return;
@@ -126,7 +126,7 @@ module.exports = {
                         const success = setForcedRarity(rarity);
                         if (success) {
                             const rarityEmojis = {
-                                common: '⬜',
+                                common: '🟫',
                                 uncommon: '🟩',
                                 rare: '🟦', 
                                 legendary: '🟨',
