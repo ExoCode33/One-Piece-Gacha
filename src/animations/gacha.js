@@ -127,9 +127,9 @@ ${topRainbow}
 
 **${frameData.desc}**
 
-**🔮 AURA STATUS:** ${indicators.aura}
-**✨ BLESSING LEVEL:** ${indicators.blessing}  
-**🌊 POWER TYPE:** ${indicators.type}
+**⚡ HAKI LEVEL:** ${indicators.haki}
+**💰 BOUNTY:** ${indicators.bounty}  
+**🍈 DEVIL FRUIT:** ${indicators.fruit}
 
 ${bottomRainbow}
 
@@ -219,9 +219,9 @@ ${topRainbow}
 
 **The rainbow flows toward destiny...**
 
-**🔮 AURA STATUS:** ${indicators.aura}
-**✨ BLESSING LEVEL:** ${indicators.blessing}  
-**🌊 POWER TYPE:** ${indicators.type}
+**⚡ HAKI LEVEL:** ${indicators.haki}
+**💰 BOUNTY:** ${indicators.bounty}  
+**🍈 DEVIL FRUIT:** ${indicators.fruit}
 
 ${bottomRainbow}
 
