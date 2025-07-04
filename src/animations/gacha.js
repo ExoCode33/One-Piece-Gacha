@@ -21,6 +21,58 @@ async function createUltimateCinematicExperience(interaction) {
             'legendary': 'ancient',
             'mythical': 'mythical',
             'omnipotent': 'godlike'
+        // FINAL PHASE: Whole bar becomes reward color
+        console.log('🎆 Final phase: Bar becoming reward color...');
+        
+        // Get the reward rarity config using old rarity name
+        const rarityConfig = DevilFruitDatabase.getRarityConfig(oldRarity);
+        
+        // Map old rarities to new progress bar colors
+        const finalBarColors = {
+            'common': '🟫',     // Brown for common
+            'uncommon': '🟩',   // Green 
+            'rare': '🟦',       // Blue
+            'legendary': '🟨',  // Yellow
+            'mythical': '🟥',   // Red
+            'omnipotent': '🟪'  // Purple
+        };
+        
+        const finalSquareColor = finalBarColors[oldRarity] || '🟩';
+        
+        // Create final solid color bar
+        let finalProgressBar = '**TRANSCENDENT**\n';
+        for (let i = 0; i < 20; i++) {
+            finalProgressBar += finalSquareColor;
+            if (i < 19) finalProgressBar += ' ';
+        }
+        
+        try {
+            const finalParticles = ParticlesSystem.createOnePieceParticles(10, 'celebration', oldRarity);
+            
+            const finalColorEmbed = new EmbedBuilder()
+                .setTitle('🌟 **POWER CRYSTALLIZED** 🌟')
+                .setDescription(`
+**The Devil Fruit's true nature is revealed!**
+
+${finalProgressBar}
+
+${finalParticles}
+                `)
+                .setColor(rarityConfig.color)
+                .setFooter({ text: `${rarityConfig.name} Power Manifested` });
+
+            const timeoutDuration = 3500;
+            const updatePromise = huntMessage.edit({ embeds: [finalColorEmbed] });
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Discord API timeout')), timeoutDuration)
+            );
+            
+            await Promise.race([updatePromise, timeoutPromise]);
+            await new Promise(resolve => setTimeout(resolve, 2000)); // Pause before final reveal
+            
+        } catch (error) {
+            console.error(`Final color phase error:`, error.message);
+            await new Promise(resolve => setTimeout(resolve, 1000));
         };
         
         const targetRarity = rarityMapping[oldRarity] || oldRarity;
@@ -370,9 +422,10 @@ ${particles}
         }
 
         // PHASE 5: Final reveal with full animation
-        const rarityConfig = DevilFruitDatabase.getRarityConfig(targetRarity);
-        const finalParticles = ParticlesSystem.createOnePieceParticles(10, 'celebration', targetRarity);
-        const finalProgressBar = NextGenGachaEngine.createRarityRevealBar(targetRarity, 0);
+        const finalParticles = ParticlesSystem.createOnePieceParticles(10, 'celebration', oldRarity);
+        
+        // Use old rarity name for final reveal since database uses old names
+        const finalProgressBar = NextGenGachaEngine.createRarityRevealBar(oldRarity, 0);
 
         // Determine rarity-specific reveal
         const rarityTitles = {
@@ -403,9 +456,9 @@ ${particles}
         };
 
         const finalEmbed = new EmbedBuilder()
-            .setTitle(rarityTitles[targetRarity] || rarityTitles.common)
+            .setTitle(rarityTitles[oldRarity] || rarityTitles.common)
             .setDescription(`
-${rarityDescriptions[targetRarity] || rarityDescriptions.common}
+${rarityDescriptions[oldRarity] || rarityDescriptions.common}
 
 **🍈 Devil Fruit:** ${targetFruit.name}
 **📋 Type:** ${typeEmojis[targetFruit.type] || '🔮'} ${targetFruit.type}
