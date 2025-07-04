@@ -123,13 +123,12 @@ function createGreyBoxIndicators(frame, phase, rarity, fruitType) {
     
     if (phase === 'animation' || phase === 'progression') {
         // Sync rarity cycling with the rainbow colors (leftmost square)
-        const allRarities = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythical', 'omnipotent'];
         const allTypes = ['Paramecia', 'Logia', 'Zoan'];
         
         // Get the color index of the leftmost square (position 0)
         const leftmostColorIndex = (0 - frame + rainbowColors.length * 100) % rainbowColors.length;
         
-        // Map rainbow colors to rarities (using your system's mapping)
+        // Map rainbow colors to rarities (using your getRarityEmoji mapping)
         const colorToRarity = {
             0: 'omnipotent',  // 🟥 Red
             1: 'mythical',    // 🟧 Orange  
@@ -150,7 +149,6 @@ function createGreyBoxIndicators(frame, phase, rarity, fruitType) {
         // Transition phase - start revealing actual information in later frames
         if (frame < 5) {
             // Still cycling but slower
-            const allRarities = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythical', 'omnipotent'];
             const allTypes = ['Paramecia', 'Logia', 'Zoan'];
             
             // Sync with leftmost square during transition too
