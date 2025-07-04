@@ -41,16 +41,16 @@ const IndicatorsSystem = {
     },
 
     // RAPID CHANGING INDICATORS that gradually lock in (EXACTLY 3 LINES)
-    // UPDATED: Faster lock timing for accelerated animation
+    // UPDATED: Proper lock timing for 18-frame animation
     getChangingIndicators(frame, finalRarity, finalType) {
         const allRarities = ['common', 'uncommon', 'rare', 'legendary', 'mythical', 'omnipotent'];
         const allTypes = ['Paramecia', 'Zoan', 'Logia', 'Ancient Zoan', 'Mythical Zoan'];
         
-        // Lock frames: indicators lock in one by one (adjusted for balanced animation)
+        // Lock frames: indicators lock in one by one (adjusted for 18-frame animation)
         const lockFrames = {
-            aura: frame >= 4,     // Locks after 4 frames
-            blessing: frame >= 5, // Locks after 5 frames  
-            type: frame >= 6      // Type locks last
+            aura: frame >= 5,     // Locks after 5 frames
+            blessing: frame >= 7, // Locks after 7 frames  
+            type: frame >= 9      // Type locks last
         };
         
         return {
