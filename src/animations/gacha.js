@@ -240,23 +240,29 @@ async function updateTransitionFrame(interaction, transFrame, targetFruit, metri
             // Center-outward conversion for 20-square bars
             const barLength = 20;
             const radius = transFrame;
-            const centerPositions = [10, 11]; // Visual center positions for 20-wide bar
+            
+            // FIXED: Proper center positions for 20-wide bar (0-19 indexing)
+            // For a 20-wide bar, positions 9 and 10 are the center
+            // We'll convert both simultaneously in the first frame
             const positions = [];
             
             for (let i = 0; i < barLength; i++) {
                 let useRewardColor = false;
                 
-                // Check if this position should be converted
-                for (const center of centerPositions) {
-                    if (Math.abs(i - center) <= radius) {
-                        useRewardColor = true;
-                        break;
-                    }
+                // Calculate distance from center (treating positions 9 and 10 as center)
+                const distanceFromCenter9 = Math.abs(i - 9);
+                const distanceFromCenter10 = Math.abs(i - 10);
+                const minDistanceFromCenter = Math.min(distanceFromCenter9, distanceFromCenter10);
+                
+                // If this position should be converted (within radius from either center point)
+                if (minDistanceFromCenter <= radius) {
+                    useRewardColor = true;
                 }
                 
                 if (useRewardColor) {
                     positions.push(rarityColors[targetFruit.rarity]?.emoji || '🟫');
                 } else {
+                    // Still rainbow
                     const colorIndex = (i - (30 + transFrame) + rainbowColors.length * 100) % rainbowColors.length;
                     positions.push(rainbowColors[colorIndex]);
                 }
@@ -322,16 +328,6 @@ async function revealInformationGradually(interaction, targetFruit, elementName,
         legendary: "Legendary Find",
         mythical: "Mythical Discovery",
         omnipotent: "Omnipotent Revelation"
-    };
-    
-    const rarityDescriptions = {
-        common: "A Devil Fruit with basic powers, but still formidable in the right hands.",
-        uncommon: "An intriguing Devil Fruit with notable abilities.",
-        rare: "A Devil Fruit with impressive powers that few possess.",
-        epic: "A remarkable Devil Fruit with extraordinary capabilities.",
-        legendary: "A Devil Fruit of immense power, known throughout the Grand Line.",
-        mythical: "A Devil Fruit of legendary status, wielding reality-bending powers.",
-        omnipotent: "A Devil Fruit of ultimate power, capable of reshaping the very fabric of existence."
     };
     
     const typeEmojis = {
