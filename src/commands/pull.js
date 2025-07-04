@@ -252,7 +252,7 @@ async function handleButtonInteractions(interaction) {
     }
 }
 
-// UPDATED: Hunt again sends command in chat instead of re-rolling
+// UPDATED: Hunt again executes a new pull automatically
 async function handleHuntAgain(interaction) {
     try {
         // Check cooldown first
@@ -265,22 +265,65 @@ async function handleHuntAgain(interaction) {
             if (now < cooldownEnd) {
                 const timeLeft = Math.ceil((cooldownEnd - now) / 1000);
                 return await interaction.reply({
-                    content: `⏰ **Cooldown Active!** Wait **${timeLeft}s** before hunting again!\n\n*Use \`/pull\` when ready to hunt again.*`,
+                    content: `⏰ **Cooldown Active!** Wait **${timeLeft}s** before hunting again!`,
                     ephemeral: true
                 });
             }
         }
 
-        // Send instruction to use /pull command instead of re-rolling
-        await interaction.reply({
-            content: `🍈 **Ready for another hunt, ${interaction.user.username}?**\n\nUse \`/pull\` to start a new Devil Fruit hunt!`,
-            ephemeral: false // Make it visible to encourage others to hunt too
+        // Set new cooldown
+        userCooldowns.set(cooldownKey, now + COOLDOWNS.single);
+        
+        // Update stats
+        const stats = userStats.get(userId);
+        if (stats) {
+            stats.totalHunts++;
+        }
+
+        // Send a new message and start the hunt animation
+        const newInteraction = await interaction.reply({
+            content: '🍈 **Starting new hunt...**',
+            fetchReply: true
         });
+
+        // Create a mock interaction object for the animation system
+        const mockInteraction = {
+            user: interaction.user,
+            editReply: async (options) => {
+                return await interaction.editReply(options);
+            },
+            replied: false,
+            deferred: false
+        };
+
+        // Defer the new interaction
+        mockInteraction.deferred = true;
+
+        // Start the hunt animation
+        const result = await createUltimateCinematicExperience(mockInteraction);
+        
+        // Update user statistics
+        if (stats && result) {
+            stats.rarityCount[result.rarity]++;
+            stats.typeCount[result.devilFruit.type] = (stats.typeCount[result.devilFruit.type] || 0) + 1;
+            
+            if (!stats.devilFruits[result.devilFruit.id]) {
+                stats.devilFruits[result.devilFruit.id] = {
+                    ...result.devilFruit,
+                    obtainedAt: new Date(),
+                    timesObtained: 1
+                };
+            } else {
+                stats.devilFruits[result.devilFruit.id].timesObtained++;
+            }
+        }
+
+        console.log(`🎊 Hunt again success: ${result.devilFruit.name} (${result.rarity}) for ${interaction.user.username}`);
         
     } catch (error) {
         console.error('Hunt again error:', error);
         await interaction.reply({
-            content: '❌ Use `/pull` command to start a new hunt!',
+            content: '❌ Unable to start new hunt! Please use `/pull` command.',
             ephemeral: true
         });
     }
