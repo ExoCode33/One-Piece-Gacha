@@ -80,23 +80,62 @@ class DatabaseManager {
         }
     }
 
-    // Devil Fruit collection
+    // ENHANCED Devil Fruit collection with duplicate support
     async saveUserFruit(userId, fruit) {
         try {
+            console.log(`💾 Saving fruit ${fruit.name} for user ${userId}`);
+            
+            // Check if user already has this fruit
+            const existingFruits = await this.query(
+                'SELECT * FROM user_devil_fruits WHERE user_id = $1 AND fruit_id = $2',
+                [userId, fruit.id]
+            );
+            
+            let duplicateCount = existingFruits.rows.length + 1; // +1 for the one we're adding now
+            
+            console.log(`📊 This will be duplicate #${duplicateCount} of ${fruit.name}`);
+            
+            // Save the new fruit instance
             const result = await this.query(
-                `INSERT INTO user_devil_fruits (user_id, fruit_id, name, type, rarity, power, previous_user, description, awakening, weakness, obtained_at)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
+                `INSERT INTO user_devil_fruits (user_id, fruit_id, name, type, rarity, power, previous_user, description, awakening, weakness, duplicate_count, obtained_at)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
                  RETURNING *`,
-                [userId, fruit.id, fruit.name, fruit.type, fruit.rarity, fruit.power, fruit.previousUser, fruit.description, fruit.awakening, fruit.weakness]
+                [userId, fruit.id, fruit.name, fruit.type, fruit.rarity, fruit.power, fruit.previousUser, fruit.description, fruit.awakening, fruit.weakness, duplicateCount]
             );
             
             // Update rarity and type stats
             await this.updateRarityStats(userId, fruit.rarity);
             await this.updateTypeStats(userId, fruit.type);
             
-            return result.rows[0];
+            // Update duplicate stats
+            await this.updateDuplicateStats(userId, fruit.id, duplicateCount);
+            
+            console.log(`✅ Fruit saved successfully with duplicate count: ${duplicateCount}`);
+            
+            return {
+                ...result.rows[0],
+                isNewFruit: duplicateCount === 1,
+                duplicateCount: duplicateCount - 1, // Return previous duplicates (before this one)
+                totalDuplicates: duplicateCount
+            };
         } catch (error) {
             console.error('Error saving user fruit:', error);
+            throw error;
+        }
+    }
+
+    // New method to handle duplicate statistics
+    async updateDuplicateStats(userId, fruitId, duplicateCount) {
+        try {
+            await this.query(
+                `INSERT INTO user_duplicate_stats (user_id, fruit_id, duplicate_count, updated_at)
+                 VALUES ($1, $2, $3, NOW())
+                 ON CONFLICT (user_id, fruit_id)
+                 DO UPDATE SET duplicate_count = $3, updated_at = NOW()`,
+                [userId, fruitId, duplicateCount]
+            );
+        } catch (error) {
+            console.error('Error updating duplicate stats:', error);
             throw error;
         }
     }
@@ -110,6 +149,25 @@ class DatabaseManager {
             return result.rows;
         } catch (error) {
             console.error('Error getting user fruits:', error);
+            return [];
+        }
+    }
+
+    // Get user fruits with duplicate information
+    async getUserFruitsWithDuplicates(userId) {
+        try {
+            const result = await this.query(
+                `SELECT udf.*, uds.duplicate_count as total_duplicates
+                 FROM user_devil_fruits udf
+                 LEFT JOIN user_duplicate_stats uds ON udf.user_id = uds.user_id AND udf.fruit_id = uds.fruit_id
+                 WHERE udf.user_id = $1 
+                 ORDER BY udf.obtained_at DESC`,
+                [userId]
+            );
+            
+            return result.rows;
+        } catch (error) {
+            console.error('Error getting user fruits with duplicates:', error);
             return [];
         }
     }
