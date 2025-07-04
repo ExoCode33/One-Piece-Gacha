@@ -267,6 +267,53 @@ class CombatSystem {
         };
         return names[element] || 'Unknown';
     }
+
+    // Calculate base combat power from rarity
+    static calculateBasePower(rarity) {
+        const basePowers = {
+            'common': 100,
+            'uncommon': 250,
+            'rare': 500,
+            'epic': 1000,
+            'legendary': 2500,
+            'mythical': 5000,
+            'omnipotent': 10000
+        };
+        return basePowers[rarity] || 100;
+    }
+
+    // Get level multiplier for combat power
+    static getLevelMultiplier(level) {
+        if (level <= 0) return 1.0;
+        return 1.0 + (level * 0.1); // 10% increase per level
+    }
+
+    // Get level rank description
+    static getLevelRank(level) {
+        if (level >= 50) return 'Yonko';
+        if (level >= 40) return 'Admiral';
+        if (level >= 30) return 'Vice Admiral';
+        if (level >= 20) return 'Rear Admiral';
+        if (level >= 15) return 'Commodore';
+        if (level >= 10) return 'Captain';
+        if (level >= 5) return 'Lieutenant';
+        if (level >= 1) return 'Ensign';
+        return 'Recruit';
+    }
+
+    // Get power rank based on total combat power
+    static getPowerRank(totalPower) {
+        if (totalPower >= 100000) return 'World Destroyer';
+        if (totalPower >= 50000) return 'Yonko Level';
+        if (totalPower >= 25000) return 'Admiral Level';
+        if (totalPower >= 10000) return 'Vice Admiral Level';
+        if (totalPower >= 5000) return 'Elite Captain';
+        if (totalPower >= 2500) return 'Captain Level';
+        if (totalPower >= 1000) return 'Officer Level';
+        if (totalPower >= 500) return 'Soldier Level';
+        if (totalPower >= 100) return 'Rookie Level';
+        return 'Beginner';
+    }
 }
 
 module.exports = {
