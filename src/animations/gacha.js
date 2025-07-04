@@ -11,8 +11,20 @@ const { ParticlesSystem } = require('./particles');
 async function createUltimateCinematicExperience(interaction) {
     try {
         // PHASE 1: Determine rarity (respects debug mode)
-        const targetRarity = getTestRarity();
-        const targetFruit = DevilFruitDatabase.getRandomDevilFruit(targetRarity);
+        const oldRarity = getTestRarity();
+        
+        // Map old rarity names to new names
+        const rarityMapping = {
+            'common': 'cursed',
+            'uncommon': 'manifested', 
+            'rare': 'potent',
+            'legendary': 'ancient',
+            'mythical': 'mythical',
+            'omnipotent': 'godlike'
+        };
+        
+        const targetRarity = rarityMapping[oldRarity] || oldRarity;
+        const targetFruit = DevilFruitDatabase.getRandomDevilFruit(oldRarity); // Use old name for database
         
         if (!targetFruit) {
             throw new Error(`No Devil Fruit found for rarity: ${targetRarity}`);
