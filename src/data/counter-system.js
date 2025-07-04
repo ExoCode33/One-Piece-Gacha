@@ -149,7 +149,7 @@ const COUNTER_MATRIX = {
     }
 };
 
-// DEVIL FRUIT ELEMENT MAPPING
+// DEVIL FRUIT ELEMENT MAPPING - COMPLETE WITH ALL FRUITS
 const DEVIL_FRUIT_ELEMENTS = {
     // LOGIA FRUITS
     'mera_mera_001': ELEMENT_TYPES.FIRE,           // Ace's Fire
@@ -170,39 +170,51 @@ const DEVIL_FRUIT_ELEMENTS = {
     'nikyu_nikyu_001': ELEMENT_TYPES.SPATIAL,     // Kuma's Paw (space manipulation)
     
     // RUBBER/NIKA
-    'hito_hito_nika_001': ELEMENT_TYPES.RUBBER,   // Luffy's Rubber/Nika
+    'hito_hito_001': ELEMENT_TYPES.RUBBER,        // Luffy's Rubber/Nika
+    'gomu_gomu_001': ELEMENT_TYPES.RUBBER,        // Regular Rubber
     
     // ZOAN CATEGORIES
-    'hito_hito_001': ELEMENT_TYPES.ZOAN_BEAST,              // Chopper
-    'neko_neko_001': ELEMENT_TYPES.ZOAN_BEAST,              // Lucci's Leopard
-    'inu_inu_wolf_001': ELEMENT_TYPES.ZOAN_BEAST,           // Jabra's Wolf
-    'tori_tori_001': ELEMENT_TYPES.ZOAN_BEAST,              // Pell's Falcon
-    'ushi_ushi_001': ELEMENT_TYPES.ZOAN_BEAST,              // Dalton's Bison
+    'hito_hito_002': ELEMENT_TYPES.ZOAN_BEAST,    // Chopper
+    'neko_neko_001': ELEMENT_TYPES.ZOAN_BEAST,    // Lucci's Leopard
+    'inu_inu_001': ELEMENT_TYPES.ZOAN_BEAST,      // Jabra's Wolf
+    'tori_tori_001': ELEMENT_TYPES.ZOAN_BEAST,    // Pell's Falcon
+    'ushi_ushi_001': ELEMENT_TYPES.ZOAN_BEAST,    // Dalton's Bison
     
     // ANCIENT ZOANS  
-    'ryu_ryu_allo_001': ELEMENT_TYPES.ZOAN_ANCIENT,         // X-Drake's Allosaurus
-    'ryu_ryu_ptera_001': ELEMENT_TYPES.ZOAN_ANCIENT,        // King's Pteranodon
-    'ryu_ryu_brachio_001': ELEMENT_TYPES.ZOAN_ANCIENT,      // Queen's Brachiosaurus
+    'ryu_ryu_001': ELEMENT_TYPES.ZOAN_ANCIENT,    // X-Drake's Allosaurus
+    'zou_zou_001': ELEMENT_TYPES.ZOAN_ANCIENT,    // Jack's Mammoth
+    'ryu_ryu_002': ELEMENT_TYPES.ZOAN_ANCIENT,    // Page One's Spinosaurus
     
     // MYTHICAL ZOANS
-    'uo_uo_001': ELEMENT_TYPES.ZOAN_MYTHICAL,               // Kaido's Dragon
-    'tori_tori_phoenix_001': ELEMENT_TYPES.ZOAN_MYTHICAL,   // Marco's Phoenix
-    'hito_hito_daibutsu_001': ELEMENT_TYPES.ZOAN_MYTHICAL,  // Sengoku's Buddha
-    'hebi_hebi_001': ELEMENT_TYPES.ZOAN_MYTHICAL,           // Orochi's Yamata
-    'inu_inu_kyubi_001': ELEMENT_TYPES.ZOAN_MYTHICAL,       // Devon's Nine-Tails
-    'inu_inu_okuchi_001': ELEMENT_TYPES.ZOAN_MYTHICAL,      // Yamato's Wolf Deity
+    'uo_uo_001': ELEMENT_TYPES.ZOAN_MYTHICAL,     // Kaido's Dragon
+    'tori_tori_002': ELEMENT_TYPES.ZOAN_MYTHICAL, // Marco's Phoenix
+    'inu_inu_003': ELEMENT_TYPES.ZOAN_MYTHICAL,   // Yamato's Wolf Deity
     
-    // OTHER PARAMECIA (default to neutral or specific elements)
-    'bara_bara_001': ELEMENT_TYPES.METAL,         // Buggy's splitting (sharp resistance)
+    // PARAMECIA FRUITS - COMPLETE MAPPING
+    'kilo_kilo_001': ELEMENT_TYPES.GRAVITY,       // Miss Valentine's Weight (gravity-based)
+    'sube_sube_001': ELEMENT_TYPES.RUBBER,        // Alvida's slip (deflection like rubber)
+    'bomu_bomu_001': ELEMENT_TYPES.FIRE,          // Mr. 5's explosions (fire-based)
     'hana_hana_001': ELEMENT_TYPES.ZOAN_BEAST,    // Robin's sprouting (biological)
+    'bara_bara_001': ELEMENT_TYPES.METAL,         // Buggy's splitting (sharp resistance)
     'doru_doru_001': ELEMENT_TYPES.STONE,         // Mr.3's wax (hardening)
     'buki_buki_001': ELEMENT_TYPES.METAL,         // Baby 5's weapons
     'mero_mero_001': ELEMENT_TYPES.SOUL,          // Hancock's love (affects soul/mind)
-    
-    // WEAK FRUITS (mostly neutral)
-    'sube_sube_001': ELEMENT_TYPES.RUBBER,        // Alvida's slip (deflection)
     'noro_noro_001': ELEMENT_TYPES.GRAVITY,       // Foxy's slow (time/space)
     'awa_awa_001': ELEMENT_TYPES.POISON,          // Kalifa's soap (chemical)
+    'supa_supa_001': ELEMENT_TYPES.METAL,         // Mr. 1's blade body
+    'toge_toge_001': ELEMENT_TYPES.METAL,         // Miss Doublefinger's spikes
+    'ori_ori_001': ELEMENT_TYPES.METAL,           // Hina's cage/binding
+    'door_door_001': ELEMENT_TYPES.SPATIAL,       // Blueno's doors
+    'berry_berry_001': ELEMENT_TYPES.RUBBER,      // Very Good's sphere body
+    'shari_shari_001': ELEMENT_TYPES.METAL,       // Sharinguru's wheels
+    'yomi_yomi_001': ELEMENT_TYPES.SOUL,          // Brook's soul revival
+    'kage_kage_001': ELEMENT_TYPES.DARKNESS,      // Moria's shadows
+    'horo_horo_001': ELEMENT_TYPES.SOUL,          // Perona's ghosts
+    'suke_suke_001': ELEMENT_TYPES.LIGHT,         // Absalom's invisibility
+    'memo_memo_001': ELEMENT_TYPES.SOUL,          // Pudding's memory manipulation
+    'tama_tama_001': ELEMENT_TYPES.ZOAN_BEAST,    // Tamago's egg body
+    'bari_bari_001': ELEMENT_TYPES.SPATIAL,       // Bartolomeo's barriers
+    'mochi_mochi_001': ELEMENT_TYPES.RUBBER,      // Katakuri's mochi (flexible like rubber)
 };
 
 // COMBAT EFFECTIVENESS CALCULATOR
@@ -253,12 +265,14 @@ class CombatSystem {
             [ELEMENT_TYPES.MAGMA]: 'Magma',
             [ELEMENT_TYPES.SAND]: 'Sand',
             [ELEMENT_TYPES.GAS]: 'Gas',
+            [ELEMENT_TYPES.SMOKE]: 'Smoke',
             [ELEMENT_TYPES.RUBBER]: 'Rubber',
             [ELEMENT_TYPES.VIBRATION]: 'Vibration',
             [ELEMENT_TYPES.SPATIAL]: 'Space',
             [ELEMENT_TYPES.GRAVITY]: 'Gravity',
             [ELEMENT_TYPES.SOUL]: 'Soul',
             [ELEMENT_TYPES.POISON]: 'Poison',
+            [ELEMENT_TYPES.HEALING]: 'Healing',
             [ELEMENT_TYPES.ZOAN_BEAST]: 'Beast',
             [ELEMENT_TYPES.ZOAN_ANCIENT]: 'Ancient Beast',
             [ELEMENT_TYPES.ZOAN_MYTHICAL]: 'Mythical Creature',
@@ -313,6 +327,33 @@ class CombatSystem {
         if (totalPower >= 500) return 'Soldier Level';
         if (totalPower >= 100) return 'Rookie Level';
         return 'Beginner';
+    }
+
+    // Calculate combat advantage in battles
+    static calculateBattleAdvantage(attackerFruitId, defenderFruitId) {
+        const result = this.calculateEffectiveness(attackerFruitId, defenderFruitId);
+        return {
+            multiplier: result.effectiveness,
+            description: result.description,
+            advantage: result.effectiveness > 1.2 ? 'strong' : 
+                      result.effectiveness < 0.8 ? 'weak' : 'neutral'
+        };
+    }
+
+    // Get element weaknesses for strategy
+    static getElementWeaknesses(element) {
+        const counters = COUNTER_MATRIX[element];
+        if (!counters) return [];
+        
+        return counters.weakAgainst.map(weakness => this.getElementName(weakness));
+    }
+
+    // Get element strengths for strategy
+    static getElementStrengths(element) {
+        const counters = COUNTER_MATRIX[element];
+        if (!counters) return [];
+        
+        return counters.strongAgainst.map(strength => this.getElementName(strength));
     }
 }
 
