@@ -1,5 +1,7 @@
 // Enhanced Devil Fruit Gacha Animation System
-// Fixed: Perfect sync between top and bottom rainbow lines
+// Fixed: Perfect sync + Dynamic text + Hidden bottom transition
+
+const { updateIndicators } = require('./indicators');
 
 const rainbowColors = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪', '🟫'];
 const rainbowEmbedColors = [0xFF0000, 0xFF8000, 0xFFFF00, 0x00FF00, 0x0080FF, 0x8000FF, 0x654321];
@@ -68,6 +70,36 @@ const DYNAMIC_ANIMATION_TEXT = {
     ]
 };
 
+// Progression text pool (12 texts)
+const PROGRESSION_TEXTS = [
+    "🌊 Power crystallization accelerating...",
+    "⚡ Energy matrices aligning perfectly...",
+    "🔥 Destiny flames burning brighter...",
+    "🌪️ Legendary aura intensifying...",
+    "💫 Cosmic forces reaching crescendo...",
+    "⚔️ Ancient power awakening fully...",
+    "🌟 Divine blessing manifesting...",
+    "🏴‍☠️ Pirate legend being born...",
+    "🔮 Mystical transformation completing...",
+    "💎 Ultimate power taking shape...",
+    "🌊 Ocean's will being revealed...",
+    "⚡ Thunder god's final judgment..."
+];
+
+// Transition text pool (10 texts)
+const TRANSITION_TEXTS = [
+    "🌊 Reality crystallizing into form...",
+    "⚡ Power taking physical shape...",
+    "🔥 Legendary essence materializing...",
+    "🌪️ Destiny vortex stabilizing...",
+    "💫 Cosmic energy solidifying...",
+    "⚔️ Ancient force awakening...",
+    "🌟 Divine power manifesting...",
+    "🏴‍☠️ Pirate legend crystallizing...",
+    "🔮 Mystical transformation completing...",
+    "💎 Ultimate ability forming..."
+];
+
 // Function to get synced rainbow pattern
 function getSyncedRainbowPattern(frame, barLength = 20) {
     const positions = [];
@@ -110,101 +142,76 @@ function updateAnimationFrame(frame, rarity = 'common') {
     // Get synced rainbow pattern for both lines
     const rainbowPattern = getSyncedRainbowPattern(frame);
     const embedColor = getEmbedColorSyncedToFirst(frame);
+    const dynamicText = getDynamicAnimationText(frame, rarity);
+    
+    // Get indicator text
+    const indicators = updateIndicators(frame, 'animation', rarity, 'Unknown');
     
     return {
         color: embedColor,
         title: "🏴‍☠️ Devil Fruit Hunt",
-        description: `${rainbowPattern}\n\n${getDynamicAnimationText(frame, rarity)}\n\n${rainbowPattern}`,
+        description: `${rainbowPattern}\n\n${dynamicText}\n\n${indicators}\n\n${rainbowPattern}`,
         footer: { text: `🌊 Frame ${frame + 1}/18 | Grand Line Energy Flowing` }
     };
 }
 
 // Progression frame update function
 function updateProgressionFrame(frame, rarity = 'common') {
+    const actualFrame = frame - 18; // Adjust for progression phase
     const rainbowPattern = getSyncedRainbowPattern(frame);
     const embedColor = getEmbedColorSyncedToFirst(frame);
     
-    const progressionTexts = [
-        "🌊 Power crystallization accelerating...",
-        "⚡ Energy matrices aligning perfectly...",
-        "🔥 Destiny flames burning brighter...",
-        "🌪️ Legendary aura intensifying...",
-        "💫 Cosmic forces reaching crescendo...",
-        "⚔️ Ancient power awakening fully...",
-        "🌟 Divine blessing manifesting...",
-        "🏴‍☠️ Pirate legend being born...",
-        "🔮 Mystical transformation completing...",
-        "💎 Ultimate power taking shape...",
-        "🌊 Ocean's will being revealed...",
-        "⚡ Thunder god's final judgment..."
-    ];
+    const progressionText = PROGRESSION_TEXTS[Math.floor(Math.random() * PROGRESSION_TEXTS.length)];
     
-    const progressionText = progressionTexts[Math.floor(Math.random() * progressionTexts.length)];
+    // Get indicator text for progression phase
+    const indicators = updateIndicators(actualFrame, 'progression', rarity, 'Unknown');
     
     return {
         color: embedColor,
         title: "🏴‍☠️ Devil Fruit Hunt - Power Surge",
-        description: `${rainbowPattern}\n\n${progressionText}\n\n${rainbowPattern}`,
-        footer: { text: `🌊 Progression ${frame - 17}/12 | Energy Crystallizing` }
+        description: `${rainbowPattern}\n\n${progressionText}\n\n${indicators}\n\n${rainbowPattern}`,
+        footer: { text: `🌊 Progression ${actualFrame + 1}/12 | Energy Crystallizing` }
     };
 }
 
-// Transition frame update function with perfect symmetry
-function updateTransitionFrame(frame, rarity = 'common', rewardColor = 0x00FF00) {
-    const transitionFrame = frame - 29;
+// Transition frame update function with perfect symmetry AND hidden bottom
+function updateTransitionFrame(frame, rarity = 'common', rewardColor = 0x00FF00, fruitElement = 'Unknown') {
+    const transitionFrame = frame - 30; // Adjust for transition phase
     const radius = transitionFrame;
     const barLength = 20;
     
-    // Create the transition pattern
+    // Create the TOP transition pattern (visible)
     const topPositions = [];
-    const bottomPositions = [];
-    
     for (let i = 0; i < barLength; i++) {
         // Calculate distance from both center positions (9 and 10)
         const distanceFromCenter9 = Math.abs(i - 9);
         const distanceFromCenter10 = Math.abs(i - 10);
         const minDistanceFromCenter = Math.min(distanceFromCenter9, distanceFromCenter10);
         
-        let useRewardColor = false;
         if (minDistanceFromCenter <= radius) {
-            useRewardColor = true;
-        }
-        
-        if (useRewardColor) {
             // Use reward color emojis based on rarity
             const rewardEmoji = getRarityEmoji(rarity);
             topPositions.push(rewardEmoji);
-            bottomPositions.push(rewardEmoji);
         } else {
             // Use rainbow colors (synced pattern)
             const colorIndex = (i - frame + rainbowColors.length * 100) % rainbowColors.length;
             topPositions.push(rainbowColors[colorIndex]);
-            bottomPositions.push(rainbowColors[colorIndex]);
         }
     }
     
+    // BOTTOM stays as pure rainbow (hidden transition effect)
+    const bottomPattern = getSyncedRainbowPattern(frame);
     const topBar = topPositions.join(' ');
-    const bottomBar = bottomPositions.join(' '); // Identical to top
     
-    const transitionTexts = [
-        "🌊 Reality crystallizing into form...",
-        "⚡ Power taking physical shape...",
-        "🔥 Legendary essence materializing...",
-        "🌪️ Destiny vortex stabilizing...",
-        "💫 Cosmic energy solidifying...",
-        "⚔️ Ancient force awakening...",
-        "🌟 Divine power manifesting...",
-        "🏴‍☠️ Pirate legend crystallizing...",
-        "🔮 Mystical transformation completing...",
-        "💎 Ultimate ability forming..."
-    ];
+    const transitionText = TRANSITION_TEXTS[Math.floor(Math.random() * TRANSITION_TEXTS.length)];
     
-    const transitionText = transitionTexts[Math.floor(Math.random() * transitionTexts.length)];
+    // Get indicator text for transition phase
+    const indicators = updateIndicators(transitionFrame, 'transition', rarity, fruitElement);
     
     return {
         color: rewardColor,
         title: "🏴‍☠️ Devil Fruit Hunt - Manifestation",
-        description: `${topBar}\n\n${transitionText}\n\n${bottomBar}`,
+        description: `${topBar}\n\n${transitionText}\n\n${indicators}\n\n${bottomPattern}`,
         footer: { text: `🌊 Transition ${transitionFrame + 1}/10 | Power Materializing` }
     };
 }
@@ -225,15 +232,79 @@ function getRarityEmoji(rarity) {
 
 // Button version functions (identical logic)
 function updateAnimationFrameButton(frame, rarity = 'common') {
-    return updateAnimationFrame(frame, rarity);
+    // Get synced rainbow pattern for both lines
+    const rainbowPattern = getSyncedRainbowPattern(frame);
+    const embedColor = getEmbedColorSyncedToFirst(frame);
+    const dynamicText = getDynamicAnimationText(frame, rarity);
+    
+    // Get indicator text
+    const indicators = updateIndicators(frame, 'animation', rarity, 'Unknown');
+    
+    return {
+        color: embedColor,
+        title: "🏴‍☠️ Devil Fruit Hunt",
+        description: `${rainbowPattern}\n\n${dynamicText}\n\n${indicators}\n\n${rainbowPattern}`,
+        footer: { text: `🌊 Frame ${frame + 1}/18 | Grand Line Energy Flowing` }
+    };
 }
 
 function updateProgressionFrameButton(frame, rarity = 'common') {
-    return updateProgressionFrame(frame, rarity);
+    const actualFrame = frame - 18;
+    const rainbowPattern = getSyncedRainbowPattern(frame);
+    const embedColor = getEmbedColorSyncedToFirst(frame);
+    
+    const progressionText = PROGRESSION_TEXTS[Math.floor(Math.random() * PROGRESSION_TEXTS.length)];
+    
+    // Get indicator text for progression phase
+    const indicators = updateIndicators(actualFrame, 'progression', rarity, 'Unknown');
+    
+    return {
+        color: embedColor,
+        title: "🏴‍☠️ Devil Fruit Hunt - Power Surge",
+        description: `${rainbowPattern}\n\n${progressionText}\n\n${indicators}\n\n${rainbowPattern}`,
+        footer: { text: `🌊 Progression ${actualFrame + 1}/12 | Energy Crystallizing` }
+    };
 }
 
-function updateTransitionFrameButton(frame, rarity = 'common', rewardColor = 0x00FF00) {
-    return updateTransitionFrame(frame, rarity, rewardColor);
+function updateTransitionFrameButton(frame, rarity = 'common', rewardColor = 0x00FF00, fruitElement = 'Unknown') {
+    const transitionFrame = frame - 30;
+    const radius = transitionFrame;
+    const barLength = 20;
+    
+    // Create the TOP transition pattern (visible)
+    const topPositions = [];
+    for (let i = 0; i < barLength; i++) {
+        // Calculate distance from both center positions (9 and 10)
+        const distanceFromCenter9 = Math.abs(i - 9);
+        const distanceFromCenter10 = Math.abs(i - 10);
+        const minDistanceFromCenter = Math.min(distanceFromCenter9, distanceFromCenter10);
+        
+        if (minDistanceFromCenter <= radius) {
+            // Use reward color emojis based on rarity
+            const rewardEmoji = getRarityEmoji(rarity);
+            topPositions.push(rewardEmoji);
+        } else {
+            // Use rainbow colors (synced pattern)
+            const colorIndex = (i - frame + rainbowColors.length * 100) % rainbowColors.length;
+            topPositions.push(rainbowColors[colorIndex]);
+        }
+    }
+    
+    // BOTTOM stays as pure rainbow (hidden transition effect)
+    const bottomPattern = getSyncedRainbowPattern(frame);
+    const topBar = topPositions.join(' ');
+    
+    const transitionText = TRANSITION_TEXTS[Math.floor(Math.random() * TRANSITION_TEXTS.length)];
+    
+    // Get indicator text for transition phase
+    const indicators = updateIndicators(transitionFrame, 'transition', rarity, fruitElement);
+    
+    return {
+        color: rewardColor,
+        title: "🏴‍☠️ Devil Fruit Hunt - Manifestation",
+        description: `${topBar}\n\n${transitionText}\n\n${indicators}\n\n${bottomPattern}`,
+        footer: { text: `🌊 Transition ${transitionFrame + 1}/10 | Power Materializing` }
+    };
 }
 
 // Main animation creation function
@@ -242,12 +313,21 @@ async function createUltimateCinematicExperience(interaction, fruit, userStats, 
     const rewardColor = getRarityColor(fruit.rarity);
     let frame = 0;
     let currentMessage;
+    let attempts = 0;
+    const maxAttempts = 50;
     
     try {
-        // Phase 1: Main Animation (18 frames)
         console.log(`🎯 Animation Starting: ${fruit.name} (${fruit.rarity})`);
+        const connectionStart = Date.now();
         
+        // Phase 1: Main Animation (18 frames)
         for (frame = 0; frame < 18; frame++) {
+            attempts++;
+            if (attempts > maxAttempts) {
+                console.log(`🚨 Max attempts reached, skipping to reveal`);
+                break;
+            }
+            
             const embed = updateAnimationFrame(frame, fruit.rarity);
             
             if (frame === 0) {
@@ -272,34 +352,47 @@ async function createUltimateCinematicExperience(interaction, fruit, userStats, 
             await new Promise(resolve => setTimeout(resolve, frameDelay));
         }
         
-        // Phase 2: Progression (12 frames)
-        console.log(`🌊 Starting progression phase...`);
+        const animationFrames = frame;
+        console.log(`📊 Animation Performance: ${animationFrames}/18 frames (${(animationFrames/18*100).toFixed(1)}%) - ${attempts} total attempts`);
         
-        for (let progFrame = 0; progFrame < 12; progFrame++) {
-            const embed = updateProgressionFrame(frame, fruit.rarity);
+        // Phase 2: Progression (12 frames)
+        if (attempts <= maxAttempts) {
+            console.log(`🌊 Starting progression phase...`);
             
-            await interaction.editReply({
-                embeds: [embed],
-                components: []
-            });
-            
-            frame++;
-            await new Promise(resolve => setTimeout(resolve, frameDelay));
+            for (let progFrame = 0; progFrame < 12; progFrame++) {
+                attempts++;
+                if (attempts > maxAttempts) break;
+                
+                const embed = updateProgressionFrame(frame, fruit.rarity);
+                
+                await interaction.editReply({
+                    embeds: [embed],
+                    components: []
+                });
+                
+                frame++;
+                await new Promise(resolve => setTimeout(resolve, frameDelay));
+            }
         }
         
         // Phase 3: Transition (10 frames)
-        console.log(`🎆 Smooth transition: Rainbow to reward color...`);
-        
-        for (let transFrame = 0; transFrame < 10; transFrame++) {
-            const embed = updateTransitionFrame(frame, fruit.rarity, rewardColor);
+        if (attempts <= maxAttempts) {
+            console.log(`🎆 Smooth transition: Rainbow to reward color...`);
             
-            await interaction.editReply({
-                embeds: [embed],
-                components: []
-            });
-            
-            frame++;
-            await new Promise(resolve => setTimeout(resolve, frameDelay));
+            for (let transFrame = 0; transFrame < 10; transFrame++) {
+                attempts++;
+                if (attempts > maxAttempts) break;
+                
+                const embed = updateTransitionFrame(frame, fruit.rarity, rewardColor, fruit.element);
+                
+                await interaction.editReply({
+                    embeds: [embed],
+                    components: []
+                });
+                
+                frame++;
+                await new Promise(resolve => setTimeout(resolve, frameDelay));
+            }
         }
         
         // Final reveal
@@ -313,6 +406,8 @@ async function createUltimateCinematicExperience(interaction, fruit, userStats, 
             components: [actionRow]
         });
         
+        const connectionTime = Date.now() - connectionStart;
+        console.log(`📡 Connection quality: ${Math.round(connectionTime/attempts)}ms`);
         console.log(`🎊 Single hunt success: ${fruit.name} (${fruit.rarity}) for ${interaction.user.username}`);
         
     } catch (error) {
