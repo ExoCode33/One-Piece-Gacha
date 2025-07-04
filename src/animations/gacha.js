@@ -105,11 +105,14 @@ async function updateAnimationFrame(interaction, frame, targetFruit, metrics) {
         try {
             metrics.frameAttempts++;
             
-            // Calculate rainbow positions and colors
-            const positions = rainbowColors.map((color, i) => {
+            // Calculate rainbow positions and colors for 20-square bars
+            const barLength = 20;
+            const positions = [];
+            
+            for (let i = 0; i < barLength; i++) {
                 const colorIndex = (i - frame + rainbowColors.length * 100) % rainbowColors.length;
-                return rainbowColors[colorIndex];
-            });
+                positions.push(rainbowColors[colorIndex]);
+            }
             
             // Create dual rainbow bars
             const topBar = positions.join(' ');
@@ -176,11 +179,14 @@ async function updateProgressionFrame(interaction, progFrame, targetFruit, metri
         try {
             metrics.frameAttempts++;
             
-            // Calculate rainbow positions
-            const positions = rainbowColors.map((color, i) => {
+            // Calculate rainbow positions for 20-square bars
+            const barLength = 20;
+            const positions = [];
+            
+            for (let i = 0; i < barLength; i++) {
                 const colorIndex = (i - (18 + progFrame) + rainbowColors.length * 100) % rainbowColors.length;
-                return rainbowColors[colorIndex];
-            });
+                positions.push(rainbowColors[colorIndex]);
+            }
             
             const topBar = positions.join(' ');
             const bottomBar = positions.join(' ');
@@ -231,12 +237,13 @@ async function updateTransitionFrame(interaction, transFrame, targetFruit, metri
         try {
             metrics.frameAttempts++;
             
-            // Center-outward conversion
+            // Center-outward conversion for 20-square bars
+            const barLength = 20;
             const radius = transFrame;
-            const centerPositions = [9, 10]; // Center positions for 20-wide bar
+            const centerPositions = [10, 11]; // Visual center positions for 20-wide bar
             const positions = [];
             
-            for (let i = 0; i < rainbowColors.length; i++) {
+            for (let i = 0; i < barLength; i++) {
                 let useRewardColor = false;
                 
                 // Check if this position should be converted
