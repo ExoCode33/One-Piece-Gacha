@@ -218,31 +218,21 @@ const NextGenGachaEngine = {
     // Create rarity reveal bar for final phase
     createRarityRevealBar(rarity, frame) {
         const rarityColors = {
-            common: '⬜',
+            common: '🟫',     // Brown for common (not white)
             uncommon: '🟩',
             rare: '🟦',
             legendary: '🟨',
             mythical: '🟥',
-            omnipotent: '🌈'
+            omnipotent: '🟪'  // Purple for omnipotent
         };
         
-        const squareColor = rarityColors[rarity] || '⬜';
+        const squareColor = rarityColors[rarity] || '🟩';
         let progressBar = '';
         
-        if (rarity === 'omnipotent') {
-            // Special rainbow effect
-            const rainbowSquares = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪'];
-            for (let i = 0; i < 20; i++) {
-                const colorIndex = (i + frame) % rainbowSquares.length;
-                progressBar += rainbowSquares[colorIndex];
-                if (i < 19) progressBar += ' ';
-            }
-        } else {
-            // Normal rarity color - full bar
-            for (let i = 0; i < 20; i++) {
-                progressBar += squareColor;
-                if (i < 19) progressBar += ' ';
-            }
+        // Normal rarity color - full bar (no special effects)
+        for (let i = 0; i < 20; i++) {
+            progressBar += squareColor;
+            if (i < 19) progressBar += ' ';
         }
         
         return `**TRANSCENDENT**\n${progressBar}`;
