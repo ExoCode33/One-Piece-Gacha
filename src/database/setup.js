@@ -99,34 +99,128 @@ async function initializeDatabase() {
             )
         `);
         
+        // Drop existing tables to ensure clean schema (for development)
+        console.log('🧹 Cleaning up existing tables...');
+        await client.query('DROP TABLE IF EXISTS battle_history CASCADE');
+        await client.query('DROP TABLE IF EXISTS user_cooldowns CASCADE');
+        await client.query('DROP TABLE IF EXISTS user_levels CASCADE');
+        await client.query('DROP TABLE IF EXISTS user_type_stats CASCADE');
+        await client.query('DROP TABLE IF EXISTS user_rarity_stats CASCADE');
+        await client.query('DROP TABLE IF EXISTS user_devil_fruits CASCADE');
+        await client.query('DROP TABLE IF EXISTS users CASCADE');
+        
+        console.log('📋 Recreating database tables with correct schema...');
+        
+        // Recreate users table
+        await client.query(`
+            CREATE TABLE users (
+                user_id VARCHAR(20) PRIMARY KEY,
+                username VARCHAR(255) NOT NULL,
+                total_hunts INTEGER DEFAULT 0,
+                discovery_rate INTEGER DEFAULT 0,
+                level INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT NOW(),
+                updated_at TIMESTAMP DEFAULT NOW()
+            )
+        `);
+        
+        // Recreate user_devil_fruits table
+        await client.query(`
+            CREATE TABLE user_devil_fruits (
+                id SERIAL PRIMARY KEY,
+                user_id VARCHAR(20) REFERENCES users(user_id) ON DELETE CASCADE,
+                fruit_id VARCHAR(50) NOT NULL,
+                name VARCHAR(255) NOT NULL,
+                type VARCHAR(100) NOT NULL,
+                rarity VARCHAR(50) NOT NULL,
+                power TEXT,
+                previous_user VARCHAR(255),
+                description TEXT,
+                awakening TEXT,
+                weakness TEXT,
+                obtained_at TIMESTAMP DEFAULT NOW()
+            )
+        `);
+        
+        // Recreate user_rarity_stats table
+        await client.query(`
+            CREATE TABLE user_rarity_stats (
+                user_id VARCHAR(20) REFERENCES users(user_id) ON DELETE CASCADE,
+                rarity VARCHAR(50) NOT NULL,
+                count INTEGER DEFAULT 0,
+                PRIMARY KEY (user_id, rarity)
+            )
+        `);
+        
+        // Recreate user_type_stats table
+        await client.query(`
+            CREATE TABLE user_type_stats (
+                user_id VARCHAR(20) REFERENCES users(user_id) ON DELETE CASCADE,
+                type VARCHAR(100) NOT NULL,
+                count INTEGER DEFAULT 0,
+                PRIMARY KEY (user_id, type)
+            )
+        `);
+        
+        // Recreate user_levels table
+        await client.query(`
+            CREATE TABLE user_levels (
+                user_id VARCHAR(20) PRIMARY KEY REFERENCES users(user_id) ON DELETE CASCADE,
+                level INTEGER DEFAULT 0,
+                updated_at TIMESTAMP DEFAULT NOW()
+            )
+        `);
+        
+        // Recreate user_cooldowns table
+        await client.query(`
+            CREATE TABLE user_cooldowns (
+                user_id VARCHAR(20) NOT NULL,
+                cooldown_type VARCHAR(50) NOT NULL,
+                end_time TIMESTAMP NOT NULL,
+                PRIMARY KEY (user_id, cooldown_type)
+            )
+        `);
+        
+        // Recreate battle_history table
+        await client.query(`
+            CREATE TABLE battle_history (
+                id SERIAL PRIMARY KEY,
+                attacker_id VARCHAR(20) NOT NULL,
+                defender_id VARCHAR(20) NOT NULL,
+                result VARCHAR(20) NOT NULL,
+                stolen_fruits JSONB,
+                battle_time TIMESTAMP DEFAULT NOW()
+            )
+        `);
+        
         // Create indexes for better performance
         await client.query(`
-            CREATE INDEX IF NOT EXISTS idx_user_devil_fruits_user_id 
+            CREATE INDEX idx_user_devil_fruits_user_id 
             ON user_devil_fruits(user_id)
         `);
         
         await client.query(`
-            CREATE INDEX IF NOT EXISTS idx_user_devil_fruits_rarity 
+            CREATE INDEX idx_user_devil_fruits_rarity 
             ON user_devil_fruits(rarity)
         `);
         
         await client.query(`
-            CREATE INDEX IF NOT EXISTS idx_user_devil_fruits_type 
+            CREATE INDEX idx_user_devil_fruits_type 
             ON user_devil_fruits(type)
         `);
         
         await client.query(`
-            CREATE INDEX IF NOT EXISTS idx_user_cooldowns_user_id 
+            CREATE INDEX idx_user_cooldowns_user_id 
             ON user_cooldowns(user_id)
         `);
         
         await client.query(`
-            CREATE INDEX IF NOT EXISTS idx_battle_history_attacker 
+            CREATE INDEX idx_battle_history_attacker 
             ON battle_history(attacker_id)
         `);
         
         await client.query(`
-            CREATE INDEX IF NOT EXISTS idx_battle_history_defender 
+            CREATE INDEX idx_battle_history_defender 
             ON battle_history(defender_id)
         `);
         
