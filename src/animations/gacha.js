@@ -116,6 +116,102 @@ function getEmbedColorSyncedToFirst(frame) {
     return rainbowEmbedColors[firstSquareColorIndex];
 }
 
+// Function to create loading spinner
+function getLoadingSpinner(frame) {
+    const spinners = ['/', '-', '\\', '|'];
+    return spinners[frame % 4];
+}
+
+// Function to create grey box with red text and loading effects
+function createGreyBoxIndicators(frame, phase, rarity, fruitElement) {
+    const spinner = getLoadingSpinner(frame);
+    
+    let fruitEnergyText = "";
+    let raritySenseText = "";
+    let devilFruitText = "";
+    
+    if (phase === 'animation') {
+        // Main animation phase - mysterious with loading
+        if (frame < 6) {
+            fruitEnergyText = `- Scanning energy patterns ${spinner} -`;
+            raritySenseText = `- Detecting blessing level ${spinner} -`;
+            devilFruitText = `- Analyzing power signature ${spinner} -`;
+        } else if (frame < 12) {
+            fruitEnergyText = `- Unknown energy crystallizing ${spinner} -`;
+            raritySenseText = `- Mysterious blessing approaching ${spinner} -`;
+            devilFruitText = `- Strange power type emerging ${spinner} -`;
+        } else {
+            fruitEnergyText = `- Legendary essence stirring ${spinner} -`;
+            raritySenseText = `- Divine blessing intensifying ${spinner} -`;
+            devilFruitText = `- True nature revealing ${spinner} -`;
+        }
+    } else if (phase === 'progression') {
+        // Progression phase - more intense but still mysterious
+        if (frame < 6) {
+            fruitEnergyText = `- Massive energy building ${spinner} -`;
+            raritySenseText = `- Supreme blessing approaching ${spinner} -`;
+            devilFruitText = `- Incredible power type manifesting ${spinner} -`;
+        } else {
+            fruitEnergyText = `- Reality-bending energy confirmed ${spinner} -`;
+            raritySenseText = `- Divine blessing acknowledged ${spinner} -`;
+            devilFruitText = `- Legendary power classification sealed ${spinner} -`;
+        }
+    } else if (phase === 'transition') {
+        // Transition phase - final moments before reveal
+        if (frame < 5) {
+            fruitEnergyText = `- Final energy analysis ${spinner} -`;
+            raritySenseText = `- Blessing type confirming ${spinner} -`;
+            devilFruitText = `- Power classification finalizing ${spinner} -`;
+        } else {
+            // Start revealing actual information
+            fruitEnergyText = getRarityEnergyText(rarity);
+            raritySenseText = getTypeText(fruitElement);
+            devilFruitText = getPowerText(rarity);
+        }
+    }
+    
+    // Create grey box format with red text
+    return `\`\`\`diff
+- FRUIT ENERGY: ${fruitEnergyText}
+- RARITY SENSE: ${raritySenseText}
+- DEVIL FRUIT: ${devilFruitText}
+\`\`\``;
+}
+
+// Helper functions for final reveal text
+function getRarityEnergyText(rarity) {
+    const energyTexts = {
+        'common': '- Simple energy confirmed -',
+        'uncommon': '- Enhanced energy detected -',
+        'rare': '- Powerful energy signature -',
+        'epic': '- Exceptional energy levels -',
+        'legendary': '- LEGENDARY ENERGY CONFIRMED -',
+        'mythical': '- MYTHICAL POWER DETECTED -',
+        'omnipotent': '- OMNIPOTENT ENERGY CONFIRMED -'
+    };
+    return energyTexts[rarity] || '- Unknown energy type -';
+}
+
+function getTypeText(element) {
+    if (element === 'Unknown') {
+        return '- Type classification pending -';
+    }
+    return `- ${element} element confirmed -`;
+}
+
+function getPowerText(rarity) {
+    const powerTexts = {
+        'common': '- Basic ability confirmed -',
+        'uncommon': '- Enhanced ability detected -',
+        'rare': '- Rare power classification -',
+        'epic': '- Epic ability confirmed -',
+        'legendary': '- LEGENDARY POWER CLASS -',
+        'mythical': '- MYTHICAL ABILITY TIER -',
+        'omnipotent': '- OMNIPOTENT POWER TIER -'
+    };
+    return powerTexts[rarity] || '- Unknown power class -';
+}
+
 // Enhanced dynamic text function with 6 text pools
 function getDynamicAnimationText(frame, rarity = 'common') {
     const poolIndex = Math.floor(frame / 3) % 6 + 1;
@@ -144,8 +240,8 @@ function updateAnimationFrame(frame, rarity = 'common') {
     const embedColor = getEmbedColorSyncedToFirst(frame);
     const dynamicText = getDynamicAnimationText(frame, rarity);
     
-    // Get indicator text
-    const indicators = updateIndicators(frame, 'animation', rarity, 'Unknown');
+    // Get grey box indicators with loading spinner
+    const indicators = createGreyBoxIndicators(frame, 'animation', rarity, 'Unknown');
     
     return {
         color: embedColor,
@@ -163,8 +259,8 @@ function updateProgressionFrame(frame, rarity = 'common') {
     
     const progressionText = PROGRESSION_TEXTS[Math.floor(Math.random() * PROGRESSION_TEXTS.length)];
     
-    // Get indicator text for progression phase
-    const indicators = updateIndicators(actualFrame, 'progression', rarity, 'Unknown');
+    // Get grey box indicators for progression phase
+    const indicators = createGreyBoxIndicators(actualFrame, 'progression', rarity, 'Unknown');
     
     return {
         color: embedColor,
@@ -174,14 +270,14 @@ function updateProgressionFrame(frame, rarity = 'common') {
     };
 }
 
-// Transition frame update function with perfect symmetry AND hidden bottom
+// Transition frame update function with perfect symmetry on BOTH lines
 function updateTransitionFrame(frame, rarity = 'common', rewardColor = 0x00FF00, fruitElement = 'Unknown') {
     const transitionFrame = frame - 30; // Adjust for transition phase
     const radius = transitionFrame;
     const barLength = 20;
     
-    // Create the TOP transition pattern (visible)
-    const topPositions = [];
+    // Create the transition pattern (same for both top and bottom)
+    const positions = [];
     for (let i = 0; i < barLength; i++) {
         // Calculate distance from both center positions (9 and 10)
         const distanceFromCenter9 = Math.abs(i - 9);
@@ -191,17 +287,16 @@ function updateTransitionFrame(frame, rarity = 'common', rewardColor = 0x00FF00,
         if (minDistanceFromCenter <= radius) {
             // Use reward color emojis based on rarity
             const rewardEmoji = getRarityEmoji(rarity);
-            topPositions.push(rewardEmoji);
+            positions.push(rewardEmoji);
         } else {
             // Use rainbow colors (synced pattern)
             const colorIndex = (i - frame + rainbowColors.length * 100) % rainbowColors.length;
-            topPositions.push(rainbowColors[colorIndex]);
+            positions.push(rainbowColors[colorIndex]);
         }
     }
     
-    // BOTTOM stays as pure rainbow (hidden transition effect)
-    const bottomPattern = getSyncedRainbowPattern(frame);
-    const topBar = topPositions.join(' ');
+    // BOTH lines show the exact same transition pattern
+    const transitionBar = positions.join(' ');
     
     const transitionText = TRANSITION_TEXTS[Math.floor(Math.random() * TRANSITION_TEXTS.length)];
     
@@ -211,7 +306,7 @@ function updateTransitionFrame(frame, rarity = 'common', rewardColor = 0x00FF00,
     return {
         color: rewardColor,
         title: "🏴‍☠️ Devil Fruit Hunt - Manifestation",
-        description: `${topBar}\n\n${transitionText}\n\n${indicators}\n\n${bottomPattern}`,
+        description: `${transitionBar}\n\n${transitionText}\n\n${indicators}\n\n${transitionBar}`,
         footer: { text: `🌊 Transition ${transitionFrame + 1}/10 | Power Materializing` }
     };
 }
@@ -271,8 +366,8 @@ function updateTransitionFrameButton(frame, rarity = 'common', rewardColor = 0x0
     const radius = transitionFrame;
     const barLength = 20;
     
-    // Create the TOP transition pattern (visible)
-    const topPositions = [];
+    // Create the transition pattern (same for both top and bottom)
+    const positions = [];
     for (let i = 0; i < barLength; i++) {
         // Calculate distance from both center positions (9 and 10)
         const distanceFromCenter9 = Math.abs(i - 9);
@@ -282,27 +377,26 @@ function updateTransitionFrameButton(frame, rarity = 'common', rewardColor = 0x0
         if (minDistanceFromCenter <= radius) {
             // Use reward color emojis based on rarity
             const rewardEmoji = getRarityEmoji(rarity);
-            topPositions.push(rewardEmoji);
+            positions.push(rewardEmoji);
         } else {
             // Use rainbow colors (synced pattern)
             const colorIndex = (i - frame + rainbowColors.length * 100) % rainbowColors.length;
-            topPositions.push(rainbowColors[colorIndex]);
+            positions.push(rainbowColors[colorIndex]);
         }
     }
     
-    // BOTTOM stays as pure rainbow (hidden transition effect)
-    const bottomPattern = getSyncedRainbowPattern(frame);
-    const topBar = topPositions.join(' ');
+    // BOTH lines show the exact same transition pattern
+    const transitionBar = positions.join(' ');
     
     const transitionText = TRANSITION_TEXTS[Math.floor(Math.random() * TRANSITION_TEXTS.length)];
     
-    // Get indicator text for transition phase
-    const indicators = updateIndicators(transitionFrame, 'transition', rarity, fruitElement);
+    // Get grey box indicators for transition phase
+    const indicators = createGreyBoxIndicators(transitionFrame, 'transition', rarity, fruitElement);
     
     return {
         color: rewardColor,
         title: "🏴‍☠️ Devil Fruit Hunt - Manifestation",
-        description: `${topBar}\n\n${transitionText}\n\n${indicators}\n\n${bottomPattern}`,
+        description: `${transitionBar}\n\n${transitionText}\n\n${indicators}\n\n${transitionBar}`,
         footer: { text: `🌊 Transition ${transitionFrame + 1}/10 | Power Materializing` }
     };
 }
