@@ -107,7 +107,7 @@ const NextGenGachaEngine = {
         return this.hyperSpectrumColors[combinedIndex];
     },
 
-    // PROGRESSION BAR SYSTEM - Starts with full rainbow, progresses rightward
+    // FIXED: Rainbow progresses LEFT TO RIGHT
     createDynamicEnergyStatus(percentage, frame, phase = 'charging', currentEmbedColor = '#0099FF') {
         const phaseDescriptors = {
             scanning: ['AWAKENING', 'STIRRING', 'CALLING', 'REACHING', 'SUMMONING'],
@@ -124,12 +124,12 @@ const NextGenGachaEngine = {
         const maxSlots = 20;
         const rainbowColors = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪', '🟫'];
         
-        // Build progress bar - ALWAYS FULL RAINBOW
+        // FIXED: Rainbow flows LEFT TO RIGHT
         let progressBar = '';
         
         for (let i = 0; i < maxSlots; i++) {
-            // Rainbow flows rightward with frame progression
-            const colorIndex = (i + frame) % rainbowColors.length;
+            // FIXED: Subtract frame instead of adding to flow left to right
+            const colorIndex = (i - frame + rainbowColors.length * 100) % rainbowColors.length;
             progressBar += rainbowColors[colorIndex];
             
             if (i < maxSlots - 1) progressBar += ' ';
@@ -162,8 +162,8 @@ const NextGenGachaEngine = {
             
             for (let i = 0; i < maxSlots; i++) {
                 if (godlikePattern[i]) {
-                    // Rainbow letter
-                    const colorIndex = (i + frame) % rainbowColors.length;
+                    // FIXED: Rainbow flows left to right
+                    const colorIndex = (i - frame + rainbowColors.length * 100) % rainbowColors.length;
                     progressBar += rainbowColors[colorIndex];
                 } else {
                     // Brown background
@@ -179,9 +179,9 @@ const NextGenGachaEngine = {
                 if (i < maxSlots - 1) progressBar += ' ';
             }
         } else {
-            // Show rainbow stopped on rarity color
+            // FIXED: Show rainbow flowing left to right
             for (let i = 0; i < maxSlots; i++) {
-                const colorIndex = (i + frame) % rainbowColors.length;
+                const colorIndex = (i - frame + rainbowColors.length * 100) % rainbowColors.length;
                 progressBar += rainbowColors[colorIndex];
                 if (i < maxSlots - 1) progressBar += ' ';
             }
@@ -204,8 +204,8 @@ const NextGenGachaEngine = {
             if (distanceFromCenter <= whiteOutFrame) {
                 progressBar += '🟫';
             } else {
-                // Show rainbow stopped at frame
-                const colorIndex = (i + frame) % rainbowColors.length;
+                // FIXED: Show rainbow flowing left to right
+                const colorIndex = (i - frame + rainbowColors.length * 100) % rainbowColors.length;
                 progressBar += rainbowColors[colorIndex];
             }
             
@@ -244,8 +244,8 @@ const NextGenGachaEngine = {
             return 0; // No progression needed, immediate brown-out
         }
         
-        // All other rarities progress 12 frames
-        return 12;
+        // All other rarities progress 8 frames (adjusted for new timing)
+        return 8;
     },
 
     // Calculate the frame where rainbow should stop for target rarity
@@ -267,9 +267,9 @@ const NextGenGachaEngine = {
         
         const targetIndex = rainbowColors.indexOf(targetColor);
         
-        // Calculate frame where position 0 (leftmost) shows the target color
-        // Since colorIndex = (i + frame) % 7, we need frame where (0 + frame) % 7 = targetIndex
-        return targetIndex;
+        // FIXED: Calculate frame where position 0 (leftmost) shows the target color
+        // Since colorIndex = (i - frame) % 7, we need frame where (0 - frame) % 7 = targetIndex
+        return -targetIndex;
     },
 
     // Calculate final stopped frame for rarity
