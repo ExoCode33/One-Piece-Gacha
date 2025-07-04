@@ -116,100 +116,46 @@ function getEmbedColorSyncedToFirst(frame) {
     return rainbowEmbedColors[firstSquareColorIndex];
 }
 
-// Function to create loading spinner
-function getLoadingSpinner(frame) {
-    const spinners = ['/', '-', '\\', '|'];
-    return spinners[frame % 4];
-}
-
-// Function to create grey box with red text and loading effects
-function createGreyBoxIndicators(frame, phase, rarity, fruitElement) {
-    const spinner = getLoadingSpinner(frame);
+// Function to create grey box with red text and cycling effects
+function createGreyBoxIndicators(frame, phase, rarity, fruitType) {
+    let rarityText = "";
+    let typeText = "";
     
-    let fruitEnergyText = "";
-    let raritySenseText = "";
-    let devilFruitText = "";
-    
-    if (phase === 'animation') {
-        // Main animation phase - mysterious with loading
-        if (frame < 6) {
-            fruitEnergyText = `- Scanning energy patterns ${spinner} -`;
-            raritySenseText = `- Detecting blessing level ${spinner} -`;
-            devilFruitText = `- Analyzing power signature ${spinner} -`;
-        } else if (frame < 12) {
-            fruitEnergyText = `- Unknown energy crystallizing ${spinner} -`;
-            raritySenseText = `- Mysterious blessing approaching ${spinner} -`;
-            devilFruitText = `- Strange power type emerging ${spinner} -`;
-        } else {
-            fruitEnergyText = `- Legendary essence stirring ${spinner} -`;
-            raritySenseText = `- Divine blessing intensifying ${spinner} -`;
-            devilFruitText = `- True nature revealing ${spinner} -`;
-        }
-    } else if (phase === 'progression') {
-        // Progression phase - more intense but still mysterious
-        if (frame < 6) {
-            fruitEnergyText = `- Massive energy building ${spinner} -`;
-            raritySenseText = `- Supreme blessing approaching ${spinner} -`;
-            devilFruitText = `- Incredible power type manifesting ${spinner} -`;
-        } else {
-            fruitEnergyText = `- Reality-bending energy confirmed ${spinner} -`;
-            raritySenseText = `- Divine blessing acknowledged ${spinner} -`;
-            devilFruitText = `- Legendary power classification sealed ${spinner} -`;
-        }
+    if (phase === 'animation' || phase === 'progression') {
+        // Cycle through all possible rarities and types during loading
+        const allRarities = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythical', 'omnipotent'];
+        const allTypes = ['Paramecia', 'Logia', 'Zoan'];
+        
+        const cycleRarity = allRarities[frame % allRarities.length];
+        const cycleType = allTypes[frame % allTypes.length];
+        
+        rarityText = `- RARITY: ${cycleRarity.toUpperCase()} -`;
+        typeText = `- TYPE: ${cycleType.toUpperCase()} -`;
+        
     } else if (phase === 'transition') {
-        // Transition phase - final moments before reveal
+        // Transition phase - start revealing actual information in later frames
         if (frame < 5) {
-            fruitEnergyText = `- Final energy analysis ${spinner} -`;
-            raritySenseText = `- Blessing type confirming ${spinner} -`;
-            devilFruitText = `- Power classification finalizing ${spinner} -`;
+            // Still cycling but slower
+            const allRarities = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythical', 'omnipotent'];
+            const allTypes = ['Paramecia', 'Logia', 'Zoan'];
+            
+            const cycleRarity = allRarities[Math.floor(frame / 2) % allRarities.length];
+            const cycleType = allTypes[Math.floor(frame / 2) % allTypes.length];
+            
+            rarityText = `- RARITY: ${cycleRarity.toUpperCase()} -`;
+            typeText = `- TYPE: ${cycleType.toUpperCase()} -`;
         } else {
-            // Start revealing actual information
-            fruitEnergyText = getRarityEnergyText(rarity);
-            raritySenseText = getTypeText(fruitElement);
-            devilFruitText = getPowerText(rarity);
+            // Final frames - reveal actual information
+            rarityText = `- RARITY: ${rarity.toUpperCase()} CONFIRMED -`;
+            typeText = `- TYPE: ${fruitType.toUpperCase()} CONFIRMED -`;
         }
     }
     
     // Create grey box format with red text
     return `\`\`\`diff
-- FRUIT ENERGY: ${fruitEnergyText}
-- RARITY SENSE: ${raritySenseText}
-- DEVIL FRUIT: ${devilFruitText}
+${rarityText}
+${typeText}
 \`\`\``;
-}
-
-// Helper functions for final reveal text
-function getRarityEnergyText(rarity) {
-    const energyTexts = {
-        'common': '- Simple energy confirmed -',
-        'uncommon': '- Enhanced energy detected -',
-        'rare': '- Powerful energy signature -',
-        'epic': '- Exceptional energy levels -',
-        'legendary': '- LEGENDARY ENERGY CONFIRMED -',
-        'mythical': '- MYTHICAL POWER DETECTED -',
-        'omnipotent': '- OMNIPOTENT ENERGY CONFIRMED -'
-    };
-    return energyTexts[rarity] || '- Unknown energy type -';
-}
-
-function getTypeText(element) {
-    if (element === 'Unknown') {
-        return '- Type classification pending -';
-    }
-    return `- ${element} element confirmed -`;
-}
-
-function getPowerText(rarity) {
-    const powerTexts = {
-        'common': '- Basic ability confirmed -',
-        'uncommon': '- Enhanced ability detected -',
-        'rare': '- Rare power classification -',
-        'epic': '- Epic ability confirmed -',
-        'legendary': '- LEGENDARY POWER CLASS -',
-        'mythical': '- MYTHICAL ABILITY TIER -',
-        'omnipotent': '- OMNIPOTENT POWER TIER -'
-    };
-    return powerTexts[rarity] || '- Unknown power class -';
 }
 
 // Enhanced dynamic text function with 6 text pools
@@ -234,14 +180,14 @@ function getDynamicAnimationText(frame, rarity = 'common') {
 }
 
 // Main animation frame update function
-function updateAnimationFrame(frame, rarity = 'common') {
+function updateAnimationFrame(frame, rarity = 'common', fruitType = 'Paramecia') {
     // Get synced rainbow pattern for both lines
     const rainbowPattern = getSyncedRainbowPattern(frame);
     const embedColor = getEmbedColorSyncedToFirst(frame);
     const dynamicText = getDynamicAnimationText(frame, rarity);
     
-    // Get grey box indicators with loading spinner
-    const indicators = createGreyBoxIndicators(frame, 'animation', rarity, 'Unknown');
+    // Get grey box indicators with cycling rarity/type
+    const indicators = createGreyBoxIndicators(frame, 'animation', rarity, fruitType);
     
     return {
         color: embedColor,
@@ -252,7 +198,7 @@ function updateAnimationFrame(frame, rarity = 'common') {
 }
 
 // Progression frame update function
-function updateProgressionFrame(frame, rarity = 'common') {
+function updateProgressionFrame(frame, rarity = 'common', fruitType = 'Paramecia') {
     const actualFrame = frame - 18; // Adjust for progression phase
     const rainbowPattern = getSyncedRainbowPattern(frame);
     const embedColor = getEmbedColorSyncedToFirst(frame);
@@ -260,7 +206,7 @@ function updateProgressionFrame(frame, rarity = 'common') {
     const progressionText = PROGRESSION_TEXTS[Math.floor(Math.random() * PROGRESSION_TEXTS.length)];
     
     // Get grey box indicators for progression phase
-    const indicators = createGreyBoxIndicators(actualFrame, 'progression', rarity, 'Unknown');
+    const indicators = createGreyBoxIndicators(actualFrame, 'progression', rarity, fruitType);
     
     return {
         color: embedColor,
@@ -422,7 +368,7 @@ async function createUltimateCinematicExperience(interaction, fruit, userStats, 
                 break;
             }
             
-            const embed = updateAnimationFrame(frame, fruit.rarity);
+            const embed = updateAnimationFrame(frame, fruit.rarity, fruit.type);
             
             if (frame === 0) {
                 if (isInitialReply) {
@@ -457,7 +403,7 @@ async function createUltimateCinematicExperience(interaction, fruit, userStats, 
                 attempts++;
                 if (attempts > maxAttempts) break;
                 
-                const embed = updateProgressionFrame(frame, fruit.rarity);
+                const embed = updateProgressionFrame(frame, fruit.rarity, fruit.type);
                 
                 await interaction.editReply({
                     embeds: [embed],
@@ -477,7 +423,7 @@ async function createUltimateCinematicExperience(interaction, fruit, userStats, 
                 attempts++;
                 if (attempts > maxAttempts) break;
                 
-                const embed = updateTransitionFrame(frame, fruit.rarity, rewardColor, fruit.element);
+                const embed = updateTransitionFrame(frame, fruit.rarity, rewardColor, fruit.type);
                 
                 await interaction.editReply({
                     embeds: [embed],
@@ -512,9 +458,9 @@ async function createUltimateCinematicExperience(interaction, fruit, userStats, 
             title: "🚨 Animation Error",
             description: "Something went wrong with the animation. Here's your fruit anyway!",
             fields: [
-                { name: "🍎 Devil Fruit", value: fruit.name, inline: true },
-                { name: "⭐ Rarity", value: fruit.rarity, inline: true },
-                { name: "💪 Combat Power", value: fruit.combatPower.toLocaleString(), inline: true }
+                { name: "🍎 Devil Fruit", value: fruit.name || 'Unknown Fruit', inline: true },
+                { name: "⭐ Rarity", value: fruit.rarity || 'unknown', inline: true },
+                { name: "💪 Combat Power", value: (fruit.combatPower || 0).toLocaleString(), inline: true }
             ]
         };
         
