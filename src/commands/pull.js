@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { createUltimateCinematicExperience } = require('../animations/gacha');
+const { DevilFruitDatabase } = require('../data/devilfruit');
 
 // User cooldowns and statistics
 const userCooldowns = new Map();
@@ -55,7 +56,8 @@ module.exports = {
                 userStats.set(userId, {
                     totalHunts: 0,
                     devilFruits: {},
-                    rarityCount: { common: 0, uncommon: 0, rare: 0, legendary: 0, mythical: 0, omnipotent: 0 }
+                    rarityCount: { common: 0, uncommon: 0, rare: 0, legendary: 0, mythical: 0, omnipotent: 0 },
+                    typeCount: { 'Paramecia': 0, 'Zoan': 0, 'Logia': 0, 'Ancient Zoan': 0, 'Mythical Zoan': 0, 'Special Paramecia': 0 }
                 });
             }
 
@@ -120,6 +122,8 @@ async function handleSingleHunt(interaction) {
         const stats = userStats.get(userId);
         if (stats && result) {
             stats.rarityCount[result.rarity]++;
+            stats.typeCount[result.devilFruit.type] = (stats.typeCount[result.devilFruit.type] || 0) + 1;
+            
             if (!stats.devilFruits[result.devilFruit.id]) {
                 stats.devilFruits[result.devilFruit.id] = {
                     ...result.devilFruit,
@@ -226,9 +230,7 @@ async function handleButtonInteractions(interaction) {
                 await showUserCollection(interaction);
                 break;
 
-            case 'share_discovery':
-                await shareDiscovery(interaction);
-                break;
+            // Removed 'share_discovery' case since we removed the button
 
             case 'detailed_results':
                 await showDetailedResults(interaction);
@@ -250,10 +252,10 @@ async function handleButtonInteractions(interaction) {
     }
 }
 
-// Hunt again button handler
+// UPDATED: Hunt again sends command in chat instead of re-rolling
 async function handleHuntAgain(interaction) {
     try {
-        // Check cooldown
+        // Check cooldown first
         const userId = interaction.user.id;
         const now = Date.now();
         const cooldownKey = `${userId}_single`;
@@ -263,52 +265,28 @@ async function handleHuntAgain(interaction) {
             if (now < cooldownEnd) {
                 const timeLeft = Math.ceil((cooldownEnd - now) / 1000);
                 return await interaction.reply({
-                    content: `⏰ **Cooldown Active!** Wait **${timeLeft}s** before hunting again!\n\n*Use /pull to start a new hunt when ready.*`,
+                    content: `⏰ **Cooldown Active!** Wait **${timeLeft}s** before hunting again!\n\n*Use \`/pull\` when ready to hunt again.*`,
                     ephemeral: true
                 });
             }
         }
 
-        // Set new cooldown
-        userCooldowns.set(cooldownKey, now + COOLDOWNS.single);
-        
-        // Update stats
-        const stats = userStats.get(userId);
-        if (stats) {
-            stats.totalHunts++;
-        }
-
-        await interaction.deferUpdate();
-        
-        // Start new hunt
-        const result = await createUltimateCinematicExperience(interaction);
-        
-        // Update stats
-        if (stats && result) {
-            stats.rarityCount[result.rarity]++;
-            if (!stats.devilFruits[result.devilFruit.id]) {
-                stats.devilFruits[result.devilFruit.id] = {
-                    ...result.devilFruit,
-                    obtainedAt: new Date(),
-                    timesObtained: 1
-                };
-            } else {
-                stats.devilFruits[result.devilFruit.id].timesObtained++;
-            }
-        }
-
-        console.log(`🎊 Hunt again success: ${result.devilFruit.name} (${result.rarity}) for ${interaction.user.username}`);
+        // Send instruction to use /pull command instead of re-rolling
+        await interaction.reply({
+            content: `🍈 **Ready for another hunt, ${interaction.user.username}?**\n\nUse \`/pull\` to start a new Devil Fruit hunt!`,
+            ephemeral: false // Make it visible to encourage others to hunt too
+        });
         
     } catch (error) {
         console.error('Hunt again error:', error);
-        await interaction.followUp({
-            content: '❌ Unable to start new hunt! Please use `/pull` command.',
+        await interaction.reply({
+            content: '❌ Use `/pull` command to start a new hunt!',
             ephemeral: true
         });
     }
 }
 
-// Show user's Devil Fruit collection
+// ENHANCED: Show detailed collection with types and rarities
 async function showUserCollection(interaction) {
     const userId = interaction.user.id;
     const stats = userStats.get(userId);
@@ -321,7 +299,7 @@ async function showUserCollection(interaction) {
 
 Start your journey on the Grand Line by hunting for Devil Fruits!
 
-*Use /pull to begin your Devil Fruit adventure!*
+*Use \`/pull\` to begin your Devil Fruit adventure!*
             `)
             .setColor('#95A5A6')
             .setFooter({ text: 'Start hunting to build your collection!' });
@@ -332,61 +310,95 @@ Start your journey on the Grand Line by hunting for Devil Fruits!
     // Collection summary
     const totalFruits = Object.keys(stats.devilFruits).length;
     const totalHunts = stats.totalHunts;
+    const discoveryRate = Math.round((totalFruits / totalHunts) * 100);
     
+    // Create detailed breakdown by type and rarity
+    let typeBreakdown = '';
+    const typeEmojis = {
+        'Paramecia': '🔮',
+        'Zoan': '🐺', 
+        'Logia': '🌪️',
+        'Ancient Zoan': '🦕',
+        'Mythical Zoan': '🐉',
+        'Special Paramecia': '✨'
+    };
+    
+    // Show type breakdown
+    for (const [type, count] of Object.entries(stats.typeCount)) {
+        if (count > 0) {
+            const emoji = typeEmojis[type] || '🔮';
+            typeBreakdown += `${emoji} **${type}:** ${count}x\n`;
+        }
+    }
+    
+    // Show rarity breakdown
     let rarityBreakdown = '';
     const rarityOrder = ['omnipotent', 'mythical', 'legendary', 'rare', 'uncommon', 'common'];
+    const rarityEmojis = {
+        omnipotent: { emoji: '🌈', name: 'Omnipotent' },
+        mythical: { emoji: '🟥', name: 'Mythical' },
+        legendary: { emoji: '🟨', name: 'Legendary' },
+        rare: { emoji: '🟦', name: 'Rare' },
+        uncommon: { emoji: '🟩', name: 'Uncommon' },
+        common: { emoji: '🟫', name: 'Common' }
+    };
     
     rarityOrder.forEach(rarity => {
         if (stats.rarityCount[rarity] > 0) {
-            const rarityNames = {
-                omnipotent: { emoji: '🌈', name: 'Omnipotent' },
-                mythical: { emoji: '🟥', name: 'Mythical' },
-                legendary: { emoji: '🟨', name: 'Legendary' },
-                rare: { emoji: '🟦', name: 'Rare' },
-                uncommon: { emoji: '🟩', name: 'Uncommon' },
-                common: { emoji: '🟫', name: 'Common' }
-            };
-            const config = rarityNames[rarity];
+            const config = rarityEmojis[rarity];
             rarityBreakdown += `${config.emoji} **${config.name}:** ${stats.rarityCount[rarity]}x\n`;
         }
     });
 
-    const successRate = Math.round((totalFruits / totalHunts) * 100);
-    
+    // Get detailed fruit list organized by type and rarity
+    const fruitsByType = {};
+    Object.values(stats.devilFruits).forEach(fruit => {
+        if (!fruitsByType[fruit.type]) {
+            fruitsByType[fruit.type] = {};
+        }
+        if (!fruitsByType[fruit.type][fruit.rarity]) {
+            fruitsByType[fruit.type][fruit.rarity] = [];
+        }
+        fruitsByType[fruit.type][fruit.rarity].push(fruit);
+    });
+
+    // Create detailed type sections
+    let detailedBreakdown = '';
+    Object.entries(fruitsByType).forEach(([type, rarities]) => {
+        const typeEmoji = typeEmojis[type] || '🔮';
+        detailedBreakdown += `\n**${typeEmoji} ${type} Fruits:**\n`;
+        
+        rarityOrder.forEach(rarity => {
+            if (rarities[rarity]) {
+                const rarityConfig = rarityEmojis[rarity];
+                rarities[rarity].forEach(fruit => {
+                    const timesText = fruit.timesObtained > 1 ? ` (x${fruit.timesObtained})` : '';
+                    detailedBreakdown += `${rarityConfig.emoji} ${fruit.name}${timesText}\n`;
+                });
+            }
+        });
+    });
+
     const collectionEmbed = new EmbedBuilder()
         .setTitle(`📚 **${interaction.user.username}'s Devil Fruit Collection**`)
         .setDescription(`
-🏴‍☠️ **Collection Statistics:**
+🏴‍☠️ **Collection Overview:**
 🍈 **Unique Fruits:** ${totalFruits}
 🎯 **Total Hunts:** ${totalHunts}
-📊 **Discovery Rate:** ${successRate}%
+📊 **Discovery Rate:** ${discoveryRate}%
 
-**🌟 Rarity Breakdown:**
-${rarityBreakdown || 'No rarities recorded yet!'}
+**🌟 By Rarity:**
+${rarityBreakdown || 'No fruits collected yet!'}
 
-*Continue hunting to expand your legendary collection!*
+**🔮 By Type:**
+${typeBreakdown || 'No fruits collected yet!'}
+
+**📋 Detailed Collection:**${detailedBreakdown || '\nNo fruits collected yet!'}
         `)
         .setColor('#3498DB')
         .setFooter({ text: `Collection | Last updated: ${new Date().toLocaleDateString()}` });
 
     await interaction.reply({ embeds: [collectionEmbed], ephemeral: true });
-}
-
-// Share discovery with others
-async function shareDiscovery(interaction) {
-    const shareEmbed = new EmbedBuilder()
-        .setTitle('📢 **Legendary Devil Fruit Discovery Shared!**')
-        .setDescription(`
-🎉 **${interaction.user.username}** just discovered an incredible Devil Fruit!
-
-Check out their amazing discovery above! The Grand Line has blessed them with legendary power!
-
-*🍈 Ready to start your own hunt? Use /pull to begin!*
-        `)
-        .setColor('#E67E22')
-        .setFooter({ text: '🏴‍☠️ Join the hunt with /pull!' });
-
-    await interaction.reply({ embeds: [shareEmbed] });
 }
 
 // Show detailed results (for multi hunts)
