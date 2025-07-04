@@ -107,7 +107,7 @@ const NextGenGachaEngine = {
         return this.hyperSpectrumColors[combinedIndex];
     },
 
-    // PROGRESSION BAR SYSTEM - Simple rainbow flow left to right
+    // PROGRESSION BAR SYSTEM - Starts with full rainbow, progresses rightward
     createDynamicEnergyStatus(percentage, frame, phase = 'charging', currentEmbedColor = '#0099FF') {
         const phaseDescriptors = {
             scanning: ['AWAKENING', 'STIRRING', 'CALLING', 'REACHING', 'SUMMONING'],
@@ -122,50 +122,97 @@ const NextGenGachaEngine = {
         
         // CONSISTENT WIDTH - Always 20 squares
         const maxSlots = 20;
+        const rainbowColors = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪', '🟫'];
         
-        // Check if we're in suspense phase (100% with continued rainbow movement)
-        const isSuspensePhase = percentage >= 100 && frame >= 20;
-        
-        let filledSlots;
-        if (isSuspensePhase) {
-            // During suspense, keep all 20 squares filled but continue rainbow movement
-            filledSlots = maxSlots;
-        } else {
-            // Normal progression - fill one by one
-            filledSlots = Math.round((percentage / 100) * maxSlots);
-        }
-        
-        // Rainbow colors for the effect
-        const rainbowColors = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪'];
-        
-        // Build progress bar with natural rainbow flow
+        // Build progress bar - ALWAYS FULL RAINBOW
         let progressBar = '';
         
-        // Create the filled squares with natural rainbow pattern
-        for (let i = 0; i < filledSlots; i++) {
-            // NATURAL RAINBOW FLOW: Each frame, new colors appear on left, existing move right
-            // Use (frame - i) to make rainbow flow LEFT TO RIGHT
-            const colorIndex = (frame - i + rainbowColors.length * 10) % rainbowColors.length;
+        for (let i = 0; i < maxSlots; i++) {
+            // Rainbow flows rightward with frame progression
+            const colorIndex = (i + frame) % rainbowColors.length;
             progressBar += rainbowColors[colorIndex];
             
-            if (i < filledSlots - 1) progressBar += ' ';
-        }
-        
-
-        
-        // Add empty squares for normal phase
-        if (!isSuspensePhase) {
-            const emptySlots = maxSlots - filledSlots;
-            if (emptySlots > 0) {
-                if (filledSlots > 0) progressBar += ' ';
-                for (let i = 0; i < emptySlots; i++) {
-                    progressBar += '⬜';
-                    if (i < emptySlots - 1) progressBar += ' ';
-                }
-            }
+            if (i < maxSlots - 1) progressBar += ' ';
         }
         
         return `**${energyLevel}**\n${progressBar}`;
+    },
+
+    // Create blinking effect between rainbow and solid color
+    createBlinkingRarityBar(rarity, frame, isBlinkOn) {
+        const rarityColors = {
+            cursed: '🟫',
+            manifested: '🟩',
+            potent: '🟦', 
+            ancient: '🟨',
+            mythical: '🟥',
+            transcendent: '🟪',
+            godlike: '🌈'
+        };
+        
+        const maxSlots = 20;
+        const rainbowColors = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪', '🟫'];
+        let progressBar = '';
+        
+        if (rarity === 'godlike') {
+            // Special GODLIKE grid pattern
+            const godlikePattern = [
+                1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0
+            ]; // 1 = rainbow letter, 0 = brown background
+            
+            for (let i = 0; i < maxSlots; i++) {
+                if (godlikePattern[i]) {
+                    // Rainbow letter
+                    const colorIndex = (i + frame) % rainbowColors.length;
+                    progressBar += rainbowColors[colorIndex];
+                } else {
+                    // Brown background
+                    progressBar += '🟫';
+                }
+                if (i < maxSlots - 1) progressBar += ' ';
+            }
+        } else if (isBlinkOn) {
+            // Show solid rarity color
+            const solidColor = rarityColors[rarity];
+            for (let i = 0; i < maxSlots; i++) {
+                progressBar += solidColor;
+                if (i < maxSlots - 1) progressBar += ' ';
+            }
+        } else {
+            // Show rainbow stopped on rarity color
+            for (let i = 0; i < maxSlots; i++) {
+                const colorIndex = (i + frame) % rainbowColors.length;
+                progressBar += rainbowColors[colorIndex];
+                if (i < maxSlots - 1) progressBar += ' ';
+            }
+        }
+        
+        return `**TRANSCENDENT**\n${progressBar}`;
+    },
+
+    // Create common rarity brown-out effect
+    createCommonWhiteOut(frame, whiteOutFrame) {
+        const maxSlots = 20;
+        const rainbowColors = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪', '🟫'];
+        let progressBar = '';
+        
+        for (let i = 0; i < maxSlots; i++) {
+            // Calculate distance from center (positions 9 and 10 are center)
+            const distanceFromCenter = Math.min(Math.abs(i - 9), Math.abs(i - 10));
+            
+            // If this position should be brown based on whiteOutFrame
+            if (distanceFromCenter <= whiteOutFrame) {
+                progressBar += '🟫';
+            } else {
+                // Show rainbow stopped at frame
+                const colorIndex = (i + frame) % rainbowColors.length;
+                progressBar += rainbowColors[colorIndex];
+            }
+            
+            if (i < maxSlots - 1) progressBar += ' ';
+        }
+        
+        return `**FADING**\n${progressBar}`;
     },
 
     // Create rarity reveal bar for final phase
@@ -201,48 +248,57 @@ const NextGenGachaEngine = {
         return `**TRANSCENDENT**\n${progressBar}`;
     },
 
-    // Calculate how many extra frames needed to reach target rarity color
-    calculateSuspenseFrames(currentFrame, targetRarity) {
-        const rainbowColors = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪'];
+    // Calculate how many frames to progress to target rarity color
+    getProgressFrames(targetRarity) {
+        if (targetRarity === 'cursed') {
+            return 0; // No progression needed, immediate brown-out
+        }
+        
+        // All other rarities progress 12 frames
+        return 12;
+    },
+
+    // Calculate the frame where rainbow should stop for target rarity
+    getStopFrame(targetRarity) {
         const rarityTargetColors = {
-            common: '⬜',      // White - not in rainbow, so 0 frames
-            uncommon: '🟩',   // Green - index 3
-            rare: '🟦',       // Blue - index 4  
-            legendary: '🟨',  // Yellow - index 2
+            cursed: '🟫',     // Brown - index 6
+            manifested: '🟩', // Green - index 3
+            potent: '🟦',     // Blue - index 4  
+            ancient: '🟨',    // Yellow - index 2
             mythical: '🟥',   // Red - index 0
-            omnipotent: null  // Full rotation - 6 frames
+            transcendent: '🟪', // Purple - index 5
+            godlike: '🟧'     // Orange - index 1
         };
 
+        const rainbowColors = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪', '🟫'];
         const targetColor = rarityTargetColors[targetRarity];
         
-        // Special cases
-        if (targetRarity === 'common') {
-            return 0; // No extra frames needed
-        }
+        if (!targetColor) return 0;
         
-        if (targetRarity === 'omnipotent') {
-            return 6; // Full rainbow rotation
-        }
-
-        // Find how many frames to reach the target color
         const targetIndex = rainbowColors.indexOf(targetColor);
-        if (targetIndex === -1) {
-            return 0; // Color not found, no extra frames
-        }
-
-        // Calculate current color position
-        const currentColorIndex = currentFrame % rainbowColors.length;
         
-        // Calculate frames needed to reach target
-        let framesToTarget;
-        if (targetIndex >= currentColorIndex) {
-            framesToTarget = targetIndex - currentColorIndex;
-        } else {
-            // Need to wrap around
-            framesToTarget = (rainbowColors.length - currentColorIndex) + targetIndex;
-        }
+        // Calculate frame where position 0 (leftmost) shows the target color
+        // Since colorIndex = (i + frame) % 7, we need frame where (0 + frame) % 7 = targetIndex
+        return targetIndex;
+    },
 
-        return framesToTarget;
+    // Calculate final stopped frame for rarity
+    calculateFinalFrame(currentFrame, targetRarity) {
+        const progressFrames = this.getProgressFrames(targetRarity);
+        const stopFrameOffset = this.getStopFrame(targetRarity);
+        
+        // Calculate where rainbow should be after progression
+        let finalFrame = currentFrame + progressFrames;
+        
+        // Adjust to land on target color
+        const rainbowLength = 7; // Including brown
+        const currentPosition = finalFrame % rainbowLength;
+        const targetPosition = stopFrameOffset;
+        
+        let adjustment = targetPosition - currentPosition;
+        if (adjustment < 0) adjustment += rainbowLength;
+        
+        return finalFrame + adjustment;
     }
 };
 
