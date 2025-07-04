@@ -39,25 +39,9 @@ module.exports = {
             try {
                 console.log(`🔘 ${interaction.user.username} clicked button: ${interaction.customId}`);
                 
-                // Handle specific button types
-                switch (interaction.customId) {
-                    case 'hunt_again':
-                    case 'view_collection':
-                    case 'detailed_results':
-                        // Import button handler from pull command
-                        const { handleButtonInteractions } = require('../commands/pull');
-                        await handleButtonInteractions(interaction);
-                        break;
-                    
-                    // Removed 'share_discovery' case - button no longer exists
-                    
-                    default:
-                        await interaction.reply({
-                            content: '❓ Unknown button action!',
-                            ephemeral: true
-                        });
-                        break;
-                }
+                // Import button handler from pull command
+                const { handleButtonInteraction } = require('../commands/pull');
+                await handleButtonInteraction(interaction);
                 
             } catch (error) {
                 console.error('Button interaction error:', error);
