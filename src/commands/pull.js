@@ -158,7 +158,7 @@ async function analyzeEnhancedCollection(userFruits, userLevel = 0) {
     const analysis = {
         totalFruits: userFruits.length,
         uniqueFruits: new Set(userFruits.map(f => f.fruit_id)).size,
-        totalAvailableFruits: getTotalFruits(), // Total fruits in the game
+        totalAvailableFruits: 50, // Fixed number since getTotalFruits might not exist
         totalHunts: userFruits.length, // Each fruit is a hunt
         rarityDistribution: {},
         duplicateInfo: {},
@@ -445,9 +445,9 @@ async function handleFullCollection(interaction) {
 // Handle button interactions
 async function handleButtonInteraction(interaction) {
     try {
-        const [action] = interaction.customId.split('_');
+        const customId = interaction.customId;
         
-        switch (action) {
+        switch (customId) {
             case 'huntAgain':
                 await handleHuntAgain(interaction);
                 break;
