@@ -9,24 +9,29 @@ async function createUltimateCinematicExperience(interaction) {
         // PHASE 1: Determine rarity (respects debug mode)
         const oldRarity = getTestRarity();
         
-        // Map old rarity names to new names
+        // Map to new rarity tiers
         const rarityMapping = {
-            'common': 'cursed',
-            'uncommon': 'manifested', 
-            'rare': 'potent',
-            'legendary': 'ancient',
+            'common': 'standard',
+            'uncommon': 'notable', 
+            'rare': 'powerful',
+            'legendary': 'legendary',
             'mythical': 'mythical',
-            'omnipotent': 'godlike'
+            'omnipotent': 'divine'
         };
         
-        const targetRarity = rarityMapping[oldRarity] || oldRarity;
+        const newRarity = rarityMapping[oldRarity] || oldRarity;
         const targetFruit = DevilFruitDatabase.getRandomDevilFruit(oldRarity);
         
         if (!targetFruit) {
             throw new Error(`No Devil Fruit found for rarity: ${oldRarity}`);
         }
 
-        console.log(`🎯 Animation Starting: ${targetFruit.name} (${targetRarity})`);
+        console.log(`🎯 Animation Starting: ${targetFruit.name} (${oldRarity})`);
+
+        // Get counter information for this fruit
+        const { CombatSystem, DEVIL_FRUIT_ELEMENTS } = require('../data/counter-system');
+        const fruitElement = DEVIL_FRUIT_ELEMENTS[targetFruit.id];
+        const elementName = fruitElement ? CombatSystem.getElementName(fruitElement) : 'Unknown';
 
         // PHASE 2: Initial hunt message
         const initialEmbed = new EmbedBuilder()
@@ -254,19 +259,19 @@ ${particles}
         const rarityTitles = {
             common: '🍈 **DEVIL FRUIT DISCOVERED** 🍈',
             uncommon: '🍈 **NOTABLE POWER AWAKENED** 🍈',
-            rare: '🍈 **RARE TREASURE CLAIMED** 🍈',
+            rare: '🍈 **POWERFUL TREASURE CLAIMED** 🍈',
             legendary: '🍈 **LEGENDARY MIGHT UNLEASHED** 🍈',
             mythical: '🍈 **MYTHICAL FORCE MANIFESTED** 🍈',
-            omnipotent: '🍈 **OMNIPOTENT REALITY TRANSCENDED** 🍈'
+            omnipotent: '🍈 **DIVINE REALITY TRANSCENDED** 🍈'
         };
 
         const rarityDescriptions = {
             common: '⚓ A Devil Fruit has chosen you!',
             uncommon: '🌊 The seas have blessed you with power!',
-            rare: '⚡ Rare energies flow through this fruit!',
+            rare: '⚡ Powerful energies flow through this fruit!',
             legendary: '🔥 **LEGENDARY CLASS ACHIEVED!** The Grand Line acknowledges your worth!',
             mythical: '👑 **MYTHICAL POWER BESTOWED!** The world trembles before this might!',
-            omnipotent: '🌌 **OMNIPOTENT TRANSCENDENCE!** Reality itself bends to your will!'
+            omnipotent: '🌌 **DIVINE TRANSCENDENCE!** Reality itself bends to your will!'
         };
 
         const typeEmojis = {
@@ -472,12 +477,13 @@ ${stageParticles}
             }
         }
 
-        // Create final formatted content - CLEAN format
+        // Create final formatted content with counter information
         const finalContent = `
 **${rarityDescriptions[oldRarity] || rarityDescriptions.common}**
 
 **🍈 Devil Fruit:** ${targetFruit.name}
 **📋 Type:** ${typeEmojis[targetFruit.type] || '🔮'} ${targetFruit.type}
+**⚔️ Element:** ${elementName}
 **👤 Previous User:** ${targetFruit.user}
 **⚡ Power:** ${targetFruit.power}
 **💎 Rarity:** ${rarityConfig.stars} ${rarityConfig.name}
@@ -487,6 +493,7 @@ ${stageParticles}
 
 **🔥 Awakening:** ${targetFruit.awakening}
 **⚠️ Weakness:** ${targetFruit.weakness}
+**🎯 Battle Info:** Strong vs ${elementName} counters, weak to ${elementName} weaknesses
 `;
 
         const finalEmbed = new EmbedBuilder()
