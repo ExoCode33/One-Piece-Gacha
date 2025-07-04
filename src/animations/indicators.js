@@ -3,30 +3,30 @@
 // ═══════════════════════════════════════════════════════════════════
 
 const IndicatorsSystem = {
-    // HAKI INTENSITY based on rarity (One Piece power levels)
-    getHakiLevel(rarity) {
-        const hakiLevels = {
-            common: 'WEAK HAKI',
-            uncommon: 'ARMAMENT HAKI', 
-            rare: 'OBSERVATION HAKI',
-            legendary: 'CONQUEROR\'S HAKI',
-            mythical: 'ADVANCED CONQUEROR\'S',
-            omnipotent: 'VOICE OF ALL THINGS'
+    // DEVIL FRUIT ENERGY based on rarity (actual fruit power)
+    getFruitEnergy(rarity) {
+        const energyLevels = {
+            common: 'FAINT AURA',
+            uncommon: 'PULSING ENERGY', 
+            rare: 'CRACKLING POWER',
+            legendary: 'OVERWHELMING FORCE',
+            mythical: 'REALITY DISTORTION',
+            omnipotent: 'GODLIKE PRESENCE'
         };
-        return hakiLevels[rarity] || 'WEAK HAKI';
+        return energyLevels[rarity] || 'FAINT AURA';
     },
 
-    // BOUNTY LEVEL based on rarity (One Piece bounty system)
-    getBountyLevel(rarity) {
-        const bountyLevels = {
-            common: '1,000 BERRIES',
-            uncommon: '50,000 BERRIES',
-            rare: '10 MILLION BERRIES', 
-            legendary: '100 MILLION BERRIES',
-            mythical: '1 BILLION BERRIES',
-            omnipotent: '5 BILLION BERRIES'
+    // DEVIL FRUIT RARITY HINTS based on rarity (fruit classification)
+    getFruitRarity(rarity) {
+        const rarityHints = {
+            common: 'STANDARD FRUIT',
+            uncommon: 'NOTABLE FRUIT',
+            rare: 'POWERFUL FRUIT', 
+            legendary: 'LEGENDARY FRUIT',
+            mythical: 'MYTHICAL FRUIT',
+            omnipotent: 'DIVINE FRUIT'
         };
-        return bountyLevels[rarity] || '1,000 BERRIES';
+        return rarityHints[rarity] || 'STANDARD FRUIT';
     },
 
     // DEVIL FRUIT CLASSIFICATION based on type (One Piece lore)
@@ -43,26 +43,26 @@ const IndicatorsSystem = {
     },
 
     // RAPID CHANGING INDICATORS that gradually lock in (EXACTLY 3 LINES)
-    // ONE PIECE THEMED - Shows Haki, Bounty, and Devil Fruit Class
+    // DEVIL FRUIT THEMED - Shows Energy, Rarity Hint, and Classification
     getChangingIndicators(frame, finalRarity, finalType) {
         const allRarities = ['common', 'uncommon', 'rare', 'legendary', 'mythical', 'omnipotent'];
         const allTypes = ['Paramecia', 'Zoan', 'Logia', 'Ancient Zoan', 'Mythical Zoan'];
         
         // Lock frames: indicators lock in one by one (adjusted for 18-frame animation)
         const lockFrames = {
-            haki: frame >= 5,     // Haki locks after 5 frames
-            bounty: frame >= 7,   // Bounty locks after 7 frames  
+            energy: frame >= 5,   // Energy locks after 5 frames
+            rarity: frame >= 7,   // Rarity hint locks after 7 frames  
             fruit: frame >= 9     // Devil Fruit class locks last
         };
         
         return {
-            haki: lockFrames.haki ? 
-                this.getHakiLevel(finalRarity) : 
-                this.getHakiLevel(allRarities[frame % allRarities.length]),
+            energy: lockFrames.energy ? 
+                this.getFruitEnergy(finalRarity) : 
+                this.getFruitEnergy(allRarities[frame % allRarities.length]),
             
-            bounty: lockFrames.bounty ? 
-                this.getBountyLevel(finalRarity) : 
-                this.getBountyLevel(allRarities[(frame + 2) % allRarities.length]),
+            rarity: lockFrames.rarity ? 
+                this.getFruitRarity(finalRarity) : 
+                this.getFruitRarity(allRarities[(frame + 2) % allRarities.length]),
             
             fruit: lockFrames.fruit ? 
                 this.getDevilFruitClass(finalType) : 
