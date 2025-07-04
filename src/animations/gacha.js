@@ -427,10 +427,214 @@ function updateTransitionFrameButton(frame, targetFruit = null, rewardColor = 0x
 }
 
 // ═══════════════════════════════════════════════════════════════════
+//                    MAIN CINEMATIC EXPERIENCE ORCHESTRATOR
+// ═══════════════════════════════════════════════════════════════════
+
+async function createUltimateCinematicExperience(interaction, userLevel, isInitialReply = true) {
+    const frameDelay = 1000; // 1 second per frame
+    let frame = 0;
+    let currentMessage;
+    let attempts = 0;
+    const maxAttempts = 50;
+    
+    try {
+        // Import required modules
+        const { generateRandomDevilFruit } = require('../data/devilfruit');
+        const DatabaseManager = require('../database/manager');
+        const { CombatSystem, DEVIL_FRUIT_ELEMENTS } = require('../data/counter-system');
+        const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+        
+        // Generate target fruit
+        const targetFruit = generateRandomDevilFruit();
+        console.log(`🎯 Animation Starting: ${targetFruit.name} (${targetFruit.rarity})`);
+        
+        // Get element information
+        const fruitElement = DEVIL_FRUIT_ELEMENTS[targetFruit.id];
+        const elementName = fruitElement ? CombatSystem.getElementName(fruitElement) : 'Unknown';
+        
+        const rewardColor = getRarityColor(targetFruit.rarity);
+        const connectionStart = Date.now();
+        
+        // Phase 1: Main Animation (18 frames)
+        for (frame = 0; frame < 18; frame++) {
+            attempts++;
+            if (attempts > maxAttempts) {
+                console.log(`🚨 Max attempts reached, skipping to reveal`);
+                break;
+            }
+            
+            const embed = updateAnimationFrame(frame, targetFruit, targetFruit.type);
+            
+            if (frame === 0) {
+                if (isInitialReply) {
+                    currentMessage = await interaction.reply({
+                        embeds: [embed],
+                        fetchReply: true
+                    });
+                } else {
+                    currentMessage = await interaction.editReply({
+                        embeds: [embed],
+                        components: []
+                    });
+                }
+            } else {
+                await interaction.editReply({
+                    embeds: [embed],
+                    components: []
+                });
+            }
+            
+            await new Promise(resolve => setTimeout(resolve, frameDelay));
+        }
+        
+        const animationFrames = frame;
+        console.log(`📊 Animation Performance: ${animationFrames}/18 frames (${(animationFrames/18*100).toFixed(1)}%) - ${attempts} total attempts`);
+        
+        // Phase 2: Progression (12 frames)
+        if (attempts <= maxAttempts) {
+            console.log(`🌊 Starting progression phase...`);
+            
+            for (let progFrame = 0; progFrame < 12; progFrame++) {
+                attempts++;
+                if (attempts > maxAttempts) break;
+                
+                const embed = updateProgressionFrame(frame, targetFruit, targetFruit.type);
+                
+                await interaction.editReply({
+                    embeds: [embed],
+                    components: []
+                });
+                
+                frame++;
+                await new Promise(resolve => setTimeout(resolve, frameDelay));
+            }
+        }
+        
+        // Phase 3: Transition (10 frames)
+        if (attempts <= maxAttempts) {
+            console.log(`🎆 Smooth transition: Rainbow to reward color...`);
+            
+            for (let transFrame = 0; transFrame < 10; transFrame++) {
+                attempts++;
+                if (attempts > maxAttempts) break;
+                
+                const embed = updateTransitionFrame(frame, targetFruit, rewardColor, targetFruit.type);
+                
+                await interaction.editReply({
+                    embeds: [embed],
+                    components: []
+                });
+                
+                frame++;
+                await new Promise(resolve => setTimeout(resolve, frameDelay));
+            }
+        }
+        
+        // Calculate user stats for final reveal
+        const userData = await DatabaseManager.getUser(interaction.user.id);
+        const userFruits = await DatabaseManager.getUserFruits(interaction.user.id);
+        
+        let userStats = {
+            totalFruits: userFruits.length + 1, // +1 for the fruit we're about to add
+            totalPower: 0
+        };
+        
+        // Calculate total power if user has level
+        if (userLevel > 0) {
+            const levelMultiplier = CombatSystem.getLevelMultiplier(userLevel);
+            userFruits.forEach(fruit => {
+                const basePower = CombatSystem.calculateBasePower(fruit.rarity);
+                userStats.totalPower += Math.floor(basePower * levelMultiplier);
+            });
+            
+            // Add current fruit power
+            const currentFruitPower = CombatSystem.calculateBasePower(targetFruit.rarity);
+            userStats.totalPower += Math.floor(currentFruitPower * levelMultiplier);
+        }
+        
+        // Final reveal with enhanced embed
+        console.log(`🎊 Gradual reveal: Devil Fruit information...`);
+        
+        const finalEmbed = createFinalRevealEmbed(targetFruit, userStats);
+        const actionRow = new ActionRowBuilder()
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId('huntAgain')
+                    .setLabel('🍈 Hunt Again')
+                    .setStyle(ButtonStyle.Primary),
+                new ButtonBuilder()
+                    .setCustomId('collection')
+                    .setLabel('📚 My Collection')
+                    .setStyle(ButtonStyle.Secondary)
+            );
+        
+        await interaction.editReply({
+            embeds: [finalEmbed],
+            components: [actionRow]
+        });
+        
+        // Save to database
+        await DatabaseManager.saveUserFruit(interaction.user.id, targetFruit);
+        await DatabaseManager.updateUserStats(interaction.user.id);
+        
+        const connectionTime = Date.now() - connectionStart;
+        console.log(`📡 Connection quality: ${Math.round(connectionTime/attempts)}ms`);
+        console.log(`🎊 Single hunt success: ${targetFruit.name} (${targetFruit.rarity}) for ${interaction.user.username}`);
+        
+    } catch (error) {
+        console.error('🚨 Animation Error:', error);
+        
+        // Fallback error handling
+        const { generateRandomDevilFruit } = require('../data/devilfruit');
+        const targetFruit = generateRandomDevilFruit();
+        
+        const errorEmbed = {
+            color: 0xFF0000,
+            title: "🚨 Animation Error",
+            description: "Something went wrong with the animation. Here's your fruit anyway!",
+            fields: [
+                { name: "🍎 Devil Fruit", value: targetFruit.name || 'Unknown Fruit', inline: true },
+                { name: "⭐ Rarity", value: targetFruit.rarity || 'unknown', inline: true },
+                { name: "🌟 Type", value: targetFruit.type || 'unknown', inline: true }
+            ]
+        };
+        
+        const actionRow = new ActionRowBuilder()
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId('huntAgain')
+                    .setLabel('🍈 Hunt Again')
+                    .setStyle(ButtonStyle.Primary),
+                new ButtonBuilder()
+                    .setCustomId('collection')
+                    .setLabel('📚 My Collection')
+                    .setStyle(ButtonStyle.Secondary)
+            );
+        
+        await interaction.editReply({
+            embeds: [errorEmbed],
+            components: [actionRow]
+        });
+        
+        // Still save the fruit to database
+        try {
+            const DatabaseManager = require('../database/manager');
+            await DatabaseManager.saveUserFruit(interaction.user.id, targetFruit);
+            await DatabaseManager.updateUserStats(interaction.user.id);
+        } catch (dbError) {
+            console.error('Failed to save fruit after animation error:', dbError);
+        }
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════
 //                    EXPORT ALL FUNCTIONS
 // ═══════════════════════════════════════════════════════════════════
 
 module.exports = {
+    // Main cinematic experience
+    createUltimateCinematicExperience,
+    
     // Main animation functions
     updateAnimationFrame,
     updateProgressionFrame, 
