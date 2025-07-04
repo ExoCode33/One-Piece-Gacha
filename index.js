@@ -1,23 +1,15 @@
 require('dotenv').config();
 const { Client, GatewayIntentBits, Collection, REST, Routes, SlashCommandBuilder } = require('discord.js');
+const { DatabaseSetup } = require('./src/database/setup');
 const fs = require('fs');
 const path = require('path');
 
-// Auto-register commands on startup
+// Auto-register commands on startup (removed multi/premium pulls)
 async function registerCommands() {
     const commands = [
         new SlashCommandBuilder()
             .setName('pull')
-            .setDescription('Pull a One Piece character from the gacha!')
-            .addStringOption(option =>
-                option.setName('type')
-                    .setDescription('Choose your hunt type')
-                    .setRequired(false)
-                    .addChoices(
-                        { name: '🍈 Single Hunt (5s cooldown)', value: 'single' },
-                        { name: '🍈x10 Multi Hunt (30s cooldown)', value: 'multi' },
-                        { name: '💎 Premium Hunt (60s cooldown, better rates)', value: 'premium' }
-                    ))
+            .setDescription('Hunt for Devil Fruits in the Grand Line!')
             .toJSON(),
         new SlashCommandBuilder()
             .setName('gacha-admin')
@@ -40,12 +32,12 @@ async function registerCommands() {
                             .setDescription('Force specific rarity (requires debug mode enabled)')
                             .setRequired(false)
                             .addChoices(
-                                { name: '⬜ Common', value: 'common' },
+                                { name: '🟫 Common', value: 'common' },
                                 { name: '🟩 Uncommon', value: 'uncommon' },
                                 { name: '🟦 Rare', value: 'rare' },
                                 { name: '🟨 Legendary', value: 'legendary' },
                                 { name: '🟥 Mythical', value: 'mythical' },
-                                { name: '🌈 Omnipotent', value: 'omnipotent' },
+                                { name: '🌈 Divine', value: 'omnipotent' },
                                 { name: '🎲 Random (Off)', value: 'off' }
                             )))
             .toJSON()
@@ -136,17 +128,26 @@ try {
     console.error('❌ Error loading events:', error);
 }
 
-// Bot ready
+// Bot ready with database initialization
 client.once('ready', async () => {
     console.log(`🏴‍☠️ ${client.user.tag} is ready to sail!`);
     console.log(`📊 Serving ${client.guilds.cache.size} server(s)`);
     console.log(`👥 Connected to ${client.users.cache.size} user(s)`);
     
+    // Initialize PostgreSQL database
+    try {
+        await DatabaseSetup.initializeDatabase();
+        console.log('🗄️ PostgreSQL database ready for Devil Fruit data!');
+    } catch (error) {
+        console.error('❌ Database initialization failed:', error);
+        console.error('⚠️ Bot will continue but data will not persist!');
+    }
+    
     // Auto-register commands when bot starts
     await registerCommands();
     
     // Set bot status
-    client.user.setActivity('🏴‍☠️ One Piece Gacha', { type: 'PLAYING' });
+    client.user.setActivity('🏴‍☠️ One Piece Gacha | PostgreSQL Ready', { type: 'PLAYING' });
 });
 
 // Enhanced error handling
@@ -158,15 +159,31 @@ client.on('warn', (warning) => {
     console.warn('⚠️ Discord client warning:', warning);
 });
 
-// Handle process termination gracefully
-process.on('SIGINT', () => {
+// Handle process termination gracefully with database cleanup
+process.on('SIGINT', async () => {
     console.log('🛑 Received SIGINT, shutting down gracefully...');
+    
+    try {
+        await DatabaseSetup.close();
+        console.log('🗄️ Database connections closed');
+    } catch (error) {
+        console.error('❌ Error closing database:', error);
+    }
+    
     client.destroy();
     process.exit(0);
 });
 
-process.on('SIGTERM', () => {
+process.on('SIGTERM', async () => {
     console.log('🛑 Received SIGTERM, shutting down gracefully...');
+    
+    try {
+        await DatabaseSetup.close();
+        console.log('🗄️ Database connections closed');
+    } catch (error) {
+        console.error('❌ Error closing database:', error);
+    }
+    
     client.destroy();
     process.exit(0);
 });
@@ -180,7 +197,7 @@ process.on('uncaughtException', (error) => {
     process.exit(1);
 });
 
-// Login with better error handling
+// Login with better error handling and environment validation
 async function startBot() {
     try {
         if (!process.env.DISCORD_TOKEN) {
@@ -190,11 +207,15 @@ async function startBot() {
         if (!process.env.CLIENT_ID) {
             throw new Error('CLIENT_ID is not set in environment variables');
         }
+
+        if (!process.env.DATABASE_URL) {
+            console.warn('⚠️ DATABASE_URL is not set - database features will be disabled');
+        }
         
         await client.login(process.env.DISCORD_TOKEN);
     } catch (error) {
         console.error('❌ Failed to start bot:', error.message);
-        console.error('💡 Make sure your .env file has DISCORD_TOKEN and CLIENT_ID set correctly');
+        console.error('💡 Make sure your .env file has DISCORD_TOKEN, CLIENT_ID, and DATABASE_URL set correctly');
         process.exit(1);
     }
 }
