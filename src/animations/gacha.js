@@ -68,10 +68,10 @@ The seas whisper of legendary treasures...
         let successfulFrames = 0;
         let totalAttempts = 0;
 
-        // Animation sequence
-        const totalFrames = 20;
-        const maxRetries = 2;
-        const baseDelay = 900;
+        // ACCELERATED: Reduced frames and faster timing
+        const totalFrames = 12; // Reduced from 20
+        const maxRetries = 1;   // Reduced retries
+        const baseDelay = 400;  // Much faster delay
         
         for (let frame = 0; frame < totalFrames; frame++) {
             let success = false;
@@ -111,7 +111,7 @@ ${particles}
                         .setColor(currentColor)
                         .setFooter({ text: `Hunt in Progress...` });
 
-                    const timeoutDuration = 3500 + (retryCount * 1000);
+                    const timeoutDuration = 2000 + (retryCount * 500); // Reduced timeout
                     const updatePromise = huntMessage.edit({ embeds: [searchEmbed] });
                     const timeoutPromise = new Promise((_, reject) => 
                         setTimeout(() => reject(new Error('Discord API timeout')), timeoutDuration)
@@ -120,7 +120,7 @@ ${particles}
                     await Promise.race([updatePromise, timeoutPromise]);
                     success = true;
                     
-                    const delay = retryCount > 0 ? baseDelay + (retryCount * 300) : baseDelay;
+                    const delay = retryCount > 0 ? baseDelay + (retryCount * 200) : baseDelay; // Faster retry delay
                     await new Promise(resolve => setTimeout(resolve, delay));
                     
                 } catch (error) {
@@ -147,9 +147,9 @@ ${particles}
         const successRate = (successfulFrames / totalFrames) * 100;
         console.log(`📊 Animation Performance: ${successfulFrames}/${totalFrames} frames (${successRate.toFixed(1)}%) - ${totalAttempts} total attempts`);
 
-        // PROGRESSION PHASE: 12 frames of rightward movement
+        // PROGRESSION PHASE: Reduced to 6 frames for speed
         console.log('🌊 Starting progression phase...');
-        const progressFrames = 12;
+        const progressFrames = 6; // Reduced from 12
         
         for (let progFrame = 0; progFrame < progressFrames; progFrame++) {
             try {
@@ -180,20 +180,20 @@ ${progressBar}
 ${particles}
                     `)
                     .setColor(currentColor)
-                    .setFooter({ text: `Progression Phase: ${progFrame + 1}/${progressFrames}` });
+                    .setFooter({ text: 'Energies converging...' }); // Removed progress counter
 
-                const timeoutDuration = 3500;
+                const timeoutDuration = 2000; // Faster timeout
                 const updatePromise = huntMessage.edit({ embeds: [progressEmbed] });
                 const timeoutPromise = new Promise((_, reject) => 
                     setTimeout(() => reject(new Error('Discord API timeout')), timeoutDuration)
                 );
                 
                 await Promise.race([updatePromise, timeoutPromise]);
-                await new Promise(resolve => setTimeout(resolve, 600));
+                await new Promise(resolve => setTimeout(resolve, 300)); // Much faster delay
                 
             } catch (error) {
                 console.error(`Progression frame ${progFrame} error:`, error.message);
-                await new Promise(resolve => setTimeout(resolve, 400));
+                await new Promise(resolve => setTimeout(resolve, 200)); // Faster error recovery
             }
         }
 
@@ -235,18 +235,18 @@ ${finalParticles}
                 .setColor(rarityConfig.color)
                 .setFooter({ text: `${rarityConfig.name} Power Manifested` });
 
-            const timeoutDuration = 3500;
+            const timeoutDuration = 2000; // Faster timeout
             const updatePromise = huntMessage.edit({ embeds: [finalColorEmbed] });
             const timeoutPromise = new Promise((_, reject) => 
                 setTimeout(() => reject(new Error('Discord API timeout')), timeoutDuration)
             );
             
             await Promise.race([updatePromise, timeoutPromise]);
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Faster delay
             
         } catch (error) {
             console.error(`Final color phase error:`, error.message);
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await new Promise(resolve => setTimeout(resolve, 500)); // Faster error recovery
         }
 
         // PHASE 5: Final reveal
