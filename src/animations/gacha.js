@@ -86,6 +86,7 @@ The seas whisper of legendary treasures...
                     const particles = ParticlesSystem.createOnePieceParticles(frame + 3, 'energy', oldRarity);
                     
                     // FIXED: Sync embed color to match the squares, not just rainbow position
+                    const rainbowEmbedColors = ['#FF0000', '#FF6000', '#FFCC00', '#00FF00', '#0080FF', '#8000FF', '#8B4513'];
                     const finalBarColors = {
                         'common': '#8B4513',      // Brown
                         'uncommon': '#2ECC71',    // Green
