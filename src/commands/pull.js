@@ -1,1015 +1,405 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { SlashCommandBuilder } = require('discord.js');
 const { createUltimateCinematicExperience } = require('../animations/gacha');
-const { DevilFruitDatabase } = require('../data/devilfruit');
-const { CombatSystem, LevelSystem } = require('../data/counter-system');
-const { DatabaseManager } = require('../database/manager');
+const DatabaseManager = require('../database/manager');
+const { CombatSystem } = require('../data/counter-system');
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('pull')
-        .setDescription('Hunt for Devil Fruits in the Grand Line!'),
+        .setDescription('🍈 Hunt for Devil Fruits in the Grand Line!'),
 
     async execute(interaction) {
         try {
-            const userId = interaction.user.id;
-            const userName = interaction.user.username;
-            const guildId = interaction.guild?.id;
-
-            // Get or create user in database
-            await DatabaseManager.getOrCreateUser(userId, userName, guildId);
-
+            console.log(`🎮 ${interaction.user.username} used /pull`);
+            
             // Check cooldown
-            const cooldownCheck = await DatabaseManager.checkCooldown(userId);
-            if (cooldownCheck.onCooldown) {
+            const userId = interaction.user.id;
+            const cooldownEnd = await DatabaseManager.getCooldown(userId, 'pull');
+            
+            if (cooldownEnd && Date.now() < cooldownEnd) {
+                const timeLeft = Math.ceil((cooldownEnd - Date.now()) / 1000);
                 return await interaction.reply({
-                    content: `⏰ **Cooldown Active!** Wait **${cooldownCheck.timeLeft}s** before your next hunt!\n\n*The Grand Line's mysteries need time to regenerate...*`,
+                    content: `⏰ Your crew is still recovering from the last hunt! Wait **${timeLeft}** more seconds before searching for another Devil Fruit.`,
                     ephemeral: true
                 });
             }
 
-            // Set cooldown (5 seconds)
-            await DatabaseManager.setCooldown(userId, 5);
-
-            // Update user's level from Discord roles
-            await DatabaseManager.updateUserLevel(userId, interaction.member);
-
-            console.log(`🎮 ${userName} initiated Devil Fruit hunt`);
-
-            // Handle single hunt (only option now)
             await handleSingleHunt(interaction);
-
-        } catch (error) {
-            console.error('🚨 Pull Command Error:', error);
-            const errorEmbed = new EmbedBuilder()
-                .setTitle('⚠️ Hunt Failed!')
-                .setDescription(`
-🌊 **The Grand Line rejected your hunt!**
-
-**Error:** ${error.message}
-
-*The seas are too turbulent right now. Try again when the waters calm...*
-                `)
-                .setColor('#E74C3C')
-                .setFooter({ text: 'Devil Fruit Hunt System | Please try again' });
             
-            try {
-                if (interaction.replied || interaction.deferred) {
-                    await interaction.followUp({ embeds: [errorEmbed], ephemeral: true });
-                } else {
-                    await interaction.reply({ embeds: [errorEmbed], ephemeral: true });
-                }
-            } catch (replyError) {
-                console.error('Failed to send error message:', replyError);
+        } catch (error) {
+            console.error(`🚨 Pull Command Error:`, error);
+            
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({
+                    content: '⚠️ Something went wrong during your Devil Fruit hunt! Please try again.',
+                    ephemeral: true
+                });
             }
         }
     }
 };
 
-// Single hunt with full cinematic experience
 async function handleSingleHunt(interaction) {
     try {
-        // Defer reply for long animation
-        await interaction.deferReply();
-
-        // Start the ultimate cinematic experience
-        const result = await createUltimateCinematicExperience(interaction);
-
-        // Save result to database
-        const userId = interaction.user.id;
-        const { CombatSystem, DEVIL_FRUIT_ELEMENTS } = require('../data/counter-system');
-        const fruitElement = DEVIL_FRUIT_ELEMENTS[result.devilFruit.id];
+        console.log(`🎮 ${interaction.user.username} initiated single Devil Fruit hunt`);
         
-        await DatabaseManager.addDevilFruit(userId, result.devilFruit, fruitElement);
-
-        console.log(`🎊 Single hunt success: ${result.devilFruit.name} (${result.rarity}) for ${interaction.user.username}`);
-
+        // Set cooldown (5 seconds)
+        await DatabaseManager.setCooldown(interaction.user.id, 'pull', Date.now() + 5000);
+        
+        // Ensure user exists in database
+        await DatabaseManager.ensureUser(interaction.user.id, interaction.user.username);
+        
+        // Get user level for combat power calculation
+        const userData = await DatabaseManager.getUser(interaction.user.id);
+        const userLevel = userData ? userData.level : 0;
+        
+        // Start the ultimate cinematic experience
+        await createUltimateCinematicExperience(interaction, userLevel);
+        
+        console.log(`🎊 Single hunt success for ${interaction.user.username}`);
+        
     } catch (error) {
         console.error('Single hunt error:', error);
-        const errorEmbed = new EmbedBuilder()
-            .setTitle('⚠️ The Sea Monsters Interfered!')
-            .setDescription(`
-🌊 **Your Devil Fruit hunt was disrupted!**
-
-Powerful sea creatures have interfered with your hunt. The Grand Line's treasures remain hidden for now.
-
-*Try again when the waters are calmer...*
-            `)
-            .setColor('#E74C3C')
-            .setFooter({ text: 'Hunt disrupted by sea monsters' });
-        
-        await interaction.editReply({ embeds: [errorEmbed] });
         throw error;
     }
 }
 
-// Button interaction handler
-async function handleButtonInteractions(interaction) {
+// Handle button interactions
+async function handleButtonInteraction(interaction) {
     try {
-        const { customId } = interaction;
-
-        switch (customId) {
-            case 'hunt_again':
+        const [action] = interaction.customId.split('_');
+        
+        switch (action) {
+            case 'huntAgain':
                 await handleHuntAgain(interaction);
                 break;
-
-            case 'view_collection':
-                await showUserCollection(interaction);
+            case 'collection':
+                await handleCollection(interaction);
                 break;
-
-            case 'view_detailed_stats':
-                await showDetailedStats(interaction);
-                break;
-
             default:
                 await interaction.reply({
-                    content: '❓ Unknown button action!',
+                    content: '❌ Unknown action.',
                     ephemeral: true
                 });
         }
-
     } catch (error) {
-        console.error('Button interaction error:', error);
+        console.error(`Button interaction error:`, error);
         await interaction.reply({
-            content: '❌ Button action failed! Please try using the /pull command instead.',
+            content: '⚠️ Something went wrong with that action.',
             ephemeral: true
         });
     }
 }
 
-// Hunt again with database integration
 async function handleHuntAgain(interaction) {
-    try {
-        const userId = interaction.user.id;
-        
-        // Check cooldown
-        const cooldownCheck = await DatabaseManager.checkCooldown(userId);
-        if (cooldownCheck.onCooldown) {
-            return await interaction.reply({
-                content: `⏰ **Cooldown Active!** Wait **${cooldownCheck.timeLeft}s** before hunting again!`,
-                ephemeral: true
-            });
-        }
-
-        // Set new cooldown
-        await DatabaseManager.setCooldown(userId, 5);
-        
-        // Update user level
-        await DatabaseManager.updateUserLevel(userId, interaction.member);
-
-        // Send a new message and start the hunt animation
+    // Check cooldown
+    const userId = interaction.user.id;
+    const cooldownEnd = await DatabaseManager.getCooldown(userId, 'pull');
+    
+    if (cooldownEnd && Date.now() < cooldownEnd) {
+        const timeLeft = Math.ceil((cooldownEnd - Date.now()) / 1000);
         await interaction.reply({
-            content: '🍈 **Starting new hunt...**',
-            fetchReply: true
-        });
-
-        // Create mock interaction for animation
-        const mockInteraction = {
-            user: interaction.user,
-            member: interaction.member,
-            editReply: async (options) => {
-                return await interaction.editReply(options);
-            },
-            replied: false,
-            deferred: true
-        };
-
-        // Start hunt animation
-        const result = await createUltimateCinematicExperience(mockInteraction);
-        
-        // Save to database
-        const { DEVIL_FRUIT_ELEMENTS } = require('../data/counter-system');
-        const fruitElement = DEVIL_FRUIT_ELEMENTS[result.devilFruit.id];
-        await DatabaseManager.addDevilFruit(userId, result.devilFruit, fruitElement);
-
-        console.log(`🎊 Hunt again success: ${result.devilFruit.name} (${result.rarity}) for ${interaction.user.username}`);
-        
-    } catch (error) {
-        console.error('Hunt again error:', error);
-        await interaction.reply({
-            content: '❌ Unable to start new hunt! Please use `/pull` command.',
+            content: `⏰ Your crew is still recovering! Wait **${timeLeft}** more seconds before hunting again.`,
             ephemeral: true
         });
+        return;
     }
+    
+    // Start new hunt
+    await interaction.deferReply();
+    await handleSingleHunt(interaction);
 }
 
-// Enhanced collection system with database
-async function showUserCollection(interaction) {
+async function handleCollection(interaction) {
     try {
+        await interaction.deferReply({ ephemeral: true });
+        
         const userId = interaction.user.id;
+        const username = interaction.user.username;
         
-        // Get collection from database
-        const collection = await DatabaseManager.getUserCollection(userId);
-
-        if (!collection || Object.keys(collection.devilFruits).length === 0) {
-            const emptyEmbed = new EmbedBuilder()
-                .setTitle('📚 **Your Devil Fruit Collection**')
-                .setDescription(`
-🍈 **Your collection is empty!**
-
-Start your journey on the Grand Line by hunting for Devil Fruits!
-
-*Use \`/pull\` to begin your Devil Fruit adventure!*
-                `)
-                .setColor('#95A5A6')
-                .setFooter({ text: 'Start hunting to build your collection!' });
-
-            return await interaction.reply({ embeds: [emptyEmbed], ephemeral: true });
-        }
-
-        const user = collection.user;
-        const battleProfile = collection.battleProfile;
+        // Ensure user exists
+        await DatabaseManager.ensureUser(userId, username);
         
-        // Calculate display data
-        const totalFruits = Object.keys(collection.devilFruits).length;
-        const totalHunts = user.total_hunts;
-        const discoveryRate = Math.round((totalFruits / totalHunts) * 100);
-
-        // Find strongest fruit
+        // Get comprehensive collection data
+        const userData = await DatabaseManager.getUser(userId);
+        const userFruits = await DatabaseManager.getUserFruits(userId);
+        const rarityStats = await DatabaseManager.getUserRarityStats(userId);
+        const typeStats = await DatabaseManager.getUserTypeStats(userId);
+        
+        // Calculate level-enhanced combat power
+        const userLevel = userData ? userData.level : 0;
+        const levelMultiplier = CombatSystem.getLevelMultiplier(userLevel);
+        const levelRank = CombatSystem.getLevelRank(userLevel);
+        
+        // Calculate total combat power with level bonus
+        let totalBasePower = 0;
+        let totalCombatPower = 0;
         let strongestFruit = null;
         let strongestPower = 0;
         
-        Object.values(collection.devilFruits).forEach(fruit => {
-            if (fruit.powerLevel > strongestPower) {
-                strongestPower = fruit.powerLevel;
+        // Group fruits for better display
+        const fruitsByType = {};
+        
+        for (const fruit of userFruits) {
+            const basePower = CombatSystem.calculateBasePower(fruit.rarity);
+            const enhancedPower = Math.floor(basePower * levelMultiplier);
+            
+            totalBasePower += basePower;
+            totalCombatPower += enhancedPower;
+            
+            if (enhancedPower > strongestPower) {
+                strongestPower = enhancedPower;
                 strongestFruit = fruit;
             }
-        });
-
-        // Combat power ranking
-        let powerRank = 'Rookie';
-        const totalCP = battleProfile.totalCombatPower;
-        if (totalCP >= 100000) powerRank = 'Yonko';
-        else if (totalCP >= 50000) powerRank = 'Admiral';
-        else if (totalCP >= 25000) powerRank = 'Warlord';
-        else if (totalCP >= 12000) powerRank = 'Supernova';
-        else if (totalCP >= 6000) powerRank = 'Captain';
-        else if (totalCP >= 3000) powerRank = 'Elite Pirate';
-        else if (totalCP >= 1500) powerRank = 'Bounty Hunter';
-
-        // Build display strings
-        let rarityBreakdown = '';
-        const rarityOrder = ['omnipotent', 'mythical', 'legendary', 'rare', 'uncommon', 'common'];
-        const rarityEmojis = {
-            omnipotent: { emoji: '🌈', name: 'Divine' },
-            mythical: { emoji: '🟥', name: 'Mythical' },
-            legendary: { emoji: '🟨', name: 'Legendary' },
-            rare: { emoji: '🟦', name: 'Rare' },
-            uncommon: { emoji: '🟩', name: 'Uncommon' },
-            common: { emoji: '🟫', name: 'Common' }
-        };
-        
-        rarityOrder.forEach(rarity => {
-            const count = collection.rarityCount[rarity] || 0;
-            if (count > 0) {
-                const config = rarityEmojis[rarity];
-                rarityBreakdown += `${config.emoji} **${config.name}:** ${count}x\n`;
+            
+            // Group by type
+            if (!fruitsByType[fruit.type]) {
+                fruitsByType[fruit.type] = [];
             }
-        });
-
-        let typeBreakdown = '';
-        const typeEmojis = {
-            'Paramecia': '🔮',
-            'Zoan': '🐺', 
-            'Logia': '🌪️',
-            'Ancient Zoan': '🦕',
-            'Mythical Zoan': '🐉',
-            'Special Paramecia': '✨'
-        };
-        
-        Object.entries(collection.typeCount).forEach(([type, count]) => {
-            if (count > 0) {
-                const emoji = typeEmojis[type] || '🔮';
-                typeBreakdown += `${emoji} **${type}:** ${count}x\n`;
-            }
-        });
-
-        const levelBonus = Math.round((battleProfile.levelMultiplier - 1.0) * 100);
-        const bonusText = levelBonus > 0 ? `+${levelBonus}% Combat Power` : 'No bonus';
-
-        // Create professional collection embed
-        const collectionEmbed = new EmbedBuilder()
-            .setTitle(`⚔️ **${interaction.user.username}'s Devil Fruit Arsenal**`)
-            .setDescription(`
-🏴‍☠️ **Pirate Profile:**
-**🎖️ Level:** ${battleProfile.level} (${battleProfile.rank})
-**⚔️ Total Combat Power:** ${battleProfile.totalCombatPower.toLocaleString()} CP
-**📈 Level Bonus:** ${bonusText}
-**🏆 Power Rank:** ${powerRank}
-**🍈 Collection:** ${totalFruits} unique fruits (${totalHunts} hunts)
-**📊 Success Rate:** ${discoveryRate}%
-**💪 Strongest Fruit:** ${strongestFruit?.name || 'None'} (${strongestPower.toLocaleString()} CP)
-
-**🌟 Power by Rarity:**
-${rarityBreakdown || 'No fruits collected yet!'}
-
-**🔮 Power by Type:**
-${typeBreakdown || 'No fruits collected yet!'}
-
-**⚔️ Battle Analysis:**
-*Your level ${battleProfile.level} ${battleProfile.rank} status grants ${bonusText} to all Devil Fruit combat power!*
-*Total Battle Strength: ${battleProfile.totalCombatPower.toLocaleString()} CP*
-
-*Ready for battle! Your experience amplifies your Devil Fruit mastery!*
-            `)
-            .setColor(getPowerRankColor(powerRank))
-            .setFooter({ text: `Level ${battleProfile.level} ${battleProfile.rank} | Combat system ready!` });
-
-        // Add combat readiness buttons
-        const actionRow = new ActionRowBuilder()
-            .addComponents(
-                new ButtonBuilder()
-                    .setCustomId('view_detailed_stats')
-                    .setLabel('📊 Detailed Stats')
-                    .setStyle(ButtonStyle.Secondary),
-                new ButtonBuilder()
-                    .setCustomId('combat_preview')
-                    .setLabel('⚔️ Combat Preview')
-                    .setStyle(ButtonStyle.Danger)
-                    .setDisabled(true) // Coming soon
-            );
-
-        await interaction.reply({ embeds: [collectionEmbed], components: [actionRow], ephemeral: true });
-
-    } catch (error) {
-        console.error('Error showing collection:', error);
-        await interaction.reply({
-            content: '❌ Failed to load collection! Please try again.',
-            ephemeral: true
-        });
-    }
-}
-
-// Show detailed statistics
-async function showDetailedStats(interaction) {
-    try {
-        const userId = interaction.user.id;
-        const collection = await DatabaseManager.getUserCollection(userId);
-
-        if (!collection) {
-            return await interaction.reply({
-                content: '❌ No collection data found!',
-                ephemeral: true
+            fruitsByType[fruit.type].push({
+                ...fruit,
+                basePower,
+                enhancedPower
             });
         }
-
-        // Create detailed fruit list
-        let detailedList = '';
-        const sortedFruits = Object.values(collection.devilFruits)
-            .sort((a, b) => b.powerLevel - a.powerLevel)
-            .slice(0, 15); // Top 15 fruits
-
-        sortedFruits.forEach((fruit, index) => {
-            const timesText = fruit.timesObtained > 1 ? ` (x${fruit.timesObtained})` : '';
-            const rarityEmoji = {
-                'omnipotent': '🌈',
-                'mythical': '🟥', 
-                'legendary': '🟨',
-                'rare': '🟦',
-                'uncommon': '🟩',
-                'common': '🟫'
-            }[fruit.rarity] || '⚪';
+        
+        // Calculate level bonus
+        const levelBonus = totalCombatPower - totalBasePower;
+        const levelBonusPercentage = levelMultiplier > 1 ? Math.round((levelMultiplier - 1) * 100) : 0;
+        
+        // Get power rank
+        const powerRank = CombatSystem.getPowerRank(totalCombatPower);
+        
+        // Create collection display
+        let collectionContent = '';
+        
+        // Header with level and power info
+        collectionContent += `🏴‍☠️ **${username}'s Devil Fruit Collection** 🏴‍☠️\n\n`;
+        
+        if (userLevel > 0) {
+            collectionContent += `🎖️ **Level:** ${userLevel} (${levelRank})\n`;
+            collectionContent += `⚔️ **Total Combat Power:** ${totalCombatPower.toLocaleString()} CP\n`;
+            if (levelBonusPercentage > 0) {
+                collectionContent += `📈 **Level Bonus:** +${levelBonusPercentage}% Combat Power\n`;
+            }
+            collectionContent += `🏆 **Power Rank:** ${powerRank}\n`;
+            if (strongestFruit) {
+                collectionContent += `💪 **Strongest Fruit:** ${strongestFruit.name} (${strongestPower.toLocaleString()} CP)\n`;
+            }
+            collectionContent += `\n`;
+        }
+        
+        // Basic stats
+        const totalFruits = userFruits.length;
+        const uniqueFruits = new Set(userFruits.map(f => f.fruit_id)).size;
+        const discoveryRate = userData ? Math.round((uniqueFruits / userData.total_hunts) * 100) : 0;
+        
+        collectionContent += `📊 **Collection Stats:**\n`;
+        collectionContent += `🍈 Total Fruits: ${totalFruits}\n`;
+        collectionContent += `✨ Unique Fruits: ${uniqueFruits}\n`;
+        collectionContent += `🎯 Discovery Rate: ${discoveryRate}%\n`;
+        collectionContent += `🏴‍☠️ Total Hunts: ${userData ? userData.total_hunts : 0}\n\n`;
+        
+        // Power breakdown by rarity (if user has level)
+        if (userLevel > 0) {
+            collectionContent += `🌟 **Power by Rarity:**\n`;
+            const rarityPowerBreakdown = {};
             
-            detailedList += `**${index + 1}.** ${rarityEmoji} ${fruit.name}${timesText}\n`;
-            detailedList += `     └ ${fruit.powerLevel.toLocaleString()} CP | ${fruit.type}\n`;
-        });
-
-        const detailsEmbed = new EmbedBuilder()
-            .setTitle(`📊 **${interaction.user.username}'s Detailed Stats**`)
-            .setDescription(`
-**🏆 Top Devil Fruits (by Power Level):**
-${detailedList || 'No fruits collected yet!'}
-
-**💾 Database Stats:**
-**Total Records:** ${Object.keys(collection.devilFruits).length} fruits
-**Combat Power Calculation:** Level ${collection.battleProfile.level} × ${collection.battleProfile.levelMultiplier}
-**Last Hunt:** ${collection.user.updated_at ? new Date(collection.user.updated_at).toLocaleString() : 'Never'}
-
-*Use your strongest fruits strategically in battles!*
-            `)
-            .setColor('#3498DB')
-            .setFooter({ text: 'Detailed collection analysis | Database powered' });
-
-        await interaction.reply({ embeds: [detailsEmbed], ephemeral: true });
-
-    } catch (error) {
-        console.error('Error showing detailed stats:', error);
-        await interaction.reply({
-            content: '❌ Failed to load detailed stats!',
-            ephemeral: true
-        });
-    }
-}
-
-// Helper functions for combat power system
-function getPowerDescription(rank) {
-    const descriptions = {
-        'Rookie': 'New to the Grand Line',
-        'Bounty Hunter': 'Building reputation',
-        'Elite Pirate': 'Skilled warrior',
-        'Captain': 'Crew leader material',
-        'Supernova': 'Rising star of the seas',
-        'Warlord': 'Government-recognized threat',
-        'Admiral': 'Marine-level power',
-        'Yonko': 'Emperor of the seas'
-    };
-    return descriptions[rank] || 'Unknown power level';
-}
-
-function getPowerRankColor(rank) {
-    const colors = {
-        'Rookie': '#95A5A6',
-        'Bounty Hunter': '#3498DB',
-        'Elite Pirate': '#2ECC71',
-        'Captain': '#F39C12',
-        'Supernova': '#E67E22',
-        'Warlord': '#9B59B6',
-        'Admiral': '#E74C3C',
-        'Yonko': '#F1C40F'
-    };
-    return colors[rank] || '#95A5A6';
-}
-
-// Export the button handler
-module.exports.handleButtonInteractions = handleButtonInteractions;const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const { createUltimateCinematicExperience } = require('../animations/gacha');
-const { DevilFruitDatabase } = require('../data/devilfruit');
-const { CombatSystem, LevelSystem } = require('../data/counter-system');
-
-// User cooldowns and statistics
-const userCooldowns = new Map();
-const userStats = new Map();
-
-// Cooldown times (in milliseconds)
-const COOLDOWNS = {
-    single: 5000,    // 5 seconds
-    multi: 30000,    // 30 seconds
-    premium: 60000   // 60 seconds
-};
-
-module.exports = {
-    data: new SlashCommandBuilder()
-        .setName('pull')
-        .setDescription('Hunt for Devil Fruits in the Grand Line!')
-        .addStringOption(option =>
-            option.setName('type')
-                .setDescription('Choose your hunt type')
-                .setRequired(false)
-                .addChoices(
-                    { name: '🍈 Single Hunt (5s cooldown)', value: 'single' },
-                    { name: '🍈x10 Multi Hunt (30s cooldown)', value: 'multi' },
-                    { name: '💎 Premium Hunt (60s cooldown, better rates)', value: 'premium' }
-                )),
-
-    async execute(interaction) {
-        try {
-            const huntType = interaction.options.getString('type') || 'single';
-            const userId = interaction.user.id;
-            const userName = interaction.user.username;
-
-            // Check cooldowns
-            const now = Date.now();
-            const cooldownKey = `${userId}_${huntType}`;
+            for (const fruit of userFruits) {
+                if (!rarityPowerBreakdown[fruit.rarity]) {
+                    rarityPowerBreakdown[fruit.rarity] = { count: 0, power: 0 };
+                }
+                rarityPowerBreakdown[fruit.rarity].count++;
+                rarityPowerBreakdown[fruit.rarity].power += Math.floor(CombatSystem.calculateBasePower(fruit.rarity) * levelMultiplier);
+            }
             
-            if (userCooldowns.has(cooldownKey)) {
-                const cooldownEnd = userCooldowns.get(cooldownKey);
-                if (now < cooldownEnd) {
-                    const timeLeft = Math.ceil((cooldownEnd - now) / 1000);
-                    return await interaction.reply({
-                        content: `⏰ **Cooldown Active!** Wait **${timeLeft}s** before your next ${huntType} hunt!\n\n*The Grand Line's mysteries need time to regenerate...*`,
-                        ephemeral: true
-                    });
+            const rarityOrder = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythical', 'omnipotent'];
+            const rarityEmojis = {
+                common: '🟫',
+                uncommon: '🟩', 
+                rare: '🟦',
+                epic: '🟪',
+                legendary: '🟨',
+                mythical: '🟥',
+                omnipotent: '⬜'
+            };
+            
+            for (const rarity of rarityOrder) {
+                if (rarityPowerBreakdown[rarity]) {
+                    const { count, power } = rarityPowerBreakdown[rarity];
+                    collectionContent += `${rarityEmojis[rarity]} ${rarity.charAt(0).toUpperCase() + rarity.slice(1)}: ${count}x (${power.toLocaleString()} CP)\n`;
                 }
             }
-
-            // Set cooldown
-            userCooldowns.set(cooldownKey, now + COOLDOWNS[huntType]);
-
-            // Initialize user stats if needed
-            if (!userStats.has(userId)) {
-                userStats.set(userId, {
-                    totalHunts: 0,
-                    devilFruits: {},
-                    rarityCount: { common: 0, uncommon: 0, rare: 0, legendary: 0, mythical: 0, omnipotent: 0 },
-                    typeCount: { 'Paramecia': 0, 'Zoan': 0, 'Logia': 0, 'Ancient Zoan': 0, 'Mythical Zoan': 0, 'Special Paramecia': 0 }
-                });
-            }
-
-            const stats = userStats.get(userId);
-            stats.totalHunts++;
-
-            console.log(`🎮 ${userName} initiated ${huntType} Devil Fruit hunt`);
-
-            // Handle different hunt types
-            switch (huntType) {
-                case 'single':
-                    await handleSingleHunt(interaction);
-                    break;
-                case 'multi':
-                    await handleMultiHunt(interaction);
-                    break;
-                case 'premium':
-                    await handlePremiumHunt(interaction);
-                    break;
-                default:
-                    await handleSingleHunt(interaction);
-            }
-
-        } catch (error) {
-            console.error('🚨 Pull Command Error:', error);
-            const errorEmbed = new EmbedBuilder()
-                .setTitle('⚠️ Hunt Failed!')
-                .setDescription(`
-🌊 **The Grand Line rejected your hunt!**
-
-**Error:** ${error.message}
-
-*The seas are too turbulent right now. Try again when the waters calm...*
-                `)
-                .setColor('#E74C3C')
-                .setFooter({ text: 'Devil Fruit Hunt System | Please try again' });
+            collectionContent += `\n`;
+        } else {
+            // Just show rarity counts without power
+            collectionContent += `🌟 **Fruits by Rarity:**\n`;
+            const rarityEmojis = {
+                common: '🟫',
+                uncommon: '🟩', 
+                rare: '🟦',
+                epic: '🟪',
+                legendary: '🟨',
+                mythical: '🟥',
+                omnipotent: '⬜'
+            };
             
-            try {
-                if (interaction.replied || interaction.deferred) {
-                    await interaction.followUp({ embeds: [errorEmbed], ephemeral: true });
+            for (const [rarity, count] of Object.entries(rarityStats)) {
+                if (count > 0) {
+                    collectionContent += `${rarityEmojis[rarity]} ${rarity.charAt(0).toUpperCase() + rarity.slice(1)}: ${count}x\n`;
+                }
+            }
+            collectionContent += `\n`;
+        }
+        
+        // Power breakdown by type (if user has level)
+        if (userLevel > 0) {
+            collectionContent += `🔮 **Power by Type:**\n`;
+            const typePowerBreakdown = {};
+            
+            for (const fruit of userFruits) {
+                if (!typePowerBreakdown[fruit.type]) {
+                    typePowerBreakdown[fruit.type] = { count: 0, power: 0 };
+                }
+                typePowerBreakdown[fruit.type].count++;
+                typePowerBreakdown[fruit.type].power += Math.floor(CombatSystem.calculateBasePower(fruit.rarity) * levelMultiplier);
+            }
+            
+            const typeEmojis = {
+                'Paramecia': '🔮',
+                'Zoan': '🐺', 
+                'Logia': '🌪️',
+                'Ancient Zoan': '🦕',
+                'Mythical Zoan': '🐉',
+                'Special Paramecia': '✨'
+            };
+            
+            for (const [type, { count, power }] of Object.entries(typePowerBreakdown)) {
+                collectionContent += `${typeEmojis[type] || '🍈'} ${type}: ${count}x (${power.toLocaleString()} CP)\n`;
+            }
+            collectionContent += `\n`;
+        } else {
+            // Just show type counts without power
+            collectionContent += `🔮 **Fruits by Type:**\n`;
+            const typeEmojis = {
+                'Paramecia': '🔮',
+                'Zoan': '🐺', 
+                'Logia': '🌪️',
+                'Ancient Zoan': '🦕',
+                'Mythical Zoan': '🐉',
+                'Special Paramecia': '✨'
+            };
+            
+            for (const [type, count] of Object.entries(typeStats)) {
+                if (count > 0) {
+                    collectionContent += `${typeEmojis[type] || '🍈'} ${type}: ${count}x\n`;
+                }
+            }
+            collectionContent += `\n`;
+        }
+        
+        // Detailed fruit list organized by type
+        collectionContent += `📜 **Detailed Collection:**\n`;
+        
+        const typeOrder = ['Logia', 'Mythical Zoan', 'Ancient Zoan', 'Zoan', 'Special Paramecia', 'Paramecia'];
+        
+        for (const type of typeOrder) {
+            if (fruitsByType[type] && fruitsByType[type].length > 0) {
+                const typeEmojis = {
+                    'Paramecia': '🔮',
+                    'Zoan': '🐺', 
+                    'Logia': '🌪️',
+                    'Ancient Zoan': '🦕',
+                    'Mythical Zoan': '🐉',
+                    'Special Paramecia': '✨'
+                };
+                
+                collectionContent += `\n${typeEmojis[type]} **${type} Fruits:**\n`;
+                
+                // Group by rarity within type
+                const rarityGroups = {};
+                for (const fruit of fruitsByType[type]) {
+                    if (!rarityGroups[fruit.rarity]) {
+                        rarityGroups[fruit.rarity] = [];
+                    }
+                    rarityGroups[fruit.rarity].push(fruit);
+                }
+                
+                const rarityOrder = ['omnipotent', 'mythical', 'legendary', 'epic', 'rare', 'uncommon', 'common'];
+                const rarityEmojis = {
+                    common: '🟫',
+                    uncommon: '🟩', 
+                    rare: '🟦',
+                    epic: '🟪',
+                    legendary: '🟨',
+                    mythical: '🟥',
+                    omnipotent: '⬜'
+                };
+                
+                for (const rarity of rarityOrder) {
+                    if (rarityGroups[rarity]) {
+                        // Count duplicates
+                        const fruitCounts = {};
+                        for (const fruit of rarityGroups[rarity]) {
+                            fruitCounts[fruit.name] = (fruitCounts[fruit.name] || 0) + 1;
+                        }
+                        
+                        for (const [fruitName, count] of Object.entries(fruitCounts)) {
+                            const displayName = count > 1 ? `${fruitName} (x${count})` : fruitName;
+                            
+                            if (userLevel > 0) {
+                                const sampleFruit = rarityGroups[rarity].find(f => f.name === fruitName);
+                                collectionContent += `${rarityEmojis[rarity]} ${displayName} - ${sampleFruit.enhancedPower.toLocaleString()} CP\n`;
+                            } else {
+                                collectionContent += `${rarityEmojis[rarity]} ${displayName}\n`;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Split into multiple messages if too long
+        const maxLength = 4000;
+        if (collectionContent.length > maxLength) {
+            const parts = [];
+            let currentPart = '';
+            const lines = collectionContent.split('\n');
+            
+            for (const line of lines) {
+                if (currentPart.length + line.length + 1 > maxLength) {
+                    parts.push(currentPart);
+                    currentPart = line;
                 } else {
-                    await interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+                    currentPart += (currentPart ? '\n' : '') + line;
                 }
-            } catch (replyError) {
-                console.error('Failed to send error message:', replyError);
             }
-        }
-    }
-};
-
-// Single hunt with full cinematic experience
-async function handleSingleHunt(interaction) {
-    try {
-        // Defer reply for long animation
-        await interaction.deferReply();
-
-        // Start the ultimate cinematic experience
-        const result = await createUltimateCinematicExperience(interaction);
-
-        // Update user statistics
-        const userId = interaction.user.id;
-        const stats = userStats.get(userId);
-        if (stats && result) {
-            stats.rarityCount[result.rarity]++;
-            stats.typeCount[result.devilFruit.type] = (stats.typeCount[result.devilFruit.type] || 0) + 1;
+            if (currentPart) parts.push(currentPart);
             
-            if (!stats.devilFruits[result.devilFruit.id]) {
-                stats.devilFruits[result.devilFruit.id] = {
-                    ...result.devilFruit,
-                    obtainedAt: new Date(),
-                    timesObtained: 1
-                };
-            } else {
-                stats.devilFruits[result.devilFruit.id].timesObtained++;
-            }
-        }
-
-        console.log(`🎊 Single hunt success: ${result.devilFruit.name} (${result.rarity}) for ${interaction.user.username}`);
-
-    } catch (error) {
-        console.error('Single hunt error:', error);
-        const errorEmbed = new EmbedBuilder()
-            .setTitle('⚠️ The Sea Monsters Interfered!')
-            .setDescription(`
-🌊 **Your Devil Fruit hunt was disrupted!**
-
-Powerful sea creatures have interfered with your hunt. The Grand Line's treasures remain hidden for now.
-
-*Try again when the waters are calmer...*
-            `)
-            .setColor('#E74C3C')
-            .setFooter({ text: 'Hunt disrupted by sea monsters' });
-        
-        await interaction.editReply({ embeds: [errorEmbed] });
-        throw error;
-    }
-}
-
-// Multi hunt (10x pulls with summary)
-async function handleMultiHunt(interaction) {
-    try {
-        await interaction.deferReply();
-
-        const mockEmbed = new EmbedBuilder()
-            .setTitle('🍈x10 **MULTI HUNT SYSTEM** 🍈x10')
-            .setDescription(`
-🚧 **Multi Hunt is currently being implemented!**
-
-The **10x Multi Hunt** system will allow you to:
-• Pull 10 Devil Fruits in one command
-• See a summary of all your results
-• Get guaranteed rare+ fruits in each multi
-• Animated reveal of your best pulls
-
-*For now, use single hunts to collect Devil Fruits!*
-            `)
-            .setColor('#3498DB')
-            .setFooter({ text: 'Multi Hunt System | Coming Soon!' });
-
-        await interaction.editReply({ embeds: [mockEmbed] });
-        console.log(`🎊 Multi hunt placeholder for ${interaction.user.username}`);
-
-    } catch (error) {
-        console.error('Multi hunt error:', error);
-        throw error;
-    }
-}
-
-// Premium hunt (better rates, longer cooldown)
-async function handlePremiumHunt(interaction) {
-    try {
-        await interaction.deferReply();
-
-        const mockEmbed = new EmbedBuilder()
-            .setTitle('💎 **PREMIUM HUNT SYSTEM** 💎')
-            .setDescription(`
-🚧 **Premium Hunt is currently being implemented!**
-
-The **Premium Hunt** system will offer:
-• Higher chances for rare+ Devil Fruits
-• Exclusive access to special animations
-• Premium-only Devil Fruit variants
-• Enhanced collection bonuses
-
-*For now, use single hunts to collect Devil Fruits!*
-            `)
-            .setColor('#9B59B6')
-            .setFooter({ text: 'Premium Hunt System | Coming Soon!' });
-
-        await interaction.editReply({ embeds: [mockEmbed] });
-        console.log(`🎊 Premium hunt placeholder for ${interaction.user.username}`);
-
-    } catch (error) {
-        console.error('Premium hunt error:', error);
-        throw error;
-    }
-}
-
-// Button interaction handler
-async function handleButtonInteractions(interaction) {
-    try {
-        const { customId } = interaction;
-
-        switch (customId) {
-            case 'hunt_again':
-                await handleHuntAgain(interaction);
-                break;
-
-            case 'view_collection':
-                await showUserCollection(interaction);
-                break;
-
-            // Removed 'share_discovery' case since we removed the button
-
-            case 'detailed_results':
-                await showDetailedResults(interaction);
-                break;
-
-            default:
-                await interaction.reply({
-                    content: '❓ Unknown button action!',
-                    ephemeral: true
-                });
-        }
-
-    } catch (error) {
-        console.error('Button interaction error:', error);
-        await interaction.reply({
-            content: '❌ Button action failed! Please try using the /pull command instead.',
-            ephemeral: true
-        });
-    }
-}
-
-// UPDATED: Hunt again executes a new pull automatically
-async function handleHuntAgain(interaction) {
-    try {
-        // Check cooldown first
-        const userId = interaction.user.id;
-        const now = Date.now();
-        const cooldownKey = `${userId}_single`;
-        
-        if (userCooldowns.has(cooldownKey)) {
-            const cooldownEnd = userCooldowns.get(cooldownKey);
-            if (now < cooldownEnd) {
-                const timeLeft = Math.ceil((cooldownEnd - now) / 1000);
-                return await interaction.reply({
-                    content: `⏰ **Cooldown Active!** Wait **${timeLeft}s** before hunting again!`,
+            // Send first part as reply, rest as follow-ups
+            await interaction.editReply({
+                content: parts[0]
+            });
+            
+            for (let i = 1; i < parts.length; i++) {
+                await interaction.followUp({
+                    content: parts[i],
                     ephemeral: true
                 });
             }
+        } else {
+            await interaction.editReply({
+                content: collectionContent
+            });
         }
-
-        // Set new cooldown
-        userCooldowns.set(cooldownKey, now + COOLDOWNS.single);
-        
-        // Update stats
-        const stats = userStats.get(userId);
-        if (stats) {
-            stats.totalHunts++;
-        }
-
-        // Send a new message and start the hunt animation
-        const newInteraction = await interaction.reply({
-            content: '🍈 **Starting new hunt...**',
-            fetchReply: true
-        });
-
-        // Create a mock interaction object for the animation system
-        const mockInteraction = {
-            user: interaction.user,
-            editReply: async (options) => {
-                return await interaction.editReply(options);
-            },
-            replied: false,
-            deferred: false
-        };
-
-        // Defer the new interaction
-        mockInteraction.deferred = true;
-
-        // Start the hunt animation
-        const result = await createUltimateCinematicExperience(mockInteraction);
-        
-        // Update user statistics
-        if (stats && result) {
-            stats.rarityCount[result.rarity]++;
-            stats.typeCount[result.devilFruit.type] = (stats.typeCount[result.devilFruit.type] || 0) + 1;
-            
-            if (!stats.devilFruits[result.devilFruit.id]) {
-                stats.devilFruits[result.devilFruit.id] = {
-                    ...result.devilFruit,
-                    obtainedAt: new Date(),
-                    timesObtained: 1
-                };
-            } else {
-                stats.devilFruits[result.devilFruit.id].timesObtained++;
-            }
-        }
-
-        console.log(`🎊 Hunt again success: ${result.devilFruit.name} (${result.rarity}) for ${interaction.user.username}`);
         
     } catch (error) {
-        console.error('Hunt again error:', error);
-        await interaction.reply({
-            content: '❌ Unable to start new hunt! Please use `/pull` command.',
-            ephemeral: true
+        console.error('Collection error:', error);
+        await interaction.editReply({
+            content: '⚠️ Error displaying collection. Please try again.'
         });
     }
 }
 
-// ENHANCED: Show professional collection with level-boosted combat power
-async function showUserCollection(interaction) {
-    const userId = interaction.user.id;
-    const stats = userStats.get(userId);
-
-    if (!stats || Object.keys(stats.devilFruits).length === 0) {
-        const emptyEmbed = new EmbedBuilder()
-            .setTitle('📚 **Your Devil Fruit Collection**')
-            .setDescription(`
-🍈 **Your collection is empty!**
-
-Start your journey on the Grand Line by hunting for Devil Fruits!
-
-*Use \`/pull\` to begin your Devil Fruit adventure!*
-            `)
-            .setColor('#95A5A6')
-            .setFooter({ text: 'Start hunting to build your collection!' });
-
-        return await interaction.reply({ embeds: [emptyEmbed], ephemeral: true });
-    }
-
-    // Get user's battle profile with level integration
-    const battleProfile = LevelSystem.getUserBattleProfile(stats, interaction.member);
-    
-    const totalFruits = Object.keys(stats.devilFruits).length;
-    const totalHunts = stats.totalHunts;
-    const discoveryRate = Math.round((totalFruits / totalHunts) * 100);
-
-    // Find strongest fruit
-    let strongestFruit = null;
-    let strongestPower = 0;
-    
-    Object.values(stats.devilFruits).forEach(fruit => {
-        if (fruit.powerLevel > strongestPower) {
-            strongestPower = fruit.powerLevel;
-            strongestFruit = fruit;
-        }
-    });
-
-    // Combat power ranking with level consideration
-    let powerRank = 'Rookie';
-    const totalCP = battleProfile.totalCombatPower;
-    if (totalCP >= 100000) powerRank = 'Yonko';
-    else if (totalCP >= 50000) powerRank = 'Admiral';
-    else if (totalCP >= 25000) powerRank = 'Warlord';
-    else if (totalCP >= 12000) powerRank = 'Supernova';
-    else if (totalCP >= 6000) powerRank = 'Captain';
-    else if (totalCP >= 3000) powerRank = 'Elite Pirate';
-    else if (totalCP >= 1500) powerRank = 'Bounty Hunter';
-
-    // Type breakdown with combat analysis
-    let typeBreakdown = '';
-    const typeEmojis = {
-        'Paramecia': '🔮',
-        'Zoan': '🐺', 
-        'Logia': '🌪️',
-        'Ancient Zoan': '🦕',
-        'Mythical Zoan': '🐉',
-        'Special Paramecia': '✨'
-    };
-    
-    // Rarity multipliers for combat power calculation
-    const rarityMultipliers = {
-        common: 1.0,
-        uncommon: 1.2,
-        rare: 1.5,
-        legendary: 2.0,
-        mythical: 3.0,
-        omnipotent: 5.0
-    };
-    
-    for (const [type, count] of Object.entries(stats.typeCount)) {
-        if (count > 0) {
-            // Calculate type-specific power
-            let typePower = 0;
-            Object.values(stats.devilFruits).forEach(fruit => {
-                if (fruit.type === type) {
-                    const multiplier = rarityMultipliers[fruit.rarity] || 1.0;
-                    typePower += fruit.powerLevel * multiplier * fruit.timesObtained;
-                }
-            });
-            
-            // Apply level multiplier to type power
-            const levelBoostedTypePower = Math.round(typePower * battleProfile.levelMultiplier);
-            
-            const emoji = typeEmojis[type] || '🔮';
-            typeBreakdown += `${emoji} **${type}:** ${count}x (${levelBoostedTypePower.toLocaleString()} CP)\n`;
-        }
-    }
-    
-    // Rarity breakdown with level-boosted combat power
-    let rarityBreakdown = '';
-    const rarityOrder = ['omnipotent', 'mythical', 'legendary', 'rare', 'uncommon', 'common'];
-    const rarityEmojis = {
-        omnipotent: { emoji: '🌈', name: 'Divine' },
-        mythical: { emoji: '🟥', name: 'Mythical' },
-        legendary: { emoji: '🟨', name: 'Legendary' },
-        rare: { emoji: '🟦', name: 'Rare' },
-        uncommon: { emoji: '🟩', name: 'Uncommon' },
-        common: { emoji: '🟫', name: 'Common' }
-    };
-    
-    rarityOrder.forEach(rarity => {
-        if (stats.rarityCount[rarity] > 0) {
-            // Calculate rarity-specific power with level boost
-            let rarityPower = 0;
-            Object.values(stats.devilFruits).forEach(fruit => {
-                if (fruit.rarity === rarity) {
-                    const multiplier = rarityMultipliers[rarity] || 1.0;
-                    rarityPower += fruit.powerLevel * multiplier * fruit.timesObtained;
-                }
-            });
-            
-            const levelBoostedRarityPower = Math.round(rarityPower * battleProfile.levelMultiplier);
-            
-            const config = rarityEmojis[rarity];
-            rarityBreakdown += `${config.emoji} **${config.name}:** ${stats.rarityCount[rarity]}x (${levelBoostedRarityPower.toLocaleString()} CP)\n`;
-        }
-    });
-
-    // Create professional collection embed with level integration
-    const collectionEmbed = new EmbedBuilder()
-        .setTitle(`⚔️ **${interaction.user.username}'s Devil Fruit Arsenal**`)
-        .setDescription(`
-🏴‍☠️ **Pirate Profile:**
-**🎖️ Level:** ${battleProfile.level} (${battleProfile.rank})
-**⚔️ Total Combat Power:** ${battleProfile.totalCombatPower.toLocaleString()} CP
-**📈 Level Bonus:** ${battleProfile.experienceBonus}
-**🏆 Power Rank:** ${powerRank}
-**🍈 Collection:** ${totalFruits} unique fruits (${totalHunts} hunts)
-**📊 Success Rate:** ${discoveryRate}%
-**💪 Strongest Fruit:** ${strongestFruit?.name || 'None'} (${strongestPower.toLocaleString()} base CP)
-
-**💡 Combat Power Breakdown:**
-**Base Power:** ${battleProfile.baseCombatPower.toLocaleString()} CP
-**Level Multiplier:** x${battleProfile.levelMultiplier}
-**Level Bonus:** +${battleProfile.levelBonus.toLocaleString()} CP
-
-**🌟 Power by Rarity:**
-${rarityBreakdown || 'No fruits collected yet!'}
-
-**🔮 Power by Type:**
-${typeBreakdown || 'No fruits collected yet!'}
-
-**⚔️ Battle Analysis:**
-*Your level ${battleProfile.level} ${battleProfile.rank} status grants ${battleProfile.experienceBonus} to all Devil Fruit combat power!*
-*Total Battle Strength: ${battleProfile.totalCombatPower.toLocaleString()} CP*
-
-*Ready for battle! Your experience amplifies your Devil Fruit mastery!*
-        `)
-        .setColor(getPowerRankColor(powerRank))
-        .setFooter({ text: `Level ${battleProfile.level} ${battleProfile.rank} | Combat system ready!` });
-
-    // Add combat readiness button
-    const actionRow = new ActionRowBuilder()
-        .addComponents(
-            new ButtonBuilder()
-                .setCustomId('view_detailed_stats')
-                .setLabel('📊 Detailed Stats')
-                .setStyle(ButtonStyle.Secondary),
-            new ButtonBuilder()
-                .setCustomId('combat_preview')
-                .setLabel('⚔️ Combat Preview')
-                .setStyle(ButtonStyle.Danger)
-                .setDisabled(true) // Coming soon
-        );
-
-    await interaction.reply({ embeds: [collectionEmbed], components: [actionRow], ephemeral: true });
-}
-
-**🔮 Power by Type:**
-${typeBreakdown || 'No fruits collected yet!'}
-
-**⚔️ Combat Analysis:**
-*Your level ${battleProfile.level} ${battleProfile.rank} status grants ${battleProfile.experienceBonus} to all Devil Fruit combat power!*
-*Total Battle Strength: ${battleProfile.totalCombatPower.toLocaleString()} CP*
-
-*Ready for battle! Your experience amplifies your Devil Fruit mastery!*
-        `)
-        .setColor(getPowerRankColor(powerRank))
-        .setFooter({ text: `Level ${battleProfile.level} ${battleProfile.rank} | Combat system ready!` });
-
-    // Add combat readiness button
-    const actionRow = new ActionRowBuilder()
-        .addComponents(
-            new ButtonBuilder()
-                .setCustomId('view_detailed_stats')
-                .setLabel('📊 Detailed Stats')
-                .setStyle(ButtonStyle.Secondary),
-            new ButtonBuilder()
-                .setCustomId('combat_preview')
-                .setLabel('⚔️ Combat Preview')
-                .setStyle(ButtonStyle.Danger)
-                .setDisabled(true) // Coming soon
-        );
-
-    await interaction.reply({ embeds: [collectionEmbed], components: [actionRow], ephemeral: true });
-}
-
-// Helper functions for combat power system
-function getPowerDescription(rank) {
-    const descriptions = {
-        'Rookie': 'New to the Grand Line',
-        'Bounty Hunter': 'Building reputation',
-        'Elite Pirate': 'Skilled warrior',
-        'Captain': 'Crew leader material',
-        'Supernova': 'Rising star of the seas',
-        'Warlord': 'Government-recognized threat',
-        'Admiral': 'Marine-level power',
-        'Yonko': 'Emperor of the seas'
-    };
-    return descriptions[rank] || 'Unknown power level';
-}
-
-function getPowerRankColor(rank) {
-    const colors = {
-        'Rookie': '#95A5A6',
-        'Bounty Hunter': '#3498DB',
-        'Elite Pirate': '#2ECC71',
-        'Captain': '#F39C12',
-        'Supernova': '#E67E22',
-        'Warlord': '#9B59B6',
-        'Admiral': '#E74C3C',
-        'Yonko': '#F1C40F'
-    };
-    return colors[rank] || '#95A5A6';
-}
-
-// Show detailed results (for multi hunts)
-async function showDetailedResults(interaction) {
-    const detailsEmbed = new EmbedBuilder()
-        .setTitle('📋 **Detailed Hunt Results**')
-        .setDescription(`
-🚧 **Detailed results feature coming soon!**
-
-This will show:
-• Individual Devil Fruit details
-• Awakening information
-• Power level comparisons
-• Collection progress
-
-*For now, check your collection to see all acquired fruits!*
-        `)
-        .setColor('#9B59B6')
-        .setFooter({ text: 'Feature in development...' });
-
-    await interaction.reply({ embeds: [detailsEmbed], ephemeral: true });
-}
-
-// Export the button handler
-module.exports.handleButtonInteractions = handleButtonInteractions;
+// Export the button handler for the interaction event
+module.exports.handleButtonInteraction = handleButtonInteraction;
