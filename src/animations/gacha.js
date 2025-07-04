@@ -85,10 +85,10 @@ The seas whisper of legendary treasures...
                     const indicators = IndicatorsSystem.getChangingIndicators(frame, oldRarity, targetFruit.type);
                     const particles = ParticlesSystem.createOnePieceParticles(frame + 3, 'energy', oldRarity);
                     
-                    // FIXED: Sync embed color to match the squares, not just rainbow position
+                    // FIXED: Keep rainbow colors much longer, only hint at rarity very late
                     const rainbowEmbedColors = ['#FF0000', '#FF6000', '#FFCC00', '#00FF00', '#0080FF', '#8000FF', '#8B4513'];
                     const finalBarColors = {
-                        'common': '#8B4513',      // Brown
+                        'common': '#8B4513',      // Brown (FIXED)
                         'uncommon': '#2ECC71',    // Green
                         'rare': '#3498DB',        // Blue
                         'legendary': '#F1C40F',   // Yellow
@@ -96,10 +96,10 @@ The seas whisper of legendary treasures...
                         'omnipotent': '#9B59B6'   // Purple
                     };
                     
-                    // Use rarity-based color if we're past the lock frame, otherwise use rainbow
+                    // Keep rainbow colors much longer - only switch to rarity color at frame 17 (very end)
                     let currentColor;
-                    if (frame >= 15) { // Late in animation, start hinting at rarity
-                        currentColor = finalBarColors[oldRarity] || rainbowEmbedColors[leftmostColorIndex];
+                    if (frame >= 17) { // Very late hint at rarity
+                        currentColor = finalBarColors[oldRarity] || '#8B4513';
                     } else {
                         const leftmostColorIndex = (-frame + rainbowEmbedColors.length * 100) % rainbowEmbedColors.length;
                         currentColor = rainbowEmbedColors[leftmostColorIndex];
@@ -127,8 +127,8 @@ ${topRainbow}
 
 **${frameData.desc}**
 
-**⚡ HAKI LEVEL:** ${indicators.haki}
-**💰 BOUNTY:** ${indicators.bounty}  
+**⚡ FRUIT ENERGY:** ${indicators.energy}
+**🔮 RARITY SENSE:** ${indicators.rarity}  
 **🍈 DEVIL FRUIT:** ${indicators.fruit}
 
 ${bottomRainbow}
@@ -183,9 +183,9 @@ ${particles}
                 const indicators = IndicatorsSystem.getChangingIndicators(totalFrames + progFrame, oldRarity, targetFruit.type);
                 const particles = ParticlesSystem.createOnePieceParticles(totalFrames + progFrame + 3, 'energy', oldRarity);
                 
-                // FIXED: Sync embed color to match squares in progression
+                // FIXED: Keep rainbow colors throughout progression - no early rarity hints
                 const finalBarColors = {
-                    'common': '#8B4513',      // Brown
+                    'common': '#8B4513',      // Brown (FIXED)
                     'uncommon': '#2ECC71',    // Green
                     'rare': '#3498DB',        // Blue
                     'legendary': '#F1C40F',   // Yellow
@@ -193,8 +193,11 @@ ${particles}
                     'omnipotent': '#9B59B6'   // Purple
                 };
                 
-                // Use rarity color for progression phase
-                const currentColor = finalBarColors[oldRarity] || '#3498DB';
+                // Keep rainbow colors throughout progression phase
+                const rainbowEmbedColors = ['#FF0000', '#FF6000', '#FFCC00', '#00FF00', '#0080FF', '#8000FF', '#8B4513'];
+                const progressFrame = totalFrames + progFrame;
+                const leftmostColorIndex = (-progressFrame + rainbowEmbedColors.length * 100) % rainbowEmbedColors.length;
+                const currentColor = rainbowEmbedColors[leftmostColorIndex];
                 
                 // CREATE CLEAN BOX without vertical sides
                 const progressFrame = totalFrames + progFrame;
@@ -219,8 +222,8 @@ ${topRainbow}
 
 **The rainbow flows toward destiny...**
 
-**⚡ HAKI LEVEL:** ${indicators.haki}
-**💰 BOUNTY:** ${indicators.bounty}  
+**⚡ FRUIT ENERGY:** ${indicators.energy}
+**🔮 RARITY SENSE:** ${indicators.rarity}  
 **🍈 DEVIL FRUIT:** ${indicators.fruit}
 
 ${bottomRainbow}
