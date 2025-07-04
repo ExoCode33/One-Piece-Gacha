@@ -329,7 +329,7 @@ async function handleHuntAgain(interaction) {
     }
 }
 
-// ENHANCED: Show detailed collection with types and rarities
+// ENHANCED: Show professional collection with combat power analysis
 async function showUserCollection(interaction) {
     const userId = interaction.user.id;
     const stats = userStats.get(userId);
@@ -350,12 +350,54 @@ Start your journey on the Grand Line by hunting for Devil Fruits!
         return await interaction.reply({ embeds: [emptyEmbed], ephemeral: true });
     }
 
-    // Collection summary
+    // Calculate total combat power and advanced statistics
     const totalFruits = Object.keys(stats.devilFruits).length;
     const totalHunts = stats.totalHunts;
     const discoveryRate = Math.round((totalFruits / totalHunts) * 100);
     
-    // Create detailed breakdown by type and rarity
+    // Calculate total combat power
+    let totalCombatPower = 0;
+    let strongestFruit = null;
+    let strongestPower = 0;
+    
+    Object.values(stats.devilFruits).forEach(fruit => {
+        const fruitPower = fruit.powerLevel * fruit.timesObtained;
+        totalCombatPower += fruitPower;
+        
+        if (fruit.powerLevel > strongestPower) {
+            strongestPower = fruit.powerLevel;
+            strongestFruit = fruit;
+        }
+    });
+
+    // Rarity multipliers for combat power calculation
+    const rarityMultipliers = {
+        common: 1.0,
+        uncommon: 1.2,
+        rare: 1.5,
+        legendary: 2.0,
+        mythical: 3.0,
+        omnipotent: 5.0
+    };
+
+    // Calculate enhanced combat power with rarity bonuses
+    let enhancedCombatPower = 0;
+    Object.values(stats.devilFruits).forEach(fruit => {
+        const multiplier = rarityMultipliers[fruit.rarity] || 1.0;
+        enhancedCombatPower += fruit.powerLevel * multiplier * fruit.timesObtained;
+    });
+
+    // Combat power ranking
+    let powerRank = 'Rookie';
+    if (enhancedCombatPower >= 50000) powerRank = 'Yonko';
+    else if (enhancedCombatPower >= 25000) powerRank = 'Admiral';
+    else if (enhancedCombatPower >= 15000) powerRank = 'Warlord';
+    else if (enhancedCombatPower >= 8000) powerRank = 'Supernova';
+    else if (enhancedCombatPower >= 4000) powerRank = 'Captain';
+    else if (enhancedCombatPower >= 2000) powerRank = 'Elite Pirate';
+    else if (enhancedCombatPower >= 1000) powerRank = 'Bounty Hunter';
+
+    // Type breakdown with combat analysis
     let typeBreakdown = '';
     const typeEmojis = {
         'Paramecia': '🔮',
@@ -366,15 +408,23 @@ Start your journey on the Grand Line by hunting for Devil Fruits!
         'Special Paramecia': '✨'
     };
     
-    // Show type breakdown
     for (const [type, count] of Object.entries(stats.typeCount)) {
         if (count > 0) {
+            // Calculate type-specific power
+            let typePower = 0;
+            Object.values(stats.devilFruits).forEach(fruit => {
+                if (fruit.type === type) {
+                    const multiplier = rarityMultipliers[fruit.rarity] || 1.0;
+                    typePower += fruit.powerLevel * multiplier * fruit.timesObtained;
+                }
+            });
+            
             const emoji = typeEmojis[type] || '🔮';
-            typeBreakdown += `${emoji} **${type}:** ${count}x\n`;
+            typeBreakdown += `${emoji} **${type}:** ${count}x (${typePower.toLocaleString()} CP)\n`;
         }
     }
     
-    // Show rarity breakdown
+    // Rarity breakdown with combat power
     let rarityBreakdown = '';
     const rarityOrder = ['omnipotent', 'mythical', 'legendary', 'rare', 'uncommon', 'common'];
     const rarityEmojis = {
@@ -388,60 +438,90 @@ Start your journey on the Grand Line by hunting for Devil Fruits!
     
     rarityOrder.forEach(rarity => {
         if (stats.rarityCount[rarity] > 0) {
+            // Calculate rarity-specific power
+            let rarityPower = 0;
+            Object.values(stats.devilFruits).forEach(fruit => {
+                if (fruit.rarity === rarity) {
+                    const multiplier = rarityMultipliers[rarity] || 1.0;
+                    rarityPower += fruit.powerLevel * multiplier * fruit.timesObtained;
+                }
+            });
+            
             const config = rarityEmojis[rarity];
-            rarityBreakdown += `${config.emoji} **${config.name}:** ${stats.rarityCount[rarity]}x\n`;
+            rarityBreakdown += `${config.emoji} **${config.name}:** ${stats.rarityCount[rarity]}x (${rarityPower.toLocaleString()} CP)\n`;
         }
     });
 
-    // Get detailed fruit list organized by type and rarity
-    const fruitsByType = {};
-    Object.values(stats.devilFruits).forEach(fruit => {
-        if (!fruitsByType[fruit.type]) {
-            fruitsByType[fruit.type] = {};
-        }
-        if (!fruitsByType[fruit.type][fruit.rarity]) {
-            fruitsByType[fruit.type][fruit.rarity] = [];
-        }
-        fruitsByType[fruit.type][fruit.rarity].push(fruit);
-    });
-
-    // Create detailed type sections
-    let detailedBreakdown = '';
-    Object.entries(fruitsByType).forEach(([type, rarities]) => {
-        const typeEmoji = typeEmojis[type] || '🔮';
-        detailedBreakdown += `\n**${typeEmoji} ${type} Fruits:**\n`;
-        
-        rarityOrder.forEach(rarity => {
-            if (rarities[rarity]) {
-                const rarityConfig = rarityEmojis[rarity];
-                rarities[rarity].forEach(fruit => {
-                    const timesText = fruit.timesObtained > 1 ? ` (x${fruit.timesObtained})` : '';
-                    detailedBreakdown += `${rarityConfig.emoji} ${fruit.name}${timesText}\n`;
-                });
-            }
-        });
-    });
-
+    // Create professional collection embed
     const collectionEmbed = new EmbedBuilder()
-        .setTitle(`📚 **${interaction.user.username}'s Devil Fruit Collection**`)
+        .setTitle(`⚔️ **${interaction.user.username}'s Devil Fruit Arsenal**`)
         .setDescription(`
-🏴‍☠️ **Collection Overview:**
-🍈 **Unique Fruits:** ${totalFruits}
-🎯 **Total Hunts:** ${totalHunts}
-📊 **Discovery Rate:** ${discoveryRate}%
+🏴‍☠️ **Pirate Profile:**
+**⚔️ Combat Power:** ${enhancedCombatPower.toLocaleString()} CP
+**🏆 Power Rank:** ${powerRank}
+**🍈 Collection:** ${totalFruits} unique fruits (${totalHunts} hunts)
+**📊 Success Rate:** ${discoveryRate}%
+**💪 Strongest Fruit:** ${strongestFruit?.name || 'None'} (${strongestPower.toLocaleString()} CP)
 
-**🌟 By Rarity:**
+**🌟 Power by Rarity:**
 ${rarityBreakdown || 'No fruits collected yet!'}
 
-**🔮 By Type:**
+**🔮 Power by Type:**
 ${typeBreakdown || 'No fruits collected yet!'}
 
-**📋 Detailed Collection:**${detailedBreakdown || '\nNo fruits collected yet!'}
-        `)
-        .setColor('#3498DB')
-        .setFooter({ text: `Collection | Last updated: ${new Date().toLocaleDateString()}` });
+**⚔️ Combat Analysis:**
+*Your collection grants ${enhancedCombatPower.toLocaleString()} Combat Power*
+*Ranking: ${powerRank} - ${getPowerDescription(powerRank)}*
 
-    await interaction.reply({ embeds: [collectionEmbed], ephemeral: true });
+*Ready for battle! Use your collection to fight other pirates and claim their Devil Fruits!*
+        `)
+        .setColor(getPowerRankColor(powerRank))
+        .setFooter({ text: `Collection analyzed | Combat system coming soon!` });
+
+    // Add combat readiness button
+    const actionRow = new ActionRowBuilder()
+        .addComponents(
+            new ButtonBuilder()
+                .setCustomId('view_detailed_stats')
+                .setLabel('📊 Detailed Stats')
+                .setStyle(ButtonStyle.Secondary),
+            new ButtonBuilder()
+                .setCustomId('combat_preview')
+                .setLabel('⚔️ Combat Preview')
+                .setStyle(ButtonStyle.Danger)
+                .setDisabled(true) // Coming soon
+        );
+
+    await interaction.reply({ embeds: [collectionEmbed], components: [actionRow], ephemeral: true });
+}
+
+// Helper functions for combat power system
+function getPowerDescription(rank) {
+    const descriptions = {
+        'Rookie': 'New to the Grand Line',
+        'Bounty Hunter': 'Building reputation',
+        'Elite Pirate': 'Skilled warrior',
+        'Captain': 'Crew leader material',
+        'Supernova': 'Rising star of the seas',
+        'Warlord': 'Government-recognized threat',
+        'Admiral': 'Marine-level power',
+        'Yonko': 'Emperor of the seas'
+    };
+    return descriptions[rank] || 'Unknown power level';
+}
+
+function getPowerRankColor(rank) {
+    const colors = {
+        'Rookie': '#95A5A6',
+        'Bounty Hunter': '#3498DB',
+        'Elite Pirate': '#2ECC71',
+        'Captain': '#F39C12',
+        'Supernova': '#E67E22',
+        'Warlord': '#9B59B6',
+        'Admiral': '#E74C3C',
+        'Yonko': '#F1C40F'
+    };
+    return colors[rank] || '#95A5A6';
 }
 
 // Show detailed results (for multi hunts)
