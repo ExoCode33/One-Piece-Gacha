@@ -422,4 +422,7 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+module.exports = { createUltimateCinematicExperience }
+
+console.log("✅ indicators.js loaded successfully");
 module.exports = { createUltimateCinematicExperience };
