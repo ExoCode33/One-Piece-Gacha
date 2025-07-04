@@ -15,92 +15,8 @@ async function initializeDatabase() {
         await client.query('SELECT NOW()');
         console.log('✅ Connected to PostgreSQL database');
         
-        console.log('📋 Creating database tables...');
-        
-        // Users table
-        await client.query(`
-            CREATE TABLE IF NOT EXISTS users (
-                user_id VARCHAR(20) PRIMARY KEY,
-                username VARCHAR(255) NOT NULL,
-                total_hunts INTEGER DEFAULT 0,
-                discovery_rate INTEGER DEFAULT 0,
-                level INTEGER DEFAULT 0,
-                created_at TIMESTAMP DEFAULT NOW(),
-                updated_at TIMESTAMP DEFAULT NOW()
-            )
-        `);
-        
-        // User Devil Fruits collection
-        await client.query(`
-            CREATE TABLE IF NOT EXISTS user_devil_fruits (
-                id SERIAL PRIMARY KEY,
-                user_id VARCHAR(20) REFERENCES users(user_id) ON DELETE CASCADE,
-                fruit_id VARCHAR(50) NOT NULL,
-                name VARCHAR(255) NOT NULL,
-                type VARCHAR(100) NOT NULL,
-                rarity VARCHAR(50) NOT NULL,
-                power TEXT,
-                previous_user VARCHAR(255),
-                description TEXT,
-                awakening TEXT,
-                weakness TEXT,
-                obtained_at TIMESTAMP DEFAULT NOW()
-            )
-        `);
-        
-        // User rarity statistics
-        await client.query(`
-            CREATE TABLE IF NOT EXISTS user_rarity_stats (
-                user_id VARCHAR(20) REFERENCES users(user_id) ON DELETE CASCADE,
-                rarity VARCHAR(50) NOT NULL,
-                count INTEGER DEFAULT 0,
-                PRIMARY KEY (user_id, rarity)
-            )
-        `);
-        
-        // User type statistics
-        await client.query(`
-            CREATE TABLE IF NOT EXISTS user_type_stats (
-                user_id VARCHAR(20) REFERENCES users(user_id) ON DELETE CASCADE,
-                type VARCHAR(100) NOT NULL,
-                count INTEGER DEFAULT 0,
-                PRIMARY KEY (user_id, type)
-            )
-        `);
-        
-        // User levels (for Discord role integration)
-        await client.query(`
-            CREATE TABLE IF NOT EXISTS user_levels (
-                user_id VARCHAR(20) PRIMARY KEY REFERENCES users(user_id) ON DELETE CASCADE,
-                level INTEGER DEFAULT 0,
-                updated_at TIMESTAMP DEFAULT NOW()
-            )
-        `);
-        
-        // User cooldowns (FIXED column names)
-        await client.query(`
-            CREATE TABLE IF NOT EXISTS user_cooldowns (
-                user_id VARCHAR(20) NOT NULL,
-                cooldown_type VARCHAR(50) NOT NULL,
-                end_time TIMESTAMP NOT NULL,
-                PRIMARY KEY (user_id, cooldown_type)
-            )
-        `);
-        
-        // Battle history (for future PvP system)
-        await client.query(`
-            CREATE TABLE IF NOT EXISTS battle_history (
-                id SERIAL PRIMARY KEY,
-                attacker_id VARCHAR(20) NOT NULL,
-                defender_id VARCHAR(20) NOT NULL,
-                result VARCHAR(20) NOT NULL,
-                stolen_fruits JSONB,
-                battle_time TIMESTAMP DEFAULT NOW()
-            )
-        `);
-        
-        // Drop existing tables to ensure clean schema (for development)
         console.log('🧹 Cleaning up existing tables...');
+        await client.query('DROP TABLE IF EXISTS user_duplicate_stats CASCADE');
         await client.query('DROP TABLE IF EXISTS battle_history CASCADE');
         await client.query('DROP TABLE IF EXISTS user_cooldowns CASCADE');
         await client.query('DROP TABLE IF EXISTS user_levels CASCADE');
@@ -109,9 +25,9 @@ async function initializeDatabase() {
         await client.query('DROP TABLE IF EXISTS user_devil_fruits CASCADE');
         await client.query('DROP TABLE IF EXISTS users CASCADE');
         
-        console.log('📋 Recreating database tables with correct schema...');
+        console.log('📋 Creating database tables with duplicate system...');
         
-        // Recreate users table
+        // Create users table
         await client.query(`
             CREATE TABLE users (
                 user_id VARCHAR(20) PRIMARY KEY,
@@ -124,7 +40,7 @@ async function initializeDatabase() {
             )
         `);
         
-        // Recreate user_devil_fruits table
+        // Create user_devil_fruits table with duplicate_count column
         await client.query(`
             CREATE TABLE user_devil_fruits (
                 id SERIAL PRIMARY KEY,
@@ -138,11 +54,23 @@ async function initializeDatabase() {
                 description TEXT,
                 awakening TEXT,
                 weakness TEXT,
+                duplicate_count INTEGER DEFAULT 1,
                 obtained_at TIMESTAMP DEFAULT NOW()
             )
         `);
         
-        // Recreate user_rarity_stats table
+        // Create user_duplicate_stats table for tracking duplicate bonuses
+        await client.query(`
+            CREATE TABLE user_duplicate_stats (
+                user_id VARCHAR(20) REFERENCES users(user_id) ON DELETE CASCADE,
+                fruit_id VARCHAR(50) NOT NULL,
+                duplicate_count INTEGER DEFAULT 1,
+                updated_at TIMESTAMP DEFAULT NOW(),
+                PRIMARY KEY (user_id, fruit_id)
+            )
+        `);
+        
+        // Create user_rarity_stats table
         await client.query(`
             CREATE TABLE user_rarity_stats (
                 user_id VARCHAR(20) REFERENCES users(user_id) ON DELETE CASCADE,
@@ -152,7 +80,7 @@ async function initializeDatabase() {
             )
         `);
         
-        // Recreate user_type_stats table
+        // Create user_type_stats table
         await client.query(`
             CREATE TABLE user_type_stats (
                 user_id VARCHAR(20) REFERENCES users(user_id) ON DELETE CASCADE,
@@ -162,7 +90,7 @@ async function initializeDatabase() {
             )
         `);
         
-        // Recreate user_levels table
+        // Create user_levels table
         await client.query(`
             CREATE TABLE user_levels (
                 user_id VARCHAR(20) PRIMARY KEY REFERENCES users(user_id) ON DELETE CASCADE,
@@ -171,7 +99,7 @@ async function initializeDatabase() {
             )
         `);
         
-        // Recreate user_cooldowns table
+        // Create user_cooldowns table
         await client.query(`
             CREATE TABLE user_cooldowns (
                 user_id VARCHAR(20) NOT NULL,
@@ -181,7 +109,7 @@ async function initializeDatabase() {
             )
         `);
         
-        // Recreate battle_history table
+        // Create battle_history table
         await client.query(`
             CREATE TABLE battle_history (
                 id SERIAL PRIMARY KEY,
@@ -193,10 +121,17 @@ async function initializeDatabase() {
             )
         `);
         
-        // Create indexes for better performance
+        console.log('🔧 Creating database indexes for optimal performance...');
+        
+        // Indexes for user_devil_fruits
         await client.query(`
             CREATE INDEX idx_user_devil_fruits_user_id 
             ON user_devil_fruits(user_id)
+        `);
+        
+        await client.query(`
+            CREATE INDEX idx_user_devil_fruits_fruit_id 
+            ON user_devil_fruits(fruit_id)
         `);
         
         await client.query(`
@@ -210,10 +145,38 @@ async function initializeDatabase() {
         `);
         
         await client.query(`
+            CREATE INDEX idx_user_devil_fruits_duplicate_count 
+            ON user_devil_fruits(duplicate_count)
+        `);
+        
+        // Indexes for user_duplicate_stats
+        await client.query(`
+            CREATE INDEX idx_user_duplicate_stats_user_id 
+            ON user_duplicate_stats(user_id)
+        `);
+        
+        await client.query(`
+            CREATE INDEX idx_user_duplicate_stats_fruit_id 
+            ON user_duplicate_stats(fruit_id)
+        `);
+        
+        await client.query(`
+            CREATE INDEX idx_user_duplicate_stats_duplicate_count 
+            ON user_duplicate_stats(duplicate_count)
+        `);
+        
+        // Indexes for user_cooldowns
+        await client.query(`
             CREATE INDEX idx_user_cooldowns_user_id 
             ON user_cooldowns(user_id)
         `);
         
+        await client.query(`
+            CREATE INDEX idx_user_cooldowns_end_time 
+            ON user_cooldowns(end_time)
+        `);
+        
+        // Indexes for battle_history
         await client.query(`
             CREATE INDEX idx_battle_history_attacker 
             ON battle_history(attacker_id)
@@ -224,8 +187,26 @@ async function initializeDatabase() {
             ON battle_history(defender_id)
         `);
         
+        await client.query(`
+            CREATE INDEX idx_battle_history_battle_time 
+            ON battle_history(battle_time)
+        `);
+        
+        // Indexes for user_rarity_stats
+        await client.query(`
+            CREATE INDEX idx_user_rarity_stats_user_id 
+            ON user_rarity_stats(user_id)
+        `);
+        
+        // Indexes for user_type_stats
+        await client.query(`
+            CREATE INDEX idx_user_type_stats_user_id 
+            ON user_type_stats(user_id)
+        `);
+        
         console.log('✅ All database tables created successfully');
         console.log('✅ Database indexes created for optimal performance');
+        console.log('🔄 Duplicate system enabled - fruits now gain 1% CP per duplicate!');
         
     } catch (error) {
         console.error('❌ Database initialization error:', error);
