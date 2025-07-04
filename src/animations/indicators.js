@@ -1,70 +1,72 @@
 // ═══════════════════════════════════════════════════════════════════
-//                 PROGRESSIVE INDICATORS SYSTEM
+//                 ONE PIECE THEMED INDICATORS SYSTEM
 // ═══════════════════════════════════════════════════════════════════
 
 const IndicatorsSystem = {
-    // PROGRESSIVE RARITY HINTS without spoiling
-    getAuraLevel(rarity) {
-        const auraLevels = {
-            common: 'STIRRING',
-            uncommon: 'BUILDING', 
-            rare: 'INTENSIFYING',
-            legendary: 'BLAZING',
-            mythical: 'TRANSCENDENT',
-            omnipotent: 'REALITY-BREAKING'
+    // HAKI INTENSITY based on rarity (One Piece power levels)
+    getHakiLevel(rarity) {
+        const hakiLevels = {
+            common: 'WEAK HAKI',
+            uncommon: 'ARMAMENT HAKI', 
+            rare: 'OBSERVATION HAKI',
+            legendary: 'CONQUEROR\'S HAKI',
+            mythical: 'ADVANCED CONQUEROR\'S',
+            omnipotent: 'VOICE OF ALL THINGS'
         };
-        return auraLevels[rarity] || 'STIRRING';
+        return hakiLevels[rarity] || 'WEAK HAKI';
     },
 
-    getBlessingLevel(rarity) {
-        const blessingLevels = {
-            common: 'GENTLE',
-            uncommon: 'NOTABLE',
-            rare: 'POWERFUL', 
-            legendary: 'DIVINE',
-            mythical: 'WORLD-SHAKING',
-            omnipotent: 'UNIVERSE-ALTERING'
+    // BOUNTY LEVEL based on rarity (One Piece bounty system)
+    getBountyLevel(rarity) {
+        const bountyLevels = {
+            common: '1,000 BERRIES',
+            uncommon: '50,000 BERRIES',
+            rare: '10 MILLION BERRIES', 
+            legendary: '100 MILLION BERRIES',
+            mythical: '1 BILLION BERRIES',
+            omnipotent: '5 BILLION BERRIES'
         };
-        return blessingLevels[rarity] || 'GENTLE';
+        return bountyLevels[rarity] || '1,000 BERRIES';
     },
 
-    getTypeHint(type) {
-        const typeHints = {
-            'Paramecia': 'BODY MANIPULATION',
-            'Zoan': 'BEAST TRANSFORMATION', 
-            'Logia': 'ELEMENTAL FORCE',
-            'Ancient Zoan': 'PREHISTORIC POWER',
+    // DEVIL FRUIT CLASSIFICATION based on type (One Piece lore)
+    getDevilFruitClass(type) {
+        const typeClasses = {
+            'Paramecia': 'SUPERHUMAN BODY',
+            'Zoan': 'ANIMAL TRANSFORMATION', 
+            'Logia': 'NATURE\'S FORCE',
+            'Ancient Zoan': 'PREHISTORIC BEAST',
             'Mythical Zoan': 'LEGENDARY CREATURE',
-            'Special Paramecia': 'UNIQUE MANIFESTATION'
+            'Special Paramecia': 'UNIQUE AWAKENING'
         };
-        return typeHints[type] || 'MYSTERIOUS POWER';
+        return typeClasses[type] || 'UNKNOWN POWER';
     },
 
     // RAPID CHANGING INDICATORS that gradually lock in (EXACTLY 3 LINES)
-    // UPDATED: Proper lock timing for 18-frame animation
+    // ONE PIECE THEMED - Shows Haki, Bounty, and Devil Fruit Class
     getChangingIndicators(frame, finalRarity, finalType) {
         const allRarities = ['common', 'uncommon', 'rare', 'legendary', 'mythical', 'omnipotent'];
         const allTypes = ['Paramecia', 'Zoan', 'Logia', 'Ancient Zoan', 'Mythical Zoan'];
         
         // Lock frames: indicators lock in one by one (adjusted for 18-frame animation)
         const lockFrames = {
-            aura: frame >= 5,     // Locks after 5 frames
-            blessing: frame >= 7, // Locks after 7 frames  
-            type: frame >= 9      // Type locks last
+            haki: frame >= 5,     // Haki locks after 5 frames
+            bounty: frame >= 7,   // Bounty locks after 7 frames  
+            fruit: frame >= 9     // Devil Fruit class locks last
         };
         
         return {
-            aura: lockFrames.aura ? 
-                this.getAuraLevel(finalRarity) : 
-                this.getAuraLevel(allRarities[frame % allRarities.length]),
+            haki: lockFrames.haki ? 
+                this.getHakiLevel(finalRarity) : 
+                this.getHakiLevel(allRarities[frame % allRarities.length]),
             
-            blessing: lockFrames.blessing ? 
-                this.getBlessingLevel(finalRarity) : 
-                this.getBlessingLevel(allRarities[(frame + 2) % allRarities.length]),
+            bounty: lockFrames.bounty ? 
+                this.getBountyLevel(finalRarity) : 
+                this.getBountyLevel(allRarities[(frame + 2) % allRarities.length]),
             
-            type: lockFrames.type ? 
-                this.getTypeHint(finalType) : 
-                this.getTypeHint(allTypes[frame % allTypes.length])
+            fruit: lockFrames.fruit ? 
+                this.getDevilFruitClass(finalType) : 
+                this.getDevilFruitClass(allTypes[frame % allTypes.length])
         };
     }
 };
