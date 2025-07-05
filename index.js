@@ -53,27 +53,23 @@ for (const file of eventFiles) {
     }
 }
 
-// Bot ready event
-client.once('ready', async () => {
-    console.log(`🏴‍☠️ ${client.user.tag} is ready to sail!`);
-    console.log(`📊 Serving ${client.guilds.cache.size} server(s)`);
-    console.log(`👥 Connected to ${client.users.cache.size} user(s)`);
-    
-    // Initialize database
+/**
+ * Clear command cache and re-register commands
+ */
+async function clearAndRegisterCommands() {
     try {
-        const { initializeDatabase } = require('./src/database/setup');
-        await initializeDatabase();
-        console.log('✅ Database initialization complete');
-        console.log('🗄️ PostgreSQL database ready for Devil Fruit data!');
-    } catch (error) {
-        console.error('❌ Database initialization failed:', error.message);
-        console.log('⚠️ Bot will continue but data will not persist!');
-    }
-    
-    // Register slash commands
-    try {
-        console.log('🔄 Registering slash commands...');
+        console.log('🧹 Clearing old command cache...');
         
+        // Clear all existing commands first
+        await client.application.commands.set([]);
+        console.log('✅ Cleared command cache');
+        
+        // Wait a moment for Discord to process
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        console.log('📝 Re-registering commands...');
+        
+        // Collect all commands
         const commands = [];
         for (const command of client.commands.values()) {
             commands.push(command.data.toJSON());
@@ -85,52 +81,7 @@ client.once('ready', async () => {
         console.log(`📝 Commands: ${commands.map(cmd => `/${cmd.name}`).join(' and ')}`);
         
     } catch (error) {
-        console.error('❌ Failed to register slash commands:', error);
+        console.error('❌ Failed to clear/register commands:', error);
+        throw error;
     }
-});
-
-// Handle process termination
-process.on('SIGINT', async () => {
-    console.log('🛑 Received SIGINT, shutting down gracefully...');
-    
-    try {
-        const DatabaseManager = require('./src/database/manager');
-        await DatabaseManager.cleanup();
-        await DatabaseManager.close();
-        console.log('✅ Database connections closed');
-    } catch (error) {
-        console.error('❌ Error during shutdown:', error);
-    }
-    
-    client.destroy();
-    process.exit(0);
-});
-
-process.on('SIGTERM', async () => {
-    console.log('🛑 Received SIGTERM, shutting down gracefully...');
-    
-    try {
-        const DatabaseManager = require('./src/database/manager');
-        await DatabaseManager.cleanup();
-        await DatabaseManager.close();
-        console.log('✅ Database connections closed');
-    } catch (error) {
-        console.error('❌ Error during shutdown:', error);
-    }
-    
-    client.destroy();
-    process.exit(0);
-});
-
-// Handle uncaught exceptions
-process.on('uncaughtException', (error) => {
-    console.error('💥 Uncaught Exception:', error);
-    process.exit(1);
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-    console.error('💥 Unhandled Rejection at:', promise, 'reason:', reason);
-});
-
-// Login to Discord
-client.login(process.env.DISCORD_TOKEN);
+}
