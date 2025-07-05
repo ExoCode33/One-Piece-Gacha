@@ -18,6 +18,159 @@ class DatabaseManager {
         }
     }
 
+    // PERSISTENCE FIX: This method preserves data across restarts
+    async initializeDatabase() {
+        try {
+            console.log('🗄️ Initializing PostgreSQL database...');
+            
+            // Test connection
+            await this.query('SELECT NOW()');
+            console.log('✅ Connected to PostgreSQL database');
+            
+            // Create tables ONLY if they don't exist (preserves data)
+            console.log('📋 Ensuring database tables exist...');
+            
+            // Users table
+            await this.query(`
+                CREATE TABLE IF NOT EXISTS users (
+                    user_id BIGINT PRIMARY KEY,
+                    username VARCHAR(255) NOT NULL,
+                    total_hunts INTEGER DEFAULT 0,
+                    discovery_rate INTEGER DEFAULT 0,
+                    level INTEGER DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT NOW(),
+                    updated_at TIMESTAMP DEFAULT NOW()
+                )
+            `);
+            
+            // User Devil Fruits table (main collection)
+            await this.query(`
+                CREATE TABLE IF NOT EXISTS user_devil_fruits (
+                    id SERIAL PRIMARY KEY,
+                    user_id BIGINT REFERENCES users(user_id) ON DELETE CASCADE,
+                    fruit_id VARCHAR(50) NOT NULL,
+                    name VARCHAR(255) NOT NULL,
+                    type VARCHAR(50) NOT NULL,
+                    rarity VARCHAR(50) NOT NULL,
+                    power TEXT NOT NULL,
+                    previous_user VARCHAR(255),
+                    description TEXT,
+                    awakening TEXT,
+                    weakness TEXT,
+                    combat_power INTEGER DEFAULT 100,
+                    duplicate_count INTEGER DEFAULT 1,
+                    obtained_at TIMESTAMP DEFAULT NOW()
+                )
+            `);
+            
+            // User Duplicate Stats table
+            await this.query(`
+                CREATE TABLE IF NOT EXISTS user_duplicate_stats (
+                    user_id BIGINT,
+                    fruit_id VARCHAR(50),
+                    duplicate_count INTEGER DEFAULT 1,
+                    updated_at TIMESTAMP DEFAULT NOW(),
+                    PRIMARY KEY (user_id, fruit_id),
+                    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+                )
+            `);
+            
+            // User Rarity Stats table
+            await this.query(`
+                CREATE TABLE IF NOT EXISTS user_rarity_stats (
+                    user_id BIGINT,
+                    rarity VARCHAR(50),
+                    count INTEGER DEFAULT 0,
+                    PRIMARY KEY (user_id, rarity),
+                    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+                )
+            `);
+            
+            // User Type Stats table
+            await this.query(`
+                CREATE TABLE IF NOT EXISTS user_type_stats (
+                    user_id BIGINT,
+                    type VARCHAR(50),
+                    count INTEGER DEFAULT 0,
+                    PRIMARY KEY (user_id, type),
+                    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+                )
+            `);
+            
+            // User Levels table
+            await this.query(`
+                CREATE TABLE IF NOT EXISTS user_levels (
+                    user_id BIGINT PRIMARY KEY,
+                    level INTEGER DEFAULT 0,
+                    updated_at TIMESTAMP DEFAULT NOW(),
+                    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+                )
+            `);
+            
+            // User Cooldowns table
+            await this.query(`
+                CREATE TABLE IF NOT EXISTS user_cooldowns (
+                    user_id BIGINT,
+                    cooldown_type VARCHAR(50),
+                    end_time TIMESTAMP NOT NULL,
+                    PRIMARY KEY (user_id, cooldown_type),
+                    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+                )
+            `);
+            
+            // Battle History table (for future PvP)
+            await this.query(`
+                CREATE TABLE IF NOT EXISTS battle_history (
+                    id SERIAL PRIMARY KEY,
+                    attacker_id BIGINT REFERENCES users(user_id) ON DELETE CASCADE,
+                    defender_id BIGINT REFERENCES users(user_id) ON DELETE CASCADE,
+                    result VARCHAR(50) NOT NULL,
+                    stolen_fruits JSONB,
+                    battle_time TIMESTAMP DEFAULT NOW()
+                )
+            `);
+            
+            // Create indexes for better performance
+            console.log('🔧 Creating database indexes for optimal performance...');
+            
+            await this.query(`
+                CREATE INDEX IF NOT EXISTS idx_user_devil_fruits_user_id 
+                ON user_devil_fruits(user_id)
+            `);
+            
+            await this.query(`
+                CREATE INDEX IF NOT EXISTS idx_user_devil_fruits_fruit_id 
+                ON user_devil_fruits(fruit_id)
+            `);
+            
+            await this.query(`
+                CREATE INDEX IF NOT EXISTS idx_user_devil_fruits_rarity 
+                ON user_devil_fruits(rarity)
+            `);
+            
+            await this.query(`
+                CREATE INDEX IF NOT EXISTS idx_user_devil_fruits_obtained_at 
+                ON user_devil_fruits(obtained_at)
+            `);
+            
+            await this.query(`
+                CREATE INDEX IF NOT EXISTS idx_user_cooldowns_end_time 
+                ON user_cooldowns(end_time)
+            `);
+            
+            console.log('✅ All database tables ready');
+            console.log('✅ Database indexes created for optimal performance');
+            console.log('🔄 Duplicate system enabled - fruits now gain 1% CP per duplicate!');
+            console.log('✅ Database initialization complete');
+            console.log('🗄️ PostgreSQL database ready for Devil Fruit data!');
+            
+            return true;
+        } catch (error) {
+            console.error('❌ Database initialization failed:', error);
+            throw error;
+        }
+    }
+
     // User management
     async ensureUser(userId, username) {
         try {
