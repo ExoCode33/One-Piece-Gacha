@@ -124,7 +124,7 @@ async function handleCollection(interaction) {
         // Create crown jewels embed
         const crownJewelsEmbed = createCrownJewelsEmbed(collectionAnalysis);
         
-        // Create action buttons (removed detailed view and search)
+        // Create action buttons
         const actionRow = new ActionRowBuilder()
             .addComponents(
                 new ButtonBuilder()
@@ -158,8 +158,8 @@ async function analyzeEnhancedCollection(userFruits, userLevel = 0) {
     const analysis = {
         totalFruits: userFruits.length,
         uniqueFruits: new Set(userFruits.map(f => f.fruit_id)).size,
-        totalAvailableFruits: 150, // Updated to match your 150 fruits database
-        totalHunts: userFruits.length, // Each fruit is a hunt
+        totalAvailableFruits: 150,
+        totalHunts: userFruits.length,
         rarityDistribution: {},
         duplicateInfo: {},
         topFruits: [],
@@ -192,7 +192,7 @@ async function analyzeEnhancedCollection(userFruits, userLevel = 0) {
         
         Object.values(fruitGroups).forEach(group => {
             const basePower = CombatSystem.calculateBasePower(group.rarity);
-            const duplicateBonus = 1 + (group.duplicates - 1) * 0.01; // 1% per duplicate
+            const duplicateBonus = 1 + (group.duplicates - 1) * 0.01;
             const fruitPower = Math.floor(basePower * levelMultiplier * duplicateBonus);
             
             group.combatPower = fruitPower;
@@ -233,7 +233,7 @@ function createCollectionOverviewEmbed(username, userData, analysis) {
     return embed;
 }
 
-// Fixed Rarity Distribution Embed
+// Rarity Distribution Embed
 function createRarityDistributionEmbed(analysis) {
     const embed = new EmbedBuilder()
         .setTitle('🌟 Rarity Distribution')
@@ -269,7 +269,7 @@ function createRarityDistributionEmbed(analysis) {
     return embed;
 }
 
-// Enhanced Power Analysis Embed
+// Power Analysis Embed
 function createPowerAnalysisEmbed(analysis, userLevel) {
     const embed = new EmbedBuilder()
         .setTitle('⚔️ Power Analysis')
@@ -478,7 +478,7 @@ async function handleButtonInteraction(interaction) {
     }
 }
 
-// FIXED: Hunt Again function that works with button interactions
+// Hunt Again function for button interactions
 async function handleHuntAgain(interaction) {
     try {
         // Check cooldown first
@@ -494,7 +494,7 @@ async function handleHuntAgain(interaction) {
             return;
         }
         
-        // FIXED: Defer the reply first for button interactions
+        // Defer the reply first for button interactions
         await interaction.deferReply();
         
         // Set cooldown (5 seconds)
@@ -509,21 +509,13 @@ async function handleHuntAgain(interaction) {
         
         // Generate target fruit
         const targetFruit = generateRandomDevilFruit();
-        console.log(`🎯 Animation Starting: ${targetFruit.name} (${targetFruit.rarity})`);
+        console.log(`🎯 Hunt Again Animation: ${targetFruit.name} (${targetFruit.rarity})`);
         
         // Get element information
         const fruitElement = DEVIL_FRUIT_ELEMENTS[targetFruit.id];
         const elementName = fruitElement ? CombatSystem.getElementName(fruitElement) : 'Unknown';
         
-        // Performance tracking
-        const performanceMetrics = {
-            startTime: Date.now(),
-            frameAttempts: 0,
-            frameSuccesses: 0,
-            connectionQuality: interaction.client.ws.ping
-        };
-        
-        // FIXED: Use editReply instead of reply since we deferred
+        // Initial embed
         const initialEmbed = new EmbedBuilder()
             .setTitle('🍈 Devil Fruit Hunt in Progress...')
             .setDescription('🌊 Searching the mysterious waters of the Grand Line...')
@@ -532,33 +524,20 @@ async function handleHuntAgain(interaction) {
             
         await interaction.editReply({ embeds: [initialEmbed] });
         
-        // Run the same animation loop as normal pull
-        // Main animation phase (18 frames)
-        for (let frame = 0; frame < 18; frame++) {
-            await updateAnimationFrameButton(interaction, frame, targetFruit, performanceMetrics);
+        // Simple animation loop
+        for (let frame = 0; frame < 10; frame++) {
+            await updateSimpleAnimation(interaction, frame, targetFruit);
             await sleep(1000);
         }
         
-        // Progression phase (12 frames)  
-        for (let progFrame = 0; progFrame < 12; progFrame++) {
-            await updateProgressionFrameButton(interaction, progFrame, targetFruit, performanceMetrics);
-            await sleep(800);
-        }
-        
-        // Transition phase (10 frames)
-        for (let transFrame = 0; transFrame < 10; transFrame++) {
-            await updateTransitionFrameButton(interaction, transFrame, targetFruit, performanceMetrics);
-            await sleep(900);
-        }
-        
-        // Reveal information
-        await revealInformationGraduallyButton(interaction, targetFruit, elementName, userLevel);
+        // Reveal final result
+        await revealFinalResult(interaction, targetFruit, elementName, userLevel);
         
         // Save to database
         await DatabaseManager.saveUserFruit(interaction.user.id, targetFruit);
         await DatabaseManager.updateUserStats(interaction.user.id);
         
-        console.log(`🎊 Hunt Again success: ${targetFruit.name} (${targetFruit.rarity}) for ${interaction.user.username}`);
+        console.log(`🎊 Hunt Again success: ${targetFruit.name} for ${interaction.user.username}`);
         
     } catch (error) {
         console.error('Hunt again error:', error);
@@ -575,12 +554,9 @@ async function handleHuntAgain(interaction) {
     }
 }
 
-// Button-specific animation functions (use editReply instead of reply)
-async function updateAnimationFrameButton(interaction, frame, targetFruit, metrics) {
+// Simple animation for hunt again
+async function updateSimpleAnimation(interaction, frame, targetFruit) {
     try {
-        metrics.frameAttempts++;
-        
-        // Calculate rainbow positions and colors for 20-square bars
         const barLength = 20;
         const positions = [];
         
@@ -589,175 +565,47 @@ async function updateAnimationFrameButton(interaction, frame, targetFruit, metri
             positions.push(rainbowColors[colorIndex]);
         }
         
-        // Create dual rainbow bars
-        const topBar = positions.join(' ');
-        const bottomBar = positions.join(' ');
+        const animationBar = positions.join(' ');
+        const embedColorIndex = (0 - frame + rainbowEmbedColors.length * 100) % rainbowEmbedColors.length;
+        const embedColor = rainbowEmbedColors[embedColorIndex];
         
-        // Calculate embed color (rainbow for most of animation)
-        let embedColor;
-        if (frame < 16) {
-            const embedColorIndex = (0 - frame + rainbowEmbedColors.length * 100) % rainbowEmbedColors.length;
-            embedColor = rainbowEmbedColors[embedColorIndex];
-        } else if (frame < 17) {
-            embedColor = rarityColors[targetFruit.rarity]?.embed || rainbowEmbedColors[0];
-        } else {
-            embedColor = rarityColors[targetFruit.rarity]?.embed || rainbowEmbedColors[0];
-        }
-        
-        // Get changing indicators
+        const particles = generateParticles();
         const indicators = getChangingIndicators(frame, targetFruit.rarity, targetFruit.type);
         
-        // Get particles
-        const particles = generateParticles();
-        
-        // Get dynamic animation text
-        const dynamicTexts = [
-            "*A mysterious presence stirs in the depths of the Grand Line...*",
-            "*Ancient powers awaken from their eternal slumber...*",
-            "*The Devil Fruit's aura begins to manifest...*",
-            "*Reality bends as the fruit's true nature emerges...*",
-            "*Your destiny as a Devil Fruit user crystallizes...*",
-            "*The fruit's power reaches critical mass...*"
+        const animationTexts = [
+            "*The Grand Line's mysteries unfold...*",
+            "*Ancient powers stir in the depths...*",
+            "*A Devil Fruit's aura begins to manifest...*"
         ];
-        const textIndex = Math.min(Math.floor(frame / 3), dynamicTexts.length - 1);
-        const dynamicText = dynamicTexts[textIndex];
+        const dynamicText = animationTexts[Math.floor(Math.random() * animationTexts.length)];
         
-        // Create animation content with dynamic text
-        const animationContent = `${topBar}\n\n` +
+        const content = `${animationBar}\n\n` +
             `🌊 **GRAND LINE EXPLORATION** 🌊\n\n` +
-            `⚡ **FRUIT ENERGY:** ${indicators.aura}\n` +
-            `🔮 **RARITY SENSE:** ${indicators.blessing}\n` +
-            `🍈 **DEVIL FRUIT:** ${indicators.typeHint}\n\n` +
+            `⚡ **ENERGY:** ${indicators.aura}\n` +
+            `🔮 **RARITY:** ${indicators.blessing}\n` +
+            `🍈 **TYPE:** ${indicators.typeHint}\n\n` +
             `${dynamicText}\n\n` +
-            `${bottomBar}\n\n` +
+            `${animationBar}\n\n` +
             `${particles}`;
         
         const embed = new EmbedBuilder()
             .setTitle('🍈 Devil Fruit Hunt in Progress...')
-            .setDescription(animationContent)
+            .setDescription(content)
             .setColor(embedColor)
             .setTimestamp();
         
         await interaction.editReply({ embeds: [embed] });
-        metrics.frameSuccesses++;
         
     } catch (error) {
         console.log(`Animation frame ${frame} error:`, error.message);
     }
 }
 
-async function updateProgressionFrameButton(interaction, progFrame, targetFruit, metrics) {
-    try {
-        metrics.frameAttempts++;
-        
-        const barLength = 20;
-        const positions = [];
-        
-        for (let i = 0; i < barLength; i++) {
-            const colorIndex = (i - (18 + progFrame) + rainbowColors.length * 100) % rainbowColors.length;
-            positions.push(rainbowColors[colorIndex]);
-        }
-        
-        const topBar = positions.join(' ');
-        const bottomBar = positions.join(' ');
-        
-        const embedColorIndex = (0 - (18 + progFrame) + rainbowEmbedColors.length * 100) % rainbowEmbedColors.length;
-        const embedColor = rainbowEmbedColors[embedColorIndex];
-        
-        const indicators = getChangingIndicators(18 + progFrame, targetFruit.rarity, targetFruit.type);
-        const particles = generateParticles('intense');
-        
-        const progressionTexts = [
-            "*The fruit's essence takes physical form...*",
-            "*Reality warps as the fruit breaches dimensional barriers...*",
-            "*Your legend begins to write itself...*"
-        ];
-        const dynamicText = progressionTexts[Math.floor(Math.random() * progressionTexts.length)];
-        
-        const progressContent = `${topBar}\n\n` +
-            `🌊 **POWER CRYSTALLIZING** 🌊\n\n` +
-            `⚡ **FRUIT ENERGY:** ${indicators.aura}\n` +
-            `🔮 **RARITY SENSE:** ${indicators.blessing}\n` +
-            `🍈 **DEVIL FRUIT:** ${indicators.typeHint}\n\n` +
-            `${dynamicText}\n\n` +
-            `${bottomBar}\n\n` +
-            `${particles}`;
-        
-        const embed = new EmbedBuilder()
-            .setTitle('🔮 Power Crystallization Phase')
-            .setDescription(progressContent)
-            .setColor(embedColor)
-            .setTimestamp();
-        
-        await interaction.editReply({ embeds: [embed] });
-        metrics.frameSuccesses++;
-        
-    } catch (error) {
-        console.log(`Progression frame ${progFrame} error:`, error.message);
-    }
-}
-
-async function updateTransitionFrameButton(interaction, transFrame, targetFruit, metrics) {
-    try {
-        metrics.frameAttempts++;
-        
-        const barLength = 20;
-        const radius = transFrame;
-        const positions = [];
-        
-        for (let i = 0; i < barLength; i++) {
-            const distanceFromCenter = Math.abs(i - 9.5);
-            
-            if (distanceFromCenter <= radius + 0.5) {
-                positions.push(rarityColors[targetFruit.rarity]?.emoji || '🟫');
-            } else {
-                const colorIndex = (i - (30 + transFrame) + rainbowColors.length * 100) % rainbowColors.length;
-                positions.push(rainbowColors[colorIndex]);
-            }
-        }
-        
-        const topBar = positions.join(' ');
-        const bottomBar = positions.join(' ');
-        
-        const embedColor = transFrame > 5 ? 
-            (rarityColors[targetFruit.rarity]?.embed || 0x8B4513) :
-            rainbowEmbedColors[(0 - (30 + transFrame) + rainbowEmbedColors.length * 100) % rainbowEmbedColors.length];
-        
-        const particles = generateParticles('crystallizing');
-        
-        const transitionTexts = [
-            "*The Devil Fruit's power takes its final form...*",
-            "*Your journey as a Devil Fruit user begins now...*",
-            "*The ocean itself acknowledges your new power...*"
-        ];
-        const dynamicText = transitionTexts[Math.floor(Math.random() * transitionTexts.length)];
-        
-        const transitionContent = `${topBar}\n\n` +
-            `⚡ **CRYSTALLIZING INTO REALITY** ⚡\n\n` +
-            `${dynamicText}\n\n` +
-            `${bottomBar}\n\n` +
-            `${particles}`;
-        
-        const embed = new EmbedBuilder()
-            .setTitle('⚡ Final Crystallization')
-            .setDescription(transitionContent)
-            .setColor(embedColor)
-            .setTimestamp();
-        
-        await interaction.editReply({ embeds: [embed] });
-        metrics.frameSuccesses++;
-        
-    } catch (error) {
-        console.log(`Transition frame ${transFrame} error:`, error.message);
-    }
-}
-
-async function revealInformationGraduallyButton(interaction, targetFruit, elementName, userLevel) {
-    // Create reward color bar
+// Reveal final result
+async function revealFinalResult(interaction, targetFruit, elementName, userLevel) {
     const rewardEmoji = rarityColors[targetFruit.rarity]?.emoji || '🟫';
     const rewardBar = Array(20).fill(rewardEmoji).join(' ');
     
-    // Calculate combat power if user has level
     let combatPowerInfo = '';
     if (userLevel > 0) {
         const basePower = CombatSystem.calculateBasePower(targetFruit.rarity);
@@ -785,44 +633,19 @@ async function revealInformationGraduallyButton(interaction, targetFruit, elemen
         'Special Paramecia': '✨'
     };
     
-    const revealLines = [
-        `🌟 **${rarityTitles[targetFruit.rarity]}**`,
-        '',
-        `🍈 **${targetFruit.name}**`,
-        `${typeEmojis[targetFruit.type] || '🍈'} **Type:** ${targetFruit.type}`,
-        `👤 **Previous User:** ${targetFruit.previousUser}`,
-        `💪 **Power:** ${targetFruit.power}`,
-        `⭐ **Rarity:** ${targetFruit.rarity.charAt(0).toUpperCase() + targetFruit.rarity.slice(1)}`,
-        combatPowerInfo,
-        `⚔️ **Element:** ${elementName}`,
-        '',
-        `📖 **Description:**`,
-        targetFruit.description,
-        '',
-        `🔥 **Awakening:** ${targetFruit.awakening}`,
-        `💧 **Weakness:** ${targetFruit.weakness}`
-    ];
-    
-    let currentContent = `${rewardBar}\n\n`;
-    
-    for (let i = 0; i < revealLines.length; i++) {
-        if (revealLines[i]) {
-            currentContent += revealLines[i] + '\n';
-        } else {
-            currentContent += '\n';
-        }
-        
-        const embed = new EmbedBuilder()
-            .setTitle('🏴‍☠️ Devil Fruit Discovered!')
-            .setDescription(currentContent + `\n${rewardBar}`)
-            .setColor(rarityColors[targetFruit.rarity]?.embed || 0x8B4513)
-            .setTimestamp();
-        
-        await interaction.editReply({ embeds: [embed] });
-        await sleep(800);
-    }
-    
-    const finalContent = currentContent + `\n${rewardBar}`;
+    const finalContent = `${rewardBar}\n\n` +
+        `🌟 **${rarityTitles[targetFruit.rarity]}**\n\n` +
+        `🍈 **${targetFruit.name}**\n` +
+        `${typeEmojis[targetFruit.type] || '🍈'} **Type:** ${targetFruit.type}\n` +
+        `👤 **Previous User:** ${targetFruit.previousUser}\n` +
+        `💪 **Power:** ${targetFruit.power}\n` +
+        `⭐ **Rarity:** ${targetFruit.rarity.charAt(0).toUpperCase() + targetFruit.rarity.slice(1)}\n` +
+        combatPowerInfo +
+        `⚔️ **Element:** ${elementName}\n\n` +
+        `📖 **Description:** ${targetFruit.description}\n\n` +
+        `🔥 **Awakening:** ${targetFruit.awakening}\n` +
+        `💧 **Weakness:** ${targetFruit.weakness}\n\n` +
+        `${rewardBar}`;
     
     const actionRow = new ActionRowBuilder()
         .addComponents(
