@@ -1,323 +1,451 @@
-// Import the correct function from devilfruit.js
-const { generateRandomDevilFruit, RARITY_RATES } = require('../data/devilfruit');
+// Animation engine for Devil Fruit gacha system
+let debugMode = false;
+let forcedRarity = null;
 
-// ═══════════════════════════════════════════════════════════════════
-//                     DEBUG SYSTEM FOR TESTING
-// ═══════════════════════════════════════════════════════════════════
-const DEBUG_CONFIG = {
-    enabled: false,
-    forcedRarity: null,
-    logMessages: true
-};
-
-function setDebugMode(enabled) {
-    DEBUG_CONFIG.enabled = enabled;
-    if (!enabled) {
-        DEBUG_CONFIG.forcedRarity = null;
-    }
-    if (DEBUG_CONFIG.logMessages) {
-        console.log(`🔧 DEBUG MODE: ${enabled ? 'ENABLED' : 'DISABLED'}`);
-    }
-    return DEBUG_CONFIG.enabled;
-}
-
-function setForcedRarity(rarity) {
-    if (!DEBUG_CONFIG.enabled) {
-        if (DEBUG_CONFIG.logMessages) {
-            console.log(`⚠️ DEBUG MODE is disabled. Enable it first.`);
+// Devil Fruit database
+const devilFruits = {
+    'Common': [
+        {
+            name: 'Chop-Chop Fruit',
+            type: 'Paramecia',
+            power: 'Allows the user to split their body into pieces',
+            description: 'The user can separate their body parts and control them remotely.',
+            previousUser: 'Buggy the Clown',
+            weakness: 'Still vulnerable to sea water and seastone'
+        },
+        {
+            name: 'Slip-Slip Fruit',
+            type: 'Paramecia',
+            power: 'Makes the user\'s body slippery',
+            description: 'Everything slides off the user\'s smooth skin.',
+            previousUser: 'Alvida',
+            weakness: 'Standard Devil Fruit weaknesses'
+        },
+        {
+            name: 'Spike-Spike Fruit',
+            type: 'Paramecia',
+            power: 'Allows the user to grow spikes from their body',
+            description: 'The user can produce sharp spikes from any part of their body.',
+            previousUser: 'Miss Double Finger',
+            weakness: 'Spikes can be broken with enough force'
+        },
+        {
+            name: 'Kilo-Kilo Fruit',
+            type: 'Paramecia',
+            power: 'Allows the user to change their weight',
+            description: 'The user can alter their body weight from 1 to 10,000 kilograms.',
+            previousUser: 'Miss Valentine',
+            weakness: 'Cannot exceed maximum weight limit'
+        },
+        {
+            name: 'Wax-Wax Fruit',
+            type: 'Paramecia',
+            power: 'Allows the user to create and manipulate wax',
+            description: 'The user can produce wax that hardens to steel-like durability.',
+            previousUser: 'Mr. 3',
+            weakness: 'Wax melts under intense heat'
         }
-        return false;
-    }
-    
-    const validRarities = ['common', 'uncommon', 'rare', 'legendary', 'mythical', 'omnipotent', null];
-    if (rarity && !validRarities.includes(rarity)) {
-        if (DEBUG_CONFIG.logMessages) {
-            console.log(`❌ Invalid rarity: ${rarity}. Valid options: ${validRarities.filter(r => r !== null).join(', ')}`);
-        }
-        return false;
-    }
-    
-    DEBUG_CONFIG.forcedRarity = rarity;
-    if (DEBUG_CONFIG.logMessages) {
-        console.log(`🎯 FORCED RARITY: ${rarity || 'OFF (random)'}`);
-    }
-    return true;
-}
-
-// Function to calculate rarity based on probabilities (moved from devilfruit.js)
-function calculateDropRarity() {
-    // Generate random number between 0-100
-    const roll = Math.random() * 100;
-    
-    // Determine rarity based on probabilities
-    let cumulativeRate = 0;
-    let selectedRarity = 'common';
-    
-    for (const [rarity, rate] of Object.entries(RARITY_RATES)) {
-        cumulativeRate += rate;
-        if (roll <= cumulativeRate) {
-            selectedRarity = rarity;
-            break;
-        }
-    }
-    
-    return selectedRarity;
-}
-
-function getTestRarity() {
-    // If debug mode is enabled and a rarity is forced, use it
-    if (DEBUG_CONFIG.enabled && DEBUG_CONFIG.forcedRarity) {
-        if (DEBUG_CONFIG.logMessages) {
-            console.log(`🎯 Debug Mode: Using forced rarity: ${DEBUG_CONFIG.forcedRarity}`);
-        }
-        return DEBUG_CONFIG.forcedRarity;
-    }
-    
-    // Otherwise use normal rarity calculation
-    const rarity = calculateDropRarity();
-    if (DEBUG_CONFIG.logMessages && DEBUG_CONFIG.enabled) {
-        console.log(`🎲 Debug Mode: Random rarity rolled: ${rarity}`);
-    }
-    return rarity;
-}
-
-function getDebugStatus() {
-    return {
-        enabled: DEBUG_CONFIG.enabled,
-        forcedRarity: DEBUG_CONFIG.forcedRarity,
-        logMessages: DEBUG_CONFIG.logMessages
-    };
-}
-
-// ═══════════════════════════════════════════════════════════════════
-//                 NEXT-GENERATION GACHA ENGINE
-// ═══════════════════════════════════════════════════════════════════
-
-const NextGenGachaEngine = {
-    // ULTRA-DIVERSE COLORS
-    hyperSpectrumColors: [
-        '#FF0000', '#FF0606', '#FF0C0C', '#FF1212', '#FF1818', '#FF1E1E', '#FF2424', '#FF2A2A',
-        '#FF3030', '#FF3636', '#FF3C3C', '#FF4242', '#FF4848', '#FF4E4E', '#FF5454', '#FF5A5A',
-        '#FF6000', '#FF6606', '#FF6C0C', '#FF7212', '#FF7818', '#FF7E1E', '#FF8424', '#FF8A2A',
-        '#FF9030', '#FF9636', '#FF9C3C', '#FFA242', '#FFA848', '#FFAE4E', '#FFB454', '#FFBA5A',
-        '#FFCC00', '#FFD206', '#FFD80C', '#FFDE12', '#FFE418', '#FFEA1E', '#FFF024', '#FFF62A',
-        '#FFFC30', '#FFFF36', '#F9FF3C', '#F3FF42', '#EDFF48', '#E7FF4E', '#E1FF54', '#DBFF5A',
-        '#00FF00', '#06FF06', '#0CFF0C', '#12FF12', '#18FF18', '#1EFF1E', '#24FF24', '#2AFF2A',
-        '#30FF30', '#36FF36', '#3CFF3C', '#42FF42', '#48FF48', '#4EFF4E', '#54FF54', '#5AFF5A',
-        '#00FFFF', '#06F9FF', '#0CF3FF', '#12EDFF', '#18E7FF', '#1EE1FF', '#24DBFF', '#2AD5FF',
-        '#30CFFF', '#36C9FF', '#3CC3FF', '#42BDFF', '#48B7FF', '#4EB1FF', '#54ABFF', '#5AA5FF',
-        '#0080FF', '#0686FF', '#0C8CFF', '#1292FF', '#1898FF', '#1E9EFF', '#24A4FF', '#2AAAFF',
-        '#30B0FF', '#36B6FF', '#3CBCFF', '#42C2FF', '#48C8FF', '#4ECEFF', '#54D4FF', '#5ADAFF',
-        '#8000FF', '#8606FF', '#8C0CFF', '#9212FF', '#9818FF', '#9E1EFF', '#A424FF', '#AA2AFF',
-        '#B030FF', '#B636FF', '#BC3CFF', '#C242FF', '#C848FF', '#CE4EFF', '#D454FF', '#DA5AFF',
-        '#FF00FF', '#FF06F9', '#FF0CF3', '#FF12ED', '#FF18E7', '#FF1EE1', '#FF24DB', '#FF2AD5',
-        '#FF30CF', '#FF36C9', '#FF3CC3', '#FF42BD', '#FF48B7', '#FF4EB1', '#FF54AB', '#FF5AA5',
-        '#FF0080', '#FF0686', '#FF0C8C', '#FF1292', '#FF1898', '#FF1E9E', '#FF24A4', '#FF2AAA',
-        '#FF30B0', '#FF36B6', '#FF3CBC', '#FF42C2', '#FF48C8', '#FF4ECE', '#FF54D4', '#FF5ADA',
-        '#FFD700', '#FFDB06', '#FFDF0C', '#FFE312', '#FFE718', '#FFEB1E', '#FFEF24', '#FFF32A',
-        '#FFF730', '#FFFB36', '#FFFF3C', '#FBFF42', '#F7FF48', '#F3FF4E', '#EFFF54', '#EBFF5A'
     ],
-
-    getHyperSpectrumColor(frame, intensity = 1, variance = 0) {
-        const stream1 = (frame * 17 + intensity * 23 + variance * 7) % this.hyperSpectrumColors.length;
-        const stream2 = (frame * 31 + intensity * 41 + variance * 13) % this.hyperSpectrumColors.length;
-        const stream3 = (frame * 43 + intensity * 47 + variance * 19) % this.hyperSpectrumColors.length;
-        
-        const goldenRatio = 1.618033988749;
-        const combinedIndex = Math.floor((stream1 + stream2 * goldenRatio + stream3 * (goldenRatio * goldenRatio)) % this.hyperSpectrumColors.length);
-        return this.hyperSpectrumColors[combinedIndex];
-    },
-
-    // FIXED: Rainbow progresses LEFT TO RIGHT
-    createDynamicEnergyStatus(percentage, frame, phase = 'charging', currentEmbedColor = '#0099FF') {
-        const phaseDescriptors = {
-            scanning: ['AWAKENING', 'STIRRING', 'CALLING', 'REACHING', 'SUMMONING'],
-            charging: ['RISING', 'BUILDING', 'SURGING', 'SWELLING', 'ROARING', 'BLAZING', 'TRANSCENDING'],
-            critical: ['LEGENDARY', 'MYTHICAL', 'TRANSCENDENT', 'OVERWHELMING', 'BOUNDLESS'],
-            materializing: ['FORMING', 'BLESSING', 'CHOOSING', 'BESTOWING', 'GRANTING']
-        };
-        
-        const descriptors = phaseDescriptors[phase] || phaseDescriptors.charging;
-        const descriptorIndex = Math.floor(percentage / 15);
-        const energyLevel = descriptors[Math.min(descriptorIndex, descriptors.length - 1)];
-        
-        // CONSISTENT WIDTH - Always 20 squares
-        const maxSlots = 20;
-        const rainbowColors = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪', '🟫'];
-        
-        // FIXED: Rainbow flows LEFT TO RIGHT
-        let progressBar = '';
-        
-        for (let i = 0; i < maxSlots; i++) {
-            // FIXED: Subtract frame instead of adding to flow left to right
-            const colorIndex = (i - frame + rainbowColors.length * 100) % rainbowColors.length;
-            progressBar += rainbowColors[colorIndex];
-            
-            if (i < maxSlots - 1) progressBar += ' ';
+    'Uncommon': [
+        {
+            name: 'Smoke-Smoke Fruit',
+            type: 'Logia',
+            power: 'Allows the user to create and control smoke',
+            description: 'The user can transform into smoke and create smoke-based attacks.',
+            previousUser: 'Smoker',
+            weakness: 'Wind can disperse smoke form'
+        },
+        {
+            name: 'Flame-Flame Fruit',
+            type: 'Logia',
+            power: 'Allows the user to create and control fire',
+            description: 'The user can transform into fire and create powerful flame attacks.',
+            previousUser: 'Portgas D. Ace',
+            weakness: 'Can be extinguished by water or superior fire'
+        },
+        {
+            name: 'Sand-Sand Fruit',
+            type: 'Logia',
+            power: 'Allows the user to create and control sand',
+            description: 'The user can transform into sand and create devastating sandstorms.',
+            previousUser: 'Crocodile',
+            weakness: 'Water makes sand clump together'
+        },
+        {
+            name: 'Rubber-Rubber Fruit',
+            type: 'Paramecia',
+            power: 'Makes the user\'s body rubber',
+            description: 'The user\'s body becomes elastic and immune to blunt attacks.',
+            previousUser: 'Monkey D. Luffy',
+            weakness: 'Sharp objects can still cut rubber'
+        },
+        {
+            name: 'Barrier-Barrier Fruit',
+            type: 'Paramecia',
+            power: 'Allows the user to create invisible barriers',
+            description: 'The user can create unbreakable transparent barriers.',
+            previousUser: 'Bartolomeo',
+            weakness: 'Limited barrier size and duration'
         }
-        
-        return `**${energyLevel}**\n${progressBar}`;
-    },
-
-    // Create blinking effect between rainbow and solid color
-    createBlinkingRarityBar(rarity, frame, isBlinkOn) {
-        const rarityColors = {
-            cursed: '🟫',
-            manifested: '🟩',
-            potent: '🟦', 
-            ancient: '🟨',
-            mythical: '🟥',
-            transcendent: '🟪',
-            godlike: '🌈'
-        };
-        
-        const maxSlots = 20;
-        const rainbowColors = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪', '🟫'];
-        let progressBar = '';
-        
-        if (rarity === 'godlike') {
-            // Special GODLIKE grid pattern
-            const godlikePattern = [
-                1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0
-            ]; // 1 = rainbow letter, 0 = brown background
-            
-            for (let i = 0; i < maxSlots; i++) {
-                if (godlikePattern[i]) {
-                    // FIXED: Rainbow flows left to right
-                    const colorIndex = (i - frame + rainbowColors.length * 100) % rainbowColors.length;
-                    progressBar += rainbowColors[colorIndex];
-                } else {
-                    // Brown background
-                    progressBar += '🟫';
-                }
-                if (i < maxSlots - 1) progressBar += ' ';
-            }
-        } else if (isBlinkOn) {
-            // Show solid rarity color
-            const solidColor = rarityColors[rarity];
-            for (let i = 0; i < maxSlots; i++) {
-                progressBar += solidColor;
-                if (i < maxSlots - 1) progressBar += ' ';
-            }
-        } else {
-            // FIXED: Show rainbow flowing left to right
-            for (let i = 0; i < maxSlots; i++) {
-                const colorIndex = (i - frame + rainbowColors.length * 100) % rainbowColors.length;
-                progressBar += rainbowColors[colorIndex];
-                if (i < maxSlots - 1) progressBar += ' ';
-            }
+    ],
+    'Rare': [
+        {
+            name: 'Ice-Ice Fruit',
+            type: 'Logia',
+            power: 'Allows the user to create and control ice',
+            description: 'The user can transform into ice and freeze their surroundings.',
+            previousUser: 'Aokiji',
+            weakness: 'Extreme heat can melt ice form'
+        },
+        {
+            name: 'Magma-Magma Fruit',
+            type: 'Logia',
+            power: 'Allows the user to create and control magma',
+            description: 'The user can transform into magma, superior to fire.',
+            previousUser: 'Akainu',
+            weakness: 'Can be cooled by extreme cold'
+        },
+        {
+            name: 'Lightning-Lightning Fruit',
+            type: 'Logia',
+            power: 'Allows the user to create and control lightning',
+            description: 'The user can transform into lightning and move at light speed.',
+            previousUser: 'Enel',
+            weakness: 'Rubber is immune to electricity'
+        },
+        {
+            name: 'Gravity-Gravity Fruit',
+            type: 'Paramecia',
+            power: 'Allows the user to manipulate gravity',
+            description: 'The user can control gravitational forces in their vicinity.',
+            previousUser: 'Fujitora',
+            weakness: 'Requires concentration to maintain'
+        },
+        {
+            name: 'String-String Fruit',
+            type: 'Paramecia',
+            power: 'Allows the user to create and control strings',
+            description: 'The user can create razor-sharp strings and control people like puppets.',
+            previousUser: 'Doflamingo',
+            weakness: 'Strings can be cut by sharp objects'
         }
-        
-        return `**TRANSCENDENT**\n${progressBar}`;
-    },
-
-    // Create common rarity brown-out effect
-    createCommonWhiteOut(frame, whiteOutFrame) {
-        const maxSlots = 20;
-        const rainbowColors = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪', '🟫'];
-        let progressBar = '';
-        
-        for (let i = 0; i < maxSlots; i++) {
-            // Calculate distance from center (positions 9 and 10 are center)
-            const distanceFromCenter = Math.min(Math.abs(i - 9), Math.abs(i - 10));
-            
-            // If this position should be brown based on whiteOutFrame
-            if (distanceFromCenter <= whiteOutFrame) {
-                progressBar += '🟫';
-            } else {
-                // FIXED: Show rainbow flowing left to right
-                const colorIndex = (i - frame + rainbowColors.length * 100) % rainbowColors.length;
-                progressBar += rainbowColors[colorIndex];
-            }
-            
-            if (i < maxSlots - 1) progressBar += ' ';
+    ],
+    'Epic': [
+        {
+            name: 'Light-Light Fruit',
+            type: 'Logia',
+            power: 'Allows the user to create and control light',
+            description: 'The user can transform into light and travel at light speed.',
+            previousUser: 'Kizaru',
+            weakness: 'Mirrors can reflect light attacks'
+        },
+        {
+            name: 'Tremor-Tremor Fruit',
+            type: 'Paramecia',
+            power: 'Allows the user to create earthquakes',
+            description: 'The user can generate devastating tremors and quakes.',
+            previousUser: 'Whitebeard',
+            weakness: 'Can harm allies if not controlled'
+        },
+        {
+            name: 'Soul-Soul Fruit',
+            type: 'Paramecia',
+            power: 'Allows the user to manipulate souls',
+            description: 'The user can extract and manipulate the souls of others.',
+            previousUser: 'Big Mom',
+            weakness: 'Requires fear to extract souls'
+        },
+        {
+            name: 'Paw-Paw Fruit',
+            type: 'Paramecia',
+            power: 'Allows the user to repel anything',
+            description: 'The user can repel pain, attacks, and even air itself.',
+            previousUser: 'Bartholomew Kuma',
+            weakness: 'Requires direct contact with paws'
+        },
+        {
+            name: 'Darkness-Darkness Fruit',
+            type: 'Logia',
+            power: 'Allows the user to create and control darkness',
+            description: 'The user can absorb attacks and nullify other Devil Fruit powers.',
+            previousUser: 'Marshall D. Teach',
+            weakness: 'User takes double damage from attacks'
         }
-        
-        return `**FADING**\n${progressBar}`;
-    },
-
-    // Create rarity reveal bar for final phase
-    createRarityRevealBar(rarity, frame) {
-        const rarityColors = {
-            common: '🟫',     // Brown for common (not white)
-            uncommon: '🟩',
-            rare: '🟦',
-            legendary: '🟨',
-            mythical: '🟥',
-            omnipotent: '🟪'  // Purple for omnipotent
-        };
-        
-        const squareColor = rarityColors[rarity] || '🟩';
-        let progressBar = '';
-        
-        // Normal rarity color - full bar (no special effects)
-        for (let i = 0; i < 20; i++) {
-            progressBar += squareColor;
-            if (i < 19) progressBar += ' ';
+    ],
+    'Legendary': [
+        {
+            name: 'Phoenix-Phoenix Fruit',
+            type: 'Mythical Zoan',
+            power: 'Allows the user to transform into a phoenix',
+            description: 'The user can transform into a phoenix with regenerative flames.',
+            previousUser: 'Marco',
+            weakness: 'Regeneration has limits',
+            awakening: 'Can share regenerative flames with others'
+        },
+        {
+            name: 'Dragon-Dragon Fruit (Ancient)',
+            type: 'Ancient Zoan',
+            power: 'Allows the user to transform into a dragon',
+            description: 'The user can transform into a massive ancient dragon.',
+            previousUser: 'Kaido',
+            weakness: 'Large size makes user a bigger target',
+            awakening: 'Can control weather and create flame clouds'
+        },
+        {
+            name: 'Time-Time Fruit',
+            type: 'Paramecia',
+            power: 'Allows the user to manipulate time',
+            description: 'The user can slow down or speed up time in small areas.',
+            previousUser: 'Unknown',
+            weakness: 'Extreme mental exhaustion from overuse'
+        },
+        {
+            name: 'Space-Space Fruit',
+            type: 'Paramecia',
+            power: 'Allows the user to manipulate space',
+            description: 'The user can create portals and bend space itself.',
+            previousUser: 'Unknown',
+            weakness: 'Requires precise calculations'
         }
-        
-        return `**TRANSCENDENT**\n${progressBar}`;
-    },
-
-    // Calculate how many frames to progress to target rarity color
-    getProgressFrames(targetRarity) {
-        if (targetRarity === 'cursed') {
-            return 0; // No progression needed, immediate brown-out
+    ],
+    'Mythical': [
+        {
+            name: 'Gum-Gum Fruit (Awakened)',
+            type: 'Mythical Zoan',
+            power: 'True power of the Sun God Nika',
+            description: 'The legendary fruit that brings joy and freedom to all.',
+            previousUser: 'Joy Boy',
+            weakness: 'Massive energy consumption',
+            awakening: 'Can turn imagination into reality and affect the environment'
+        },
+        {
+            name: 'Void-Void Fruit',
+            type: 'Logia',
+            power: 'Allows the user to control the void',
+            description: 'The user can erase anything from existence temporarily.',
+            previousUser: 'Unknown',
+            weakness: 'Using the power erases part of the user\'s memories',
+            awakening: 'Can create permanent voids in reality'
+        },
+        {
+            name: 'Creation-Creation Fruit',
+            type: 'Paramecia',
+            power: 'Allows the user to create anything',
+            description: 'The user can create matter from nothing using their life force.',
+            previousUser: 'Unknown',
+            weakness: 'Creating complex things shortens lifespan',
+            awakening: 'Can create living beings'
         }
-        
-        // All other rarities progress 8 frames (adjusted for new timing)
-        return 8;
-    },
-
-    // Calculate the frame where rainbow should stop for target rarity
-    getStopFrame(targetRarity) {
-        const rarityTargetColors = {
-            cursed: '🟫',     // Brown - index 6
-            manifested: '🟩', // Green - index 3
-            potent: '🟦',     // Blue - index 4  
-            ancient: '🟨',    // Yellow - index 2
-            mythical: '🟥',   // Red - index 0
-            transcendent: '🟪', // Purple - index 5
-            godlike: '🟧'     // Orange - index 1
-        };
-
-        const rainbowColors = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪', '🟫'];
-        const targetColor = rarityTargetColors[targetRarity];
-        
-        if (!targetColor) return 0;
-        
-        const targetIndex = rainbowColors.indexOf(targetColor);
-        
-        // FIXED: Calculate frame where position 0 (leftmost) shows the target color
-        // Since colorIndex = (i - frame) % 7, we need frame where (0 - frame) % 7 = targetIndex
-        return -targetIndex;
-    },
-
-    // Calculate final stopped frame for rarity
-    calculateFinalFrame(currentFrame, targetRarity) {
-        const progressFrames = this.getProgressFrames(targetRarity);
-        const stopFrameOffset = this.getStopFrame(targetRarity);
-        
-        // Calculate where rainbow should be after progression
-        let finalFrame = currentFrame + progressFrames;
-        
-        // Adjust to land on target color
-        const rainbowLength = 7; // Including brown
-        const currentPosition = finalFrame % rainbowLength;
-        const targetPosition = stopFrameOffset;
-        
-        let adjustment = targetPosition - currentPosition;
-        if (adjustment < 0) adjustment += rainbowLength;
-        
-        return finalFrame + adjustment;
-    }
+    ]
 };
+
+// Rarity chances
+const rarityChances = {
+    'Common': 40,      // 40%
+    'Uncommon': 30,    // 30%
+    'Rare': 20,        // 20%
+    'Epic': 8,         // 8%
+    'Legendary': 1.8,  // 1.8%
+    'Mythical': 0.2    // 0.2%
+};
+
+// Animation sequences
+const animationSequences = [
+    {
+        title: '🌊 Sailing the Grand Line...',
+        description: 'Your ship cuts through the mysterious waters of the Grand Line...',
+        color: '#3498DB',
+        footer: 'The adventure begins...'
+    },
+    {
+        title: '🏝️ Mysterious Island Discovered!',
+        description: 'You spot a strange island shrouded in mist. Something powerful awaits...',
+        color: '#27AE60',
+        footer: 'What secrets does this island hold?'
+    },
+    {
+        title: '🍎 Devil Fruit Found!',
+        description: 'In the depths of the island, you discover a Devil Fruit pulsing with mysterious energy!',
+        color: '#E74C3C',
+        footer: 'The fruit\'s power is awakening...'
+    }
+];
+
+/**
+ * Set debug mode on/off
+ * @param {boolean} enabled - Whether to enable debug mode
+ */
+function setDebugMode(enabled) {
+    debugMode = enabled;
+    console.log(`🔧 Debug mode ${enabled ? 'enabled' : 'disabled'}`);
+}
+
+/**
+ * Check if debug mode is enabled
+ * @returns {boolean} - Current debug mode status
+ */
+function isDebugMode() {
+    return debugMode;
+}
+
+/**
+ * Force a specific rarity for testing
+ * @param {string|null} rarity - Rarity to force, or null to disable
+ */
+function forceRarity(rarity) {
+    forcedRarity = rarity;
+    console.log(`🎯 Force rarity ${rarity ? 'set to ' + rarity : 'disabled'}`);
+}
+
+/**
+ * Get the current forced rarity
+ * @returns {string|null} - Current forced rarity
+ */
+function getForcedRarity() {
+    return forcedRarity;
+}
+
+/**
+ * Select a random rarity based on chances
+ * @returns {string} - Selected rarity
+ */
+function selectRarity() {
+    // If rarity is forced, return it
+    if (forcedRarity) {
+        return forcedRarity;
+    }
+    
+    const random = Math.random() * 100;
+    let cumulative = 0;
+    
+    for (const [rarity, chance] of Object.entries(rarityChances)) {
+        cumulative += chance;
+        if (random <= cumulative) {
+            return rarity;
+        }
+    }
+    
+    return 'Common'; // Fallback
+}
+
+/**
+ * Select a random fruit from a rarity tier
+ * @param {string} rarity - Rarity tier
+ * @returns {Object} - Selected fruit
+ */
+function selectFruit(rarity) {
+    const fruits = devilFruits[rarity];
+    if (!fruits || fruits.length === 0) {
+        return devilFruits['Common'][0]; // Fallback
+    }
+    
+    const randomIndex = Math.floor(Math.random() * fruits.length);
+    return { ...fruits[randomIndex], rarity };
+}
+
+/**
+ * Perform a pull and return the result
+ * @returns {Object} - Pull result
+ */
+function performPull() {
+    const rarity = selectRarity();
+    const fruit = selectFruit(rarity);
+    
+    if (debugMode) {
+        console.log(`🎲 Pull result: ${fruit.name} (${rarity})`);
+    }
+    
+    return fruit;
+}
+
+/**
+ * Get the animation sequence for pulls
+ * @returns {Array} - Array of animation frames
+ */
+function getAnimationSequence() {
+    return animationSequences;
+}
+
+/**
+ * Get all available rarities
+ * @returns {Array} - Array of rarity names
+ */
+function getRarities() {
+    return Object.keys(rarityChances);
+}
+
+/**
+ * Get all fruits of a specific rarity
+ * @param {string} rarity - Rarity to get fruits for
+ * @returns {Array} - Array of fruits
+ */
+function getFruitsByRarity(rarity) {
+    return devilFruits[rarity] || [];
+}
+
+/**
+ * Get all fruits in the database
+ * @returns {Object} - All fruits organized by rarity
+ */
+function getAllFruits() {
+    return devilFruits;
+}
+
+/**
+ * Get rarity chances for display
+ * @returns {Object} - Rarity chances
+ */
+function getRarityChances() {
+    return rarityChances;
+}
+
+/**
+ * Calculate rarity color for embeds
+ * @param {string} rarity - Rarity name
+ * @returns {string} - Hex color code
+ */
+function getRarityColor(rarity) {
+    const colors = {
+        'Common': '#95A5A6',
+        'Uncommon': '#3498DB',
+        'Rare': '#9B59B6',
+        'Epic': '#E74C3C',
+        'Legendary': '#F39C12',
+        'Mythical': '#E91E63'
+    };
+    return colors[rarity] || '#95A5A6';
+}
+
+/**
+ * Get rarity emoji
+ * @param {string} rarity - Rarity name
+ * @returns {string} - Emoji
+ */
+function getRarityEmoji(rarity) {
+    const emojis = {
+        'Common': '⚪',
+        'Uncommon': '🔵',
+        'Rare': '🟣',
+        'Epic': '🔴',
+        'Legendary': '🟡',
+        'Mythical': '🌟'
+    };
+    return emojis[rarity] || '❓';
+}
 
 module.exports = {
-    NextGenGachaEngine,
     setDebugMode,
-    setForcedRarity,
-    getTestRarity,
-    getDebugStatus,
-    DEBUG_CONFIG
+    isDebugMode,
+    forceRarity,
+    getForcedRarity,
+    performPull,
+    getAnimationSequence,
+    getRarities,
+    getFruitsByRarity,
+    getAllFruits,
+    getRarityChances,
+    getRarityColor,
+    getRarityEmoji,
+    selectRarity,
+    selectFruit
 };
