@@ -104,42 +104,6 @@ module.exports = {
                     await interaction.reply({ embeds: [statusEmbed], ephemeral: true });
                 }
                 
-                if (rarity && mode !== 'enable') {
-                    const status = getDebugStatus();
-                    
-                    if (!status.enabled) {
-                        await interaction.reply({ 
-                            content: '⚠️ **Debug mode must be enabled first!**\n\nUse `/gacha-admin debug enable` to activate debug mode before setting rarities.', 
-                            ephemeral: true 
-                        });
-                        return;
-                    }
-                    
-                    if (rarity === 'off') {
-                        setForcedRarity(null);
-                        await interaction.reply({ 
-                            content: '🎲 **Forced rarity disabled!**\n\nDrops are now random while debug mode remains active. Debug logging will continue.', 
-                            ephemeral: true 
-                        });
-                    } else {
-                        const success = setForcedRarity(rarity);
-                        if (success) {
-                            const rarityEmojis = {
-                                common: '🟫',
-                                uncommon: '🟩',
-                                rare: '🟦', 
-                                legendary: '🟨',
-                                mythical: '🟥',
-                                omnipotent: '🌈'
-                            };
-                            await interaction.reply({ 
-                                content: `🎯 **Forced rarity set!**\n\nAll Devil Fruit pulls will now be: ${rarityEmojis[rarity]} **${rarity.toUpperCase()}**\n\n*Use /pull to test the animation with ${rarity} rarity fruits!*`, 
-                                ephemeral: true 
-                            });
-                        }
-                    }
-                }
-                
             } catch (error) {
                 console.error('🚨 Admin Command Error:', error);
                 await interaction.reply({ 
