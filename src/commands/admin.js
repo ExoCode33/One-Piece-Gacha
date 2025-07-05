@@ -104,7 +104,6 @@ module.exports = {
                     await interaction.reply({ embeds: [statusEmbed], ephemeral: true });
                 }
                 
-                // Handle rarity changes when debug is already enabled
                 if (rarity && mode !== 'enable') {
                     const status = getDebugStatus();
                     
