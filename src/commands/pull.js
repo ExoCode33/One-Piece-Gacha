@@ -1,421 +1,458 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { createUltimateCinematicExperience } = require('../animations/gacha');
 const DatabaseManager = require('../database/manager');
-
-// Try to import optional dependencies with fallbacks
-let CombatSystem, DEVIL_FRUIT_ELEMENTS, generateRandomDevilFruit, generateParticles, getChangingIndicators;
-
-try {
-    const combatModule = require('../data/counter-system');
-    CombatSystem = combatModule.CombatSystem;
-    DEVIL_FRUIT_ELEMENTS = combatModule.DEVIL_FRUIT_ELEMENTS;
-} catch (error) {
-    console.log('Counter system not available:', error.message);
-    CombatSystem = {
-        calculateBasePower: () => 100,
-        getLevelMultiplier: () => 1,
-        getElementName: () => 'Unknown',
-        getLevelRank: () => 'Rookie',
-        getPowerRank: () => 'Beginner'
-    };
-    DEVIL_FRUIT_ELEMENTS = {};
-}
-
-try {
-    const fruitModule = require('../data/devilfruit');
-    generateRandomDevilFruit = fruitModule.generateRandomDevilFruit;
-} catch (error) {
-    console.log('Devil fruit module not available:', error.message);
-    generateRandomDevilFruit = () => ({
-        id: 'fruit_001',
-        name: 'Test Fruit',
-        type: 'Paramecia',
-        rarity: 'common',
-        power: 'Test power',
-        previousUser: 'Test User',
-        description: 'A test devil fruit',
-        awakening: 'Test awakening',
-        weakness: 'Test weakness'
-    });
-}
-
-try {
-    const particlesModule = require('../animations/particles');
-    generateParticles = particlesModule.generateParticles;
-} catch (error) {
-    console.log('Particles module not available:', error.message);
-    generateParticles = () => '✨ ⚡ 🌟 ✨ ⚡';
-}
-
-try {
-    const indicatorsModule = require('../animations/indicators');
-    getChangingIndicators = indicatorsModule.getChangingIndicators;
-} catch (error) {
-    console.log('Indicators module not available:', error.message);
-    getChangingIndicators = () => ({
-        aura: '🌟 Mysterious',
-        blessing: '✨ Unknown',
-        typeHint: '🍈 Devil Fruit'
-    });
-}
-
-// Rainbow colors for animations
-const rainbowEmbedColors = [0xFF0000, 0xFF7F00, 0xFFFF00, 0x00FF00, 0x0000FF, 0x8000FF, 0x8B4513];
-const rainbowColors = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪', '🟫'];
-
-// Rarity color mappings
-const rarityColors = {
-    common: { emoji: '🟫', embed: 0x8B4513 },
-    uncommon: { emoji: '🟩', embed: 0x00FF00 },
-    rare: { emoji: '🟦', embed: 0x0000FF },
-    epic: { emoji: '🟪', embed: 0x8000FF },
-    legendary: { emoji: '🟨', embed: 0xFFFF00 },
-    mythical: { emoji: '🟥', embed: 0xFF0000 },
-    omnipotent: { emoji: '⬜', embed: 0xFFFFFF }
-};
+const { performGachaPull, getFruitById, RARITY_CONFIG } = require('../data/devilfruit');
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('pull')
-        .setDescription('🍈 Hunt for Devil Fruits in the Grand Line!'),
+        .setDescription('Hunt for a Devil Fruit! 🍈'),
 
     async execute(interaction) {
         try {
-            console.log(`🎮 ${interaction.user.username} used /pull`);
-            
-            // Check cooldown
             const userId = interaction.user.id;
-            const cooldownEnd = await DatabaseManager.getCooldown(userId, 'pull');
             
-            if (cooldownEnd && Date.now() < cooldownEnd) {
-                const timeLeft = Math.ceil((cooldownEnd - Date.now()) / 1000);
-                return await interaction.reply({
-                    content: `⏰ Your crew is still recovering from the last hunt! Wait **${timeLeft}** more seconds before searching for another Devil Fruit.`,
-                    ephemeral: true
-                });
+            // Check cooldown (1 hour = 3600000 ms)
+            const cooldownKey = `pull_${userId}`;
+            const lastPull = await DatabaseManager.getCooldown(cooldownKey);
+            const cooldownTime = 3600000; // 1 hour
+            
+            if (lastPull && Date.now() - lastPull < cooldownTime) {
+                const remainingTime = Math.ceil((cooldownTime - (Date.now() - lastPull)) / 1000 / 60);
+                const embed = new EmbedBuilder()
+                    .setColor(0xff6b6b)
+                    .setTitle('🕐 Devil Fruit Hunt Cooldown')
+                    .setDescription(`You need to wait **${remainingTime} minutes** before hunting again!`)
+                    .setFooter({ text: 'Come back when your energy has recovered!' });
+                
+                return await interaction.reply({ embeds: [embed], ephemeral: true });
             }
 
-            // Set cooldown (5 seconds)
-            await DatabaseManager.setCooldown(interaction.user.id, 'pull', Date.now() + 5000);
+            // Set new cooldown
+            await DatabaseManager.setCooldown(cooldownKey, Date.now());
+
+            // Generate the Devil Fruit
+            const targetFruit = performGachaPull();
             
-            // Ensure user exists in database
-            await DatabaseManager.ensureUser(interaction.user.id, interaction.user.username);
-            
-            // Get user level for combat power calculation
-            const userData = await DatabaseManager.getUser(interaction.user.id);
-            const userLevel = userData ? userData.level : 0;
-            
-            // Start the ultimate cinematic experience
-            await createUltimateCinematicExperience(interaction, userLevel);
-            
-            console.log(`🎊 Pull success for ${interaction.user.username}`);
-            
+            // Start the cinematic experience
+            await createUltimateCinematicExperience(interaction, targetFruit, true);
+
+            // Set up button interaction handler
+            const filter = (i) => i.user.id === interaction.user.id;
+            const collector = interaction.channel.createMessageComponentCollector({ 
+                filter, 
+                time: 300000 // 5 minutes
+            });
+
+            collector.on('collect', async (buttonInteraction) => {
+                try {
+                    if (buttonInteraction.customId === 'huntAgain') {
+                        await this.handleHuntAgain(buttonInteraction);
+                    } else if (buttonInteraction.customId === 'collection') {
+                        await this.showCollection(buttonInteraction);
+                    }
+                } catch (error) {
+                    console.log('Button interaction error:', error);
+                    await buttonInteraction.reply({ 
+                        content: '❌ An error occurred with the button interaction!', 
+                        ephemeral: true 
+                    });
+                }
+            });
+
+            collector.on('end', () => {
+                // Disable buttons after timeout
+                interaction.editReply({ components: [] }).catch(() => {});
+            });
+
         } catch (error) {
-            console.error(`🚨 Pull Command Error:`, error);
+            console.log('🚨 Pull Command Error:', error);
             
-            if (!interaction.replied && !interaction.deferred) {
-                await interaction.reply({
-                    content: '⚠️ Something went wrong during your Devil Fruit hunt! Please try again.',
-                    ephemeral: true
-                });
+            const errorEmbed = new EmbedBuilder()
+                .setColor(0xff0000)
+                .setTitle('❌ Error')
+                .setDescription('Something went wrong with the Devil Fruit hunt! Please try again.')
+                .setFooter({ text: 'If this persists, contact an admin.' });
+            
+            if (interaction.deferred || interaction.replied) {
+                await interaction.editReply({ embeds: [errorEmbed], components: [] });
+            } else {
+                await interaction.reply({ embeds: [errorEmbed], ephemeral: true });
             }
         }
+    },
+
+    async handleHuntAgain(interaction) {
+        try {
+            const userId = interaction.user.id;
+            
+            // Check cooldown for hunt again
+            const cooldownKey = `pull_${userId}`;
+            const lastPull = await DatabaseManager.getCooldown(cooldownKey);
+            const cooldownTime = 3600000; // 1 hour
+            
+            if (lastPull && Date.now() - lastPull < cooldownTime) {
+                const remainingTime = Math.ceil((cooldownTime - (Date.now() - lastPull)) / 1000 / 60);
+                
+                const cooldownEmbed = new EmbedBuilder()
+                    .setColor(0xff6b6b)
+                    .setTitle('🕐 Hunt Again Cooldown')
+                    .setDescription(`You need to wait **${remainingTime} minutes** before hunting again!\n\nUse this time to:\n🔍 View your collection\n📊 Plan your strategy\n⚔️ Check your combat power`)
+                    .setFooter({ text: 'Patience makes the heart grow stronger!' });
+                
+                return await interaction.reply({ embeds: [cooldownEmbed], ephemeral: true });
+            }
+
+            // Set new cooldown
+            await DatabaseManager.setCooldown(cooldownKey, Date.now());
+
+            // Generate new fruit and start animation
+            const newFruit = performGachaPull();
+            console.log(`🔄 Hunt Again: ${newFruit.name} (${newFruit.rarity}) for ${interaction.user.username}`);
+            
+            // Start new cinematic experience
+            await createUltimateCinematicExperience(interaction, newFruit, false);
+
+        } catch (error) {
+            console.log('Hunt Again error:', error);
+            await interaction.reply({ 
+                content: '❌ Error during hunt again! Please try using `/pull` again.', 
+                ephemeral: true 
+            });
+        }
+    },
+
+    async showCollection(interaction) {
+        try {
+            const userId = interaction.user.id;
+            const userFruits = await DatabaseManager.getUserFruits(userId);
+            
+            if (userFruits.length === 0) {
+                const embed = new EmbedBuilder()
+                    .setColor(0x95a5a6)
+                    .setTitle('📚 Your Devil Fruit Collection')
+                    .setDescription('Your collection is empty! Use `/pull` to hunt for Devil Fruits.')
+                    .addFields(
+                        { name: '🎯 Goal', value: 'Collect all 150 Devil Fruits!', inline: true },
+                        { name: '🏆 Progress', value: '0/150 (0%)', inline: true },
+                        { name: '⚔️ Total Power', value: '0 CP', inline: true }
+                    )
+                    .setFooter({ text: 'Start your journey to become the Pirate King!' });
+                
+                return await interaction.reply({ embeds: [embed], ephemeral: true });
+            }
+
+            // Process fruits data
+            const fruitCounts = {};
+            let totalPower = 0;
+            
+            userFruits.forEach(fruit => {
+                const fruitId = fruit.fruit_id;
+                if (!fruitCounts[fruitId]) {
+                    fruitCounts[fruitId] = {
+                        count: 0,
+                        rarity: fruit.rarity,
+                        name: fruit.name || 'Unknown',
+                        combatPower: fruit.combat_power || 100
+                    };
+                }
+                fruitCounts[fruitId].count++;
+                
+                // Calculate power with duplicate bonus
+                const duplicateBonus = 1 + (fruitCounts[fruitId].count - 1) * 0.01;
+                totalPower += Math.floor(fruitCounts[fruitId].combatPower * duplicateBonus);
+            });
+
+            const uniqueFruits = Object.keys(fruitCounts).length;
+            const totalFruits = userFruits.length;
+            const completionPercent = Math.round((uniqueFruits / 150) * 100);
+
+            // Sort fruits by rarity and count
+            const rarityOrder = ['omnipotent', 'mythical', 'legendary', 'epic', 'rare', 'uncommon', 'common'];
+            const sortedFruits = Object.entries(fruitCounts)
+                .sort(([, a], [, b]) => {
+                    const rarityDiff = rarityOrder.indexOf(a.rarity) - rarityOrder.indexOf(b.rarity);
+                    if (rarityDiff !== 0) return rarityDiff;
+                    return b.count - a.count; // Then by count
+                });
+
+            // Create display list
+            const rarityEmojis = {
+                common: '⚪',
+                uncommon: '🟢', 
+                rare: '🔵',
+                epic: '🟣',
+                legendary: '🟡',
+                mythical: '🔴',
+                omnipotent: '⭐'
+            };
+
+            // Show top fruits (up to 15)
+            const displayFruits = sortedFruits
+                .slice(0, 15)
+                .map(([fruitId, data]) => {
+                    const emoji = rarityEmojis[data.rarity] || '❓';
+                    const countText = data.count > 1 ? ` x${data.count}` : '';
+                    const duplicateBonus = data.count > 1 ? ` (+${(data.count - 1)}% CP)` : '';
+                    return `${emoji} ${data.name}${countText}${duplicateBonus}`;
+                })
+                .join('\n');
+
+            // Count by rarity
+            const rarityBreakdown = {};
+            Object.values(fruitCounts).forEach(fruit => {
+                rarityBreakdown[fruit.rarity] = (rarityBreakdown[fruit.rarity] || 0) + 1;
+            });
+
+            const rarityDisplay = Object.entries(rarityBreakdown)
+                .sort(([a], [b]) => rarityOrder.indexOf(a) - rarityOrder.indexOf(b))
+                .filter(([, count]) => count > 0)
+                .map(([rarity, count]) => `${rarityEmojis[rarity]} ${rarity}: ${count}`)
+                .join(' • ');
+
+            // Create main embed
+            const embed = new EmbedBuilder()
+                .setColor(0x3498db)
+                .setTitle('📚 Your Devil Fruit Collection')
+                .setDescription(`🏆 **Collection Progress: ${uniqueFruits}/150 (${completionPercent}%)**\n📊 **Total Fruits:** ${totalFruits}\n⚔️ **Total Combat Power:** ${totalPower.toLocaleString()} CP`)
+                .addFields(
+                    { 
+                        name: '🌟 Your Top Fruits', 
+                        value: displayFruits || 'No fruits yet!', 
+                        inline: false 
+                    },
+                    { 
+                        name: '📈 Rarity Breakdown', 
+                        value: rarityDisplay || 'No fruits collected', 
+                        inline: false 
+                    }
+                )
+                .setFooter({ 
+                    text: sortedFruits.length > 15 ? 
+                        `Showing top 15 fruits • ${sortedFruits.length - 15} more in your collection` :
+                        'Your complete collection is shown above' 
+                })
+                .setTimestamp();
+
+            // Add progress bar
+            const progressBarLength = 20;
+            const filledBars = Math.floor((uniqueFruits / 150) * progressBarLength);
+            const emptyBars = progressBarLength - filledBars;
+            const progressBar = '🟩'.repeat(filledBars) + '⬜'.repeat(emptyBars);
+            
+            embed.addFields({ 
+                name: '📊 Collection Progress', 
+                value: `${progressBar}\n${uniqueFruits}/150 unique fruits`, 
+                inline: false 
+            });
+
+            // Create buttons for more actions
+            const actionRow = new ActionRowBuilder()
+                .addComponents(
+                    new ButtonBuilder()
+                        .setCustomId('fullCollection')
+                        .setLabel('📋 Full Collection')
+                        .setStyle(ButtonStyle.Secondary),
+                    new ButtonBuilder()
+                        .setCustomId('rarityStats')
+                        .setLabel('📈 Rarity Stats')
+                        .setStyle(ButtonStyle.Secondary),
+                    new ButtonBuilder()
+                        .setCustomId('powerAnalysis')
+                        .setLabel('⚔️ Power Analysis')
+                        .setStyle(ButtonStyle.Secondary)
+                );
+
+            await interaction.reply({ embeds: [embed], components: [actionRow], ephemeral: true });
+
+            // Handle sub-collection buttons
+            const filter = (i) => i.user.id === interaction.user.id;
+            const collector = interaction.channel.createMessageComponentCollector({ 
+                filter, 
+                time: 120000 // 2 minutes
+            });
+
+            collector.on('collect', async (buttonInteraction) => {
+                try {
+                    if (buttonInteraction.customId === 'fullCollection') {
+                        await this.showFullCollection(buttonInteraction, fruitCounts);
+                    } else if (buttonInteraction.customId === 'rarityStats') {
+                        await this.showRarityStats(buttonInteraction, fruitCounts);
+                    } else if (buttonInteraction.customId === 'powerAnalysis') {
+                        await this.showPowerAnalysis(buttonInteraction, fruitCounts, totalPower);
+                    }
+                } catch (error) {
+                    console.log('Collection button error:', error);
+                    await buttonInteraction.reply({ 
+                        content: '❌ Error loading that information!', 
+                        ephemeral: true 
+                    });
+                }
+            });
+
+        } catch (error) {
+            console.log('Collection display error:', error);
+            
+            const errorEmbed = new EmbedBuilder()
+                .setColor(0xff0000)
+                .setTitle('❌ Error')
+                .setDescription('Unable to load your collection. Please try again.');
+            
+            await interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+        }
+    },
+
+    async showFullCollection(interaction, fruitCounts) {
+        // Sort all fruits
+        const rarityOrder = ['omnipotent', 'mythical', 'legendary', 'epic', 'rare', 'uncommon', 'common'];
+        const sortedFruits = Object.entries(fruitCounts)
+            .sort(([, a], [, b]) => {
+                const rarityDiff = rarityOrder.indexOf(a.rarity) - rarityOrder.indexOf(b.rarity);
+                if (rarityDiff !== 0) return rarityDiff;
+                return b.count - a.count;
+            });
+
+        const rarityEmojis = {
+            common: '⚪', uncommon: '🟢', rare: '🔵',
+            epic: '🟣', legendary: '🟡', mythical: '🔴', omnipotent: '⭐'
+        };
+
+        // Create pages for full collection
+        const itemsPerPage = 25;
+        const totalPages = Math.ceil(sortedFruits.length / itemsPerPage);
+        let currentPage = 0;
+
+        const generatePage = (page) => {
+            const start = page * itemsPerPage;
+            const end = start + itemsPerPage;
+            const pageFruits = sortedFruits.slice(start, end);
+
+            const fruitList = pageFruits
+                .map(([fruitId, data]) => {
+                    const emoji = rarityEmojis[data.rarity] || '❓';
+                    const countText = data.count > 1 ? ` x${data.count}` : '';
+                    return `${emoji} ${data.name}${countText}`;
+                })
+                .join('\n');
+
+            return new EmbedBuilder()
+                .setColor(0x3498db)
+                .setTitle('📋 Complete Devil Fruit Collection')
+                .setDescription(fruitList || 'No fruits on this page')
+                .setFooter({ 
+                    text: `Page ${page + 1} of ${totalPages} • ${sortedFruits.length} unique fruits total` 
+                });
+        };
+
+        const embed = generatePage(currentPage);
+        
+        // Add navigation buttons if multiple pages
+        let components = [];
+        if (totalPages > 1) {
+            const navRow = new ActionRowBuilder()
+                .addComponents(
+                    new ButtonBuilder()
+                        .setCustomId('prevPage')
+                        .setLabel('◀️ Previous')
+                        .setStyle(ButtonStyle.Secondary)
+                        .setDisabled(currentPage === 0),
+                    new ButtonBuilder()
+                        .setCustomId('nextPage')
+                        .setLabel('Next ▶️')
+                        .setStyle(ButtonStyle.Secondary)
+                        .setDisabled(currentPage === totalPages - 1)
+                );
+            components = [navRow];
+        }
+
+        await interaction.reply({ embeds: [embed], components, ephemeral: true });
+    },
+
+    async showRarityStats(interaction, fruitCounts) {
+        const rarityStats = {};
+        const rarityEmojis = {
+            common: '⚪', uncommon: '🟢', rare: '🔵',
+            epic: '🟣', legendary: '🟡', mythical: '🔴', omnipotent: '⭐'
+        };
+
+        // Count fruits by rarity
+        Object.values(fruitCounts).forEach(fruit => {
+            if (!rarityStats[fruit.rarity]) {
+                rarityStats[fruit.rarity] = { unique: 0, total: 0 };
+            }
+            rarityStats[fruit.rarity].unique++;
+            rarityStats[fruit.rarity].total += fruit.count;
+        });
+
+        // Expected distribution from RARITY_CONFIG
+        const expectedDistribution = {
+            common: 50, uncommon: 37, rare: 16, epic: 13,
+            legendary: 9, mythical: 3, omnipotent: 2
+        };
+
+        const statsText = Object.entries(expectedDistribution)
+            .map(([rarity, expected]) => {
+                const stats = rarityStats[rarity] || { unique: 0, total: 0 };
+                const completion = Math.round((stats.unique / expected) * 100);
+                const emoji = rarityEmojis[rarity];
+                return `${emoji} **${rarity.toUpperCase()}**: ${stats.unique}/${expected} (${completion}%) - ${stats.total} total`;
+            })
+            .join('\n');
+
+        const embed = new EmbedBuilder()
+            .setColor(0x9b59b6)
+            .setTitle('📈 Collection Rarity Statistics')
+            .setDescription(statsText)
+            .setFooter({ text: 'Complete all rarities to become the ultimate collector!' });
+
+        await interaction.reply({ embeds: [embed], ephemeral: true });
+    },
+
+    async showPowerAnalysis(interaction, fruitCounts, totalPower) {
+        // Analyze power distribution
+        const powerByRarity = {};
+        Object.values(fruitCounts).forEach(fruit => {
+            if (!powerByRarity[fruit.rarity]) {
+                powerByRarity[fruit.rarity] = 0;
+            }
+            const duplicateBonus = 1 + (fruit.count - 1) * 0.01;
+            powerByRarity[fruit.rarity] += Math.floor(fruit.combatPower * duplicateBonus * fruit.count);
+        });
+
+        const rarityEmojis = {
+            common: '⚪', uncommon: '🟢', rare: '🔵',
+            epic: '🟣', legendary: '🟡', mythical: '🔴', omnipotent: '⭐'
+        };
+
+        const powerBreakdown = Object.entries(powerByRarity)
+            .sort(([, a], [, b]) => b - a)
+            .map(([rarity, power]) => {
+                const percentage = Math.round((power / totalPower) * 100);
+                return `${rarityEmojis[rarity]} **${rarity.toUpperCase()}**: ${power.toLocaleString()} CP (${percentage}%)`;
+            })
+            .join('\n');
+
+        // Calculate potential with full collection
+        const avgPowerByRarity = {
+            common: 250, uncommon: 435, rare: 750, epic: 1070,
+            legendary: 1350, mythical: 1520, omnipotent: 1590
+        };
+
+        const potentialPower = Object.entries(avgPowerByRarity).reduce((sum, [rarity, avgPower]) => {
+            const expected = { common: 50, uncommon: 37, rare: 16, epic: 13, legendary: 9, mythical: 3, omnipotent: 2 }[rarity];
+            return sum + (avgPower * expected);
+        }, 0);
+
+        const embed = new EmbedBuilder()
+            .setColor(0xe74c3c)
+            .setTitle('⚔️ Combat Power Analysis')
+            .setDescription(`**Total Combat Power**: ${totalPower.toLocaleString()} CP\n**Potential at 100%**: ${potentialPower.toLocaleString()} CP\n**Current Progress**: ${Math.round((totalPower / potentialPower) * 100)}%`)
+            .addFields(
+                { name: '🔥 Power by Rarity', value: powerBreakdown || 'No power yet!', inline: false },
+                { name: '💡 Tip', value: 'Collect duplicates for +1% CP bonus per duplicate!', inline: false }
+            )
+            .setFooter({ text: 'Grow stronger with every Devil Fruit!' });
+
+        await interaction.reply({ embeds: [embed], ephemeral: true });
     }
 };
-
-// Handle button interactions
-async function handleButtonInteraction(interaction) {
-    try {
-        const customId = interaction.customId;
-        
-        switch (customId) {
-            case 'huntAgain':
-                await handleHuntAgain(interaction);
-                break;
-            case 'collection':
-                await handleCollection(interaction);
-                break;
-            default:
-                await interaction.reply({
-                    content: '❌ Unknown action.',
-                    ephemeral: true
-                });
-        }
-    } catch (error) {
-        console.error(`Button interaction error:`, error);
-        if (!interaction.replied && !interaction.deferred) {
-            await interaction.reply({
-                content: '⚠️ Something went wrong with that action.',
-                ephemeral: true
-            });
-        }
-    }
-}
-
-// Enhanced Hunt Again with full rainbow progression
-async function handleHuntAgain(interaction) {
-    try {
-        // Check cooldown first
-        const userId = interaction.user.id;
-        const cooldownEnd = await DatabaseManager.getCooldown(userId, 'pull');
-        
-        if (cooldownEnd && Date.now() < cooldownEnd) {
-            const timeLeft = Math.ceil((cooldownEnd - Date.now()) / 1000);
-            await interaction.reply({
-                content: `⏰ Your crew is still recovering! Wait **${timeLeft}** more seconds before hunting again.`,
-                ephemeral: true
-            });
-            return;
-        }
-        
-        // Defer the reply for button interactions
-        await interaction.deferReply();
-        
-        // Set cooldown
-        await DatabaseManager.setCooldown(interaction.user.id, 'pull', Date.now() + 5000);
-        
-        // Ensure user exists
-        await DatabaseManager.ensureUser(interaction.user.id, interaction.user.username);
-        
-        // Get user level
-        const userData = await DatabaseManager.getUser(interaction.user.id);
-        const userLevel = userData ? userData.level : 0;
-        
-        // Generate target fruit
-        const targetFruit = generateRandomDevilFruit();
-        console.log(`🎯 Hunt Again: ${targetFruit.name} (${targetFruit.rarity})`);
-        
-        // Get element information
-        const fruitElement = DEVIL_FRUIT_ELEMENTS[targetFruit.id];
-        const elementName = fruitElement ? CombatSystem.getElementName(fruitElement) : 'Unknown';
-        
-        // Start rainbow animation
-        await startRainbowAnimation(interaction, targetFruit, elementName, userLevel);
-        
-        // Save to database
-        await DatabaseManager.saveUserFruit(interaction.user.id, targetFruit);
-        await DatabaseManager.updateUserStats(interaction.user.id);
-        
-        console.log(`🎊 Hunt Again success: ${targetFruit.name} for ${interaction.user.username}`);
-        
-    } catch (error) {
-        console.error('Hunt again error:', error);
-        if (interaction.deferred && !interaction.replied) {
-            await interaction.editReply({
-                content: '⚠️ Error starting new hunt. Please try again.'
-            });
-        }
-    }
-}
-
-// Rainbow animation system
-async function startRainbowAnimation(interaction, targetFruit, elementName, userLevel) {
-    try {
-        // Initial embed
-        const initialEmbed = new EmbedBuilder()
-            .setTitle('🍈 Devil Fruit Hunt in Progress...')
-            .setDescription('🌊 Searching the mysterious waters of the Grand Line...')
-            .setColor(rainbowEmbedColors[0])
-            .setTimestamp();
-            
-        await interaction.editReply({ embeds: [initialEmbed] });
-        
-        // Phase 1: Rainbow animation (10 frames)
-        for (let frame = 0; frame < 10; frame++) {
-            await updateRainbowFrame(interaction, frame, targetFruit);
-            await sleep(1000);
-        }
-        
-        // Phase 2: Crystallization (5 frames)
-        for (let crystalFrame = 0; crystalFrame < 5; crystalFrame++) {
-            await updateCrystallizationFrame(interaction, crystalFrame, targetFruit);
-            await sleep(800);
-        }
-        
-        // Phase 3: Final reveal
-        await revealFinalResult(interaction, targetFruit, elementName, userLevel);
-        
-    } catch (error) {
-        console.error('Rainbow animation error:', error);
-    }
-}
-
-// Rainbow animation frame
-async function updateRainbowFrame(interaction, frame, targetFruit) {
-    try {
-        const barLength = 20;
-        const positions = [];
-        
-        // Create rainbow pattern
-        for (let i = 0; i < barLength; i++) {
-            const colorIndex = (i - frame + rainbowColors.length * 100) % rainbowColors.length;
-            positions.push(rainbowColors[colorIndex]);
-        }
-        
-        const topBar = positions.join(' ');
-        const bottomBar = positions.join(' ');
-        
-        // Cycling embed color
-        const embedColorIndex = (0 - frame + rainbowEmbedColors.length * 100) % rainbowEmbedColors.length;
-        const embedColor = rainbowEmbedColors[embedColorIndex];
-        
-        // Get dynamic content
-        const indicators = getChangingIndicators(frame, targetFruit.rarity, targetFruit.type);
-        const particles = generateParticles();
-        
-        const animationTexts = [
-            "*A mysterious presence stirs in the depths...*",
-            "*Ancient powers awaken from slumber...*",
-            "*The Devil Fruit's aura manifests...*"
-        ];
-        const dynamicText = animationTexts[Math.floor(Math.random() * animationTexts.length)];
-        
-        const content = `${topBar}\n\n` +
-            `🌊 **GRAND LINE EXPLORATION** 🌊\n\n` +
-            `⚡ **ENERGY:** ${indicators.aura}\n` +
-            `🔮 **RARITY:** ${indicators.blessing}\n` +
-            `🍈 **TYPE:** ${indicators.typeHint}\n\n` +
-            `${dynamicText}\n\n` +
-            `${bottomBar}\n\n` +
-            `${particles}`;
-        
-        const embed = new EmbedBuilder()
-            .setTitle('🍈 Devil Fruit Hunt in Progress...')
-            .setDescription(content)
-            .setColor(embedColor)
-            .setTimestamp();
-        
-        await interaction.editReply({ embeds: [embed] });
-        
-    } catch (error) {
-        console.log(`Rainbow frame ${frame} error:`, error.message);
-    }
-}
-
-// Crystallization frame
-async function updateCrystallizationFrame(interaction, frame, targetFruit) {
-    try {
-        const barLength = 20;
-        const positions = [];
-        
-        // Create expanding rarity color
-        for (let i = 0; i < barLength; i++) {
-            const distanceFromCenter = Math.abs(i - 9.5);
-            if (distanceFromCenter <= frame + 0.5) {
-                positions.push(rarityColors[targetFruit.rarity]?.emoji || '🟫');
-            } else {
-                const colorIndex = (i - frame + rainbowColors.length * 100) % rainbowColors.length;
-                positions.push(rainbowColors[colorIndex]);
-            }
-        }
-        
-        const crystallBar = positions.join(' ');
-        const embedColor = rarityColors[targetFruit.rarity]?.embed || 0x8B4513;
-        
-        const content = `${crystallBar}\n\n` +
-            `⚡ **CRYSTALLIZING INTO REALITY** ⚡\n\n` +
-            `*The Devil Fruit's power takes its final form...*\n\n` +
-            `${crystallBar}`;
-        
-        const embed = new EmbedBuilder()
-            .setTitle('⚡ Power Crystallization')
-            .setDescription(content)
-            .setColor(embedColor)
-            .setTimestamp();
-        
-        await interaction.editReply({ embeds: [embed] });
-        
-    } catch (error) {
-        console.log(`Crystallization frame ${frame} error:`, error.message);
-    }
-}
-
-// Final result reveal
-async function revealFinalResult(interaction, targetFruit, elementName, userLevel) {
-    try {
-        const rewardEmoji = rarityColors[targetFruit.rarity]?.emoji || '🟫';
-        const rewardBar = Array(20).fill(rewardEmoji).join(' ');
-        
-        let combatPowerInfo = '';
-        if (userLevel > 0) {
-            const basePower = CombatSystem.calculateBasePower(targetFruit.rarity);
-            const levelMultiplier = CombatSystem.getLevelMultiplier(userLevel);
-            const totalPower = Math.floor(basePower * levelMultiplier);
-            combatPowerInfo = `⚔️ **Combat Power:** ${totalPower.toLocaleString()} CP\n`;
-        }
-        
-        const rarityTitles = {
-            common: "Common Discovery",
-            uncommon: "Uncommon Find", 
-            rare: "Rare Discovery",
-            epic: "Epic Revelation",
-            legendary: "Legendary Find",
-            mythical: "Mythical Discovery",
-            omnipotent: "Omnipotent Revelation"
-        };
-        
-        const content = `${rewardBar}\n\n` +
-            `🌟 **${rarityTitles[targetFruit.rarity]}**\n\n` +
-            `🍈 **${targetFruit.name}**\n` +
-            `🔮 **Type:** ${targetFruit.type}\n` +
-            `👤 **Previous User:** ${targetFruit.previousUser}\n` +
-            `💪 **Power:** ${targetFruit.power}\n` +
-            `⭐ **Rarity:** ${targetFruit.rarity.charAt(0).toUpperCase() + targetFruit.rarity.slice(1)}\n` +
-            combatPowerInfo +
-            `⚔️ **Element:** ${elementName}\n\n` +
-            `📖 **Description:** ${targetFruit.description}\n\n` +
-            `${rewardBar}`;
-        
-        const actionRow = new ActionRowBuilder()
-            .addComponents(
-                new ButtonBuilder()
-                    .setCustomId('huntAgain')
-                    .setLabel('🍈 Hunt Again')
-                    .setStyle(ButtonStyle.Primary),
-                new ButtonBuilder()
-                    .setCustomId('collection')
-                    .setLabel('📚 Collection')
-                    .setStyle(ButtonStyle.Secondary)
-            );
-        
-        const embed = new EmbedBuilder()
-            .setTitle('🏴‍☠️ Devil Fruit Claimed!')
-            .setDescription(content)
-            .setColor(rarityColors[targetFruit.rarity]?.embed || 0x8B4513)
-            .setTimestamp();
-        
-        await interaction.editReply({ 
-            embeds: [embed], 
-            components: [actionRow] 
-        });
-        
-    } catch (error) {
-        console.error('Final result error:', error);
-    }
-}
-
-// Basic collection handler
-async function handleCollection(interaction) {
-    try {
-        await interaction.deferReply({ ephemeral: true });
-        
-        const embed = new EmbedBuilder()
-            .setTitle('📚 Your Devil Fruit Collection')
-            .setDescription('🍈 Collection system is being enhanced!\n\nFor now, use `/pull` to continue your Devil Fruit hunting adventure!')
-            .setColor(0x3498DB)
-            .setTimestamp();
-        
-        await interaction.editReply({ embeds: [embed] });
-        
-    } catch (error) {
-        console.error('Collection error:', error);
-    }
-}
-
-// Utility function
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-// Export button handler
-module.exports.handleButtonInteraction = handleButtonInteraction;
