@@ -12,7 +12,7 @@ const client = new Client({
     ]
 });
 
-// Create commands collection
+// Initialize commands collection
 client.commands = new Collection();
 
 // Load commands
@@ -21,16 +21,13 @@ const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('
 
 for (const file of commandFiles) {
     const filePath = path.join(commandsPath, file);
-    try {
-        const command = require(filePath);
-        if ('data' in command && 'execute' in command) {
-            client.commands.set(command.data.name, command);
-            console.log(`✅ Loaded command: ${command.data.name}`);
-        } else {
-            console.log(`⚠️ Command at ${filePath} is missing required "data" or "execute" property.`);
-        }
-    } catch (error) {
-        console.error(`❌ Error loading command ${file}:`, error.message);
+    const command = require(filePath);
+    
+    if ('data' in command && 'execute' in command) {
+        client.commands.set(command.data.name, command);
+        console.log(`✅ Loaded command: ${command.data.name}`);
+    } else {
+        console.log(`⚠️ Command at ${filePath} is missing "data" or "execute" property.`);
     }
 }
 
@@ -40,17 +37,14 @@ const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'
 
 for (const file of eventFiles) {
     const filePath = path.join(eventsPath, file);
-    try {
-        const event = require(filePath);
-        if (event.once) {
-            client.once(event.name, (...args) => event.execute(...args));
-        } else {
-            client.on(event.name, (...args) => event.execute(...args));
-        }
-        console.log(`✅ Loaded event: ${event.name}`);
-    } catch (error) {
-        console.error(`❌ Error loading event ${file}:`, error.message);
+    const event = require(filePath);
+    
+    if (event.once) {
+        client.once(event.name, (...args) => event.execute(...args));
+    } else {
+        client.on(event.name, (...args) => event.execute(...args));
     }
+    console.log(`✅ Loaded event: ${event.name}`);
 }
 
 // Bot ready event
@@ -59,38 +53,26 @@ client.once('ready', async () => {
     console.log(`📊 Serving ${client.guilds.cache.size} server(s)`);
     console.log(`👥 Connected to ${client.users.cache.size} user(s)`);
     
-    // Initialize database using the persistent DatabaseManager method
+    // Initialize database
+    const DatabaseManager = require('./src/database/manager');
     try {
-        const DatabaseManager = require('./src/database/manager');
         await DatabaseManager.initializeDatabase();
+        console.log('🗄️ PostgreSQL database ready for Devil Fruit data!');
+        
+        // Initialize logging system
+        try {
+            const ActivityLogger = require('./src/systems/logger');
+            await ActivityLogger.initialize(client);
+            console.log('📝 Activity logging system initialized!');
+        } catch (logError) {
+            console.warn('⚠️ Activity logging system failed to initialize:', logError.message);
+            console.warn('📝 Bot will continue without logging features');
+        }
+        
     } catch (error) {
         console.error('❌ Database initialization failed:', error.message);
-        console.log('⚠️ Bot will continue but data will not persist!');
-    }
-
-    // Initialize activity logging system
-    try {
-        const ActivityLogger = require('./src/systems/logger');
-        await ActivityLogger.initialize(client);
-    } catch (error) {
-        console.error('❌ Activity logger initialization failed:', error.message);
-        console.log('⚠️ Bot will continue but activity logging may not work!');
-    }
-
-    // Validate economy configuration
-    try {
-        const EconomyConfig = require('./src/config/economy');
-        const configIssues = EconomyConfig.validate();
-        if (configIssues.length > 0) {
-            console.warn('⚠️ Economy configuration issues:');
-            configIssues.forEach(issue => console.warn(`  - ${issue}`));
-        } else {
-            console.log('✅ Economy configuration validated');
-        }
-    } catch (error) {
-        console.error('❌ Economy configuration validation failed:', error.message);
-    } Database initialization failed:', error.message);
-        console.log('⚠️ Bot will continue but data will not persist!');
+        console.error('🚨 Bot cannot function without database. Please check your DATABASE_URL.');
+        process.exit(1);
     }
     
     // Register slash commands
@@ -102,8 +84,15 @@ client.once('ready', async () => {
             commands.push(command.data.toJSON());
         }
         
-        // Register commands globally
-        await client.application.commands.set(commands);
+        const { REST } = require('@discordjs/rest');
+        const { Routes } = require('discord-api-types/v9');
+        const rest = new REST({ version: '9' }).setToken(process.env.DISCORD_TOKEN);
+        
+        await rest.put(
+            Routes.applicationCommands(client.user.id),
+            { body: commands }
+        );
+        
         console.log('✅ Successfully registered slash commands!');
         console.log(`📝 Commands: ${commands.map(cmd => `/${cmd.name}`).join(', ')}`);
         
@@ -112,47 +101,16 @@ client.once('ready', async () => {
     }
 });
 
-// Handle process termination
-process.on('SIGINT', async () => {
-    console.log('🛑 Received SIGINT, shutting down gracefully...');
-    
-    try {
-        const DatabaseManager = require('./src/database/manager');
-        await DatabaseManager.cleanup();
-        await DatabaseManager.close();
-        console.log('✅ Database connections closed');
-    } catch (error) {
-        console.error('❌ Error during shutdown:', error);
-    }
-    
-    client.destroy();
-    process.exit(0);
+// Error handling
+client.on('error', console.error);
+
+process.on('unhandledRejection', (error) => {
+    console.error('🚨 Unhandled promise rejection:', error);
 });
 
-process.on('SIGTERM', async () => {
-    console.log('🛑 Received SIGTERM, shutting down gracefully...');
-    
-    try {
-        const DatabaseManager = require('./src/database/manager');
-        await DatabaseManager.cleanup();
-        await DatabaseManager.close();
-        console.log('✅ Database connections closed');
-    } catch (error) {
-        console.error('❌ Error during shutdown:', error);
-    }
-    
-    client.destroy();
-    process.exit(0);
-});
-
-// Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
-    console.error('💥 Uncaught Exception:', error);
+    console.error('🚨 Uncaught exception:', error);
     process.exit(1);
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-    console.error('💥 Unhandled Rejection at:', promise, 'reason:', reason);
 });
 
 // Login to Discord
