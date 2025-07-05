@@ -120,7 +120,8 @@ module.exports = {
                     )
                     .setFooter({ text: 'Start your journey to become the Pirate King!' });
                 
-                await interaction.followUp({ embeds: [embed], ephemeral: true });
+                await interaction.deferReply({ ephemeral: true });
+                await interaction.editReply({ embeds: [embed] });
                 return;
             }
 
@@ -229,8 +230,9 @@ module.exports = {
                 inline: false 
             });
 
-            // Use followUp instead of update/editReply since this is a button interaction
-            await interaction.followUp({ embeds: [embed], ephemeral: true });
+            // Use deferReply for button interactions
+            await interaction.deferReply({ ephemeral: true });
+            await interaction.editReply({ embeds: [embed] });
 
         } catch (error) {
             console.log('Collection display error:', error);
