@@ -404,14 +404,7 @@ function createFinalRevealEmbed(fruit, userStats) {
         duplicateInfo,
         powerInfo,
         `📖 **Power Description:**`,
-        `*${fruit.description}*`,
-        "",
-        `🔥 **Awakening:** ${fruit.awakening}`,
-        `💧 **Weakness:** ${fruit.weakness}`,
-        "",
-        `📊 **Collection Progress:**`,
-        `🏆 **Total Fruits:** ${userStats?.totalFruits || 1}`,
-        `⚡ **Total Power:** ${(userStats?.totalPower || 0).toLocaleString()} CP`,
+        `*${fruit.power || 'A mysterious power awaits discovery...'}*`,
         "",
         `${rewardBar}`
     ].join('\n');
@@ -462,7 +455,7 @@ function updateTransitionFrameButton(frame, targetFruit = null, rewardColor = 0x
 //                    MAIN CINEMATIC EXPERIENCE ORCHESTRATOR
 // ═══════════════════════════════════════════════════════════════════
 
-async function createUltimateCinematicExperience(interaction, userLevel, isInitialReply = true) {
+async function createUltimateCinematicExperience(interaction, targetFruit = null, isInitialReply = true) {
     const frameDelay = 1000; // 1 second per frame
     let frame = 0;
     let currentMessage;
@@ -470,19 +463,16 @@ async function createUltimateCinematicExperience(interaction, userLevel, isIniti
     const maxAttempts = 50;
     
     try {
-        // Import required modules
-        const { generateRandomDevilFruit } = require('../data/devilfruit');
+        // Import required modules with corrected paths
+        const { performGachaPull } = require('../data/devilfruit');
         const DatabaseManager = require('../database/manager');
-        const { CombatSystem, DEVIL_FRUIT_ELEMENTS } = require('../data/counter-system');
         const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
         
-        // Generate target fruit
-        const targetFruit = generateRandomDevilFruit();
+        // Generate target fruit if not provided
+        if (!targetFruit) {
+            targetFruit = performGachaPull();
+        }
         console.log(`🎯 Animation Starting: ${targetFruit.name} (${targetFruit.rarity})`);
-        
-        // Get element information
-        const fruitElement = DEVIL_FRUIT_ELEMENTS[targetFruit.id];
-        const elementName = fruitElement ? CombatSystem.getElementName(fruitElement) : 'Unknown';
         
         const rewardColor = getRarityColor(targetFruit.rarity);
         const connectionStart = Date.now();
@@ -586,30 +576,33 @@ async function createUltimateCinematicExperience(interaction, userLevel, isIniti
         };
         
         // Calculate total power with duplicate bonuses
+        const userLevel = userData?.level || 1;
         if (userLevel > 0) {
-            const levelMultiplier = CombatSystem.getLevelMultiplier(userLevel);
-            
             // Calculate power for existing fruits with their duplicate bonuses
             const fruitPowerMap = {};
             userFruits.forEach(fruit => {
                 if (!fruitPowerMap[fruit.fruit_id]) {
-                    fruitPowerMap[fruit.fruit_id] = { count: 0, rarity: fruit.rarity };
+                    fruitPowerMap[fruit.fruit_id] = { 
+                        count: 0, 
+                        rarity: fruit.rarity,
+                        combatPower: fruit.combat_power || targetFruit.combatPower || 100
+                    };
                 }
                 fruitPowerMap[fruit.fruit_id].count++;
             });
             
             // Calculate total power including duplicate bonuses
             Object.values(fruitPowerMap).forEach(fruitData => {
-                const basePower = CombatSystem.calculateBasePower(fruitData.rarity);
+                const basePower = fruitData.combatPower;
                 const duplicateBonus = 1 + (fruitData.count - 1) * 0.01; // 1% per duplicate
-                const totalFruitPower = Math.floor(basePower * levelMultiplier * duplicateBonus);
+                const totalFruitPower = Math.floor(basePower * duplicateBonus);
                 userStats.totalPower += totalFruitPower * fruitData.count;
             });
             
             // Add current fruit power (it's already included in userFruits now)
-            const currentFruitBasePower = CombatSystem.calculateBasePower(targetFruit.rarity);
+            const currentFruitBasePower = targetFruit.combatPower || 100;
             const currentDuplicateBonus = 1 + duplicateCount * 0.01; // Bonus based on duplicates
-            const currentFruitPower = Math.floor(currentFruitBasePower * levelMultiplier * currentDuplicateBonus);
+            const currentFruitPower = Math.floor(currentFruitBasePower * currentDuplicateBonus);
             userStats.currentFruitPower = currentFruitPower;
         }
         
@@ -643,17 +636,17 @@ async function createUltimateCinematicExperience(interaction, userLevel, isIniti
         console.error('🚨 Animation Error:', error);
         
         // Fallback error handling
-        const { generateRandomDevilFruit } = require('../data/devilfruit');
-        const targetFruit = generateRandomDevilFruit();
+        const { performGachaPull } = require('../data/devilfruit');
+        const fallbackFruit = targetFruit || performGachaPull();
         
         const errorEmbed = {
             color: 0xFF0000,
             title: "🚨 Animation Error",
             description: "Something went wrong with the animation. Here's your fruit anyway!",
             fields: [
-                { name: "🍎 Devil Fruit", value: targetFruit.name || 'Unknown Fruit', inline: true },
-                { name: "⭐ Rarity", value: targetFruit.rarity || 'unknown', inline: true },
-                { name: "🌟 Type", value: targetFruit.type || 'unknown', inline: true }
+                { name: "🍎 Devil Fruit", value: fallbackFruit.name || 'Unknown Fruit', inline: true },
+                { name: "⭐ Rarity", value: fallbackFruit.rarity || 'unknown', inline: true },
+                { name: "🌟 Type", value: fallbackFruit.type || 'unknown', inline: true }
             ]
         };
         
@@ -677,7 +670,7 @@ async function createUltimateCinematicExperience(interaction, userLevel, isIniti
         // Still save the fruit to database
         try {
             const DatabaseManager = require('../database/manager');
-            await DatabaseManager.saveUserFruit(interaction.user.id, targetFruit);
+            await DatabaseManager.saveUserFruit(interaction.user.id, fallbackFruit);
             await DatabaseManager.updateUserStats(interaction.user.id);
         } catch (dbError) {
             console.error('Failed to save fruit after animation error:', dbError);
