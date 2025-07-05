@@ -616,7 +616,6 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// Export everything
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('pull')
