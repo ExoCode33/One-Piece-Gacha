@@ -67,6 +67,31 @@ client.once('ready', async () => {
         console.error('❌ Database initialization failed:', error.message);
         console.log('⚠️ Bot will continue but data will not persist!');
     }
+
+    // Initialize activity logging system
+    try {
+        const ActivityLogger = require('./src/systems/logger');
+        await ActivityLogger.initialize(client);
+    } catch (error) {
+        console.error('❌ Activity logger initialization failed:', error.message);
+        console.log('⚠️ Bot will continue but activity logging may not work!');
+    }
+
+    // Validate economy configuration
+    try {
+        const EconomyConfig = require('./src/config/economy');
+        const configIssues = EconomyConfig.validate();
+        if (configIssues.length > 0) {
+            console.warn('⚠️ Economy configuration issues:');
+            configIssues.forEach(issue => console.warn(`  - ${issue}`));
+        } else {
+            console.log('✅ Economy configuration validated');
+        }
+    } catch (error) {
+        console.error('❌ Economy configuration validation failed:', error.message);
+    } Database initialization failed:', error.message);
+        console.log('⚠️ Bot will continue but data will not persist!');
+    }
     
     // Register slash commands
     try {
@@ -80,7 +105,7 @@ client.once('ready', async () => {
         // Register commands globally
         await client.application.commands.set(commands);
         console.log('✅ Successfully registered slash commands!');
-        console.log(`📝 Commands: ${commands.map(cmd => `/${cmd.name}`).join(' and ')}`);
+        console.log(`📝 Commands: ${commands.map(cmd => `/${cmd.name}`).join(', ')}`);
         
     } catch (error) {
         console.error('❌ Failed to register slash commands:', error);
