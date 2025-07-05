@@ -6,11 +6,9 @@ const { generateRandomDevilFruit } = require('../data/devilfruit');
 const { generateParticles } = require('../animations/particles');
 const { getChangingIndicators } = require('../animations/indicators');
 
-// Rainbow colors for button animations
 const rainbowEmbedColors = [0xFF0000, 0xFF7F00, 0xFFFF00, 0x00FF00, 0x0000FF, 0x8000FF, 0x8B4513];
 const rainbowColors = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪', '🟫'];
 
-// Rarity color mappings
 const rarityColors = {
     common: { emoji: '🟫', embed: 0x8B4513 },
     uncommon: { emoji: '🟩', embed: 0x00FF00 },
@@ -64,7 +62,6 @@ async function handleButtonInteraction(interaction) {
 // --- BUTTON: HUNT AGAIN ---
 async function handleHuntAgain(interaction) {
     try {
-        // Check cooldown
         const userId = interaction.user.id;
         const cooldownEnd = await DatabaseManager.getCooldown(userId, 'pull');
         if (cooldownEnd && Date.now() < cooldownEnd) {
@@ -104,28 +101,20 @@ async function handleHuntAgain(interaction) {
         // Import animation functions
         const { updateAnimationFrame, updateProgressionFrame, updateTransitionFrame, revealInformationGradually } = require('../animations/gacha');
 
-        // Main animation phase (18 frames)
         for (let frame = 0; frame < 18; frame++) {
             await updateAnimationFrameButton(interaction, frame, targetFruit, performanceMetrics);
             await sleep(1000);
         }
-
-        // Progression phase (12 frames)  
         for (let progFrame = 0; progFrame < 12; progFrame++) {
             await updateProgressionFrameButton(interaction, progFrame, targetFruit, performanceMetrics);
             await sleep(800);
         }
-
-        // Transition phase (10 frames)
         for (let transFrame = 0; transFrame < 10; transFrame++) {
             await updateTransitionFrameButton(interaction, transFrame, targetFruit, performanceMetrics);
             await sleep(900);
         }
-
-        // Reveal information
         await revealInformationGraduallyButton(interaction, targetFruit, elementName, userLevel);
 
-        // Save to database
         await DatabaseManager.saveUserFruit(interaction.user.id, targetFruit);
         await DatabaseManager.updateUserStats(interaction.user.id);
 
@@ -133,7 +122,6 @@ async function handleHuntAgain(interaction) {
 
     } catch (error) {
         console.error('Hunt again error:', error);
-
         try {
             if (interaction.deferred && !interaction.replied) {
                 await interaction.editReply({
@@ -149,21 +137,17 @@ async function handleHuntAgain(interaction) {
 // --- BUTTON: COLLECTION ---
 async function handleCollection(interaction) {
     await interaction.reply({ content: "Your collection overview here!", ephemeral: true });
-    // You can expand this function as needed for your bot!
 }
 
 // --- BUTTON: FULL COLLECTION ---
 async function handleFullCollection(interaction) {
     await interaction.reply({ content: "Your full collection list here!", ephemeral: true });
-    // You can expand this function as needed for your bot!
 }
 
 // --- ANIMATION FUNCTIONS ---
 async function updateAnimationFrameButton(interaction, frame, targetFruit, metrics) {
     try {
         metrics.frameAttempts++;
-
-        // Calculate rainbow positions and colors for 20-square bars
         const barLength = 20;
         const positions = [];
         for (let i = 0; i < barLength; i++) {
@@ -173,7 +157,6 @@ async function updateAnimationFrameButton(interaction, frame, targetFruit, metri
         const topBar = positions.join(' ');
         const bottomBar = positions.join(' ');
 
-        // Calculate embed color (rainbow for most of animation)
         let embedColor;
         if (frame < 16) {
             const embedColorIndex = (0 - frame + rainbowEmbedColors.length * 100) % rainbowEmbedColors.length;
@@ -182,11 +165,8 @@ async function updateAnimationFrameButton(interaction, frame, targetFruit, metri
             embedColor = rarityColors[targetFruit.rarity]?.embed || rainbowEmbedColors[0];
         }
 
-        // Get changing indicators
         const indicators = getChangingIndicators(frame, targetFruit.rarity, targetFruit.type);
         const particles = generateParticles();
-
-        // Get dynamic animation text
         const dynamicTexts = [
             "*A mysterious presence stirs in the depths of the Grand Line...*",
             "*Ancient powers awaken from their eternal slumber...*",
@@ -197,8 +177,6 @@ async function updateAnimationFrameButton(interaction, frame, targetFruit, metri
         ];
         const textIndex = Math.min(Math.floor(frame / 3), dynamicTexts.length - 1);
         const dynamicText = dynamicTexts[textIndex];
-
-        // Create animation content with dynamic text
         const animationContent = `${topBar}\n\n` +
             `🌊 **GRAND LINE EXPLORATION** 🌊\n\n` +
             `⚡ **FRUIT ENERGY:** ${indicators.aura}\n` +
@@ -207,7 +185,6 @@ async function updateAnimationFrameButton(interaction, frame, targetFruit, metri
             `${dynamicText}\n\n` +
             `${bottomBar}\n\n` +
             `${particles}`;
-
         const embed = new EmbedBuilder()
             .setTitle('🍈 Devil Fruit Hunt in Progress...')
             .setDescription(animationContent)
@@ -225,7 +202,6 @@ async function updateAnimationFrameButton(interaction, frame, targetFruit, metri
 async function updateProgressionFrameButton(interaction, progFrame, targetFruit, metrics) {
     try {
         metrics.frameAttempts++;
-
         const barLength = 20;
         const positions = [];
         for (let i = 0; i < barLength; i++) {
@@ -234,20 +210,16 @@ async function updateProgressionFrameButton(interaction, progFrame, targetFruit,
         }
         const topBar = positions.join(' ');
         const bottomBar = positions.join(' ');
-
         const embedColorIndex = (0 - (18 + progFrame) + rainbowEmbedColors.length * 100) % rainbowEmbedColors.length;
         const embedColor = rainbowEmbedColors[embedColorIndex];
-
         const indicators = getChangingIndicators(18 + progFrame, targetFruit.rarity, targetFruit.type);
         const particles = generateParticles('intense');
-
         const progressionTexts = [
             "*The fruit's essence takes physical form...*",
             "*Reality warps as the fruit breaches dimensional barriers...*",
             "*Your legend begins to write itself...*"
         ];
         const dynamicText = progressionTexts[Math.floor(Math.random() * progressionTexts.length)];
-
         const progressContent = `${topBar}\n\n` +
             `🌊 **POWER CRYSTALLIZING** 🌊\n\n` +
             `⚡ **FRUIT ENERGY:** ${indicators.aura}\n` +
@@ -256,7 +228,6 @@ async function updateProgressionFrameButton(interaction, progFrame, targetFruit,
             `${dynamicText}\n\n` +
             `${bottomBar}\n\n` +
             `${particles}`;
-
         const embed = new EmbedBuilder()
             .setTitle('🔮 Power Crystallization Phase')
             .setDescription(progressContent)
@@ -274,7 +245,6 @@ async function updateProgressionFrameButton(interaction, progFrame, targetFruit,
 async function updateTransitionFrameButton(interaction, transFrame, targetFruit, metrics) {
     try {
         metrics.frameAttempts++;
-
         const barLength = 20;
         const radius = transFrame;
         const positions = [];
@@ -289,26 +259,21 @@ async function updateTransitionFrameButton(interaction, transFrame, targetFruit,
         }
         const topBar = positions.join(' ');
         const bottomBar = positions.join(' ');
-
         const embedColor = transFrame > 5 ?
             (rarityColors[targetFruit.rarity]?.embed || 0x8B4513) :
             rainbowEmbedColors[(0 - (30 + transFrame) + rainbowEmbedColors.length * 100) % rainbowEmbedColors.length];
-
         const particles = generateParticles('crystallizing');
-
         const transitionTexts = [
             "*The Devil Fruit's power takes its final form...*",
             "*Your journey as a Devil Fruit user begins now...*",
             "*The ocean itself acknowledges your new power...*"
         ];
         const dynamicText = transitionTexts[Math.floor(Math.random() * transitionTexts.length)];
-
         const transitionContent = `${topBar}\n\n` +
             `⚡ **CRYSTALLIZING INTO REALITY** ⚡\n\n` +
             `${dynamicText}\n\n` +
             `${bottomBar}\n\n` +
             `${particles}`;
-
         const embed = new EmbedBuilder()
             .setTitle('⚡ Final Crystallization')
             .setDescription(transitionContent)
@@ -380,7 +345,6 @@ async function revealInformationGraduallyButton(interaction, targetFruit, elemen
         } else {
             currentContent += '\n';
         }
-
         const embed = new EmbedBuilder()
             .setTitle('🏴‍☠️ Devil Fruit Discovered!')
             .setDescription(currentContent + `\n${rewardBar}`)
@@ -390,9 +354,7 @@ async function revealInformationGraduallyButton(interaction, targetFruit, elemen
         await interaction.editReply({ embeds: [embed] });
         await sleep(800);
     }
-
     const finalContent = currentContent + `\n${rewardBar}`;
-
     const actionRow = new ActionRowBuilder()
         .addComponents(
             new ButtonBuilder()
@@ -404,7 +366,6 @@ async function revealInformationGraduallyButton(interaction, targetFruit, elemen
                 .setLabel('📚 My Collection')
                 .setStyle(ButtonStyle.Secondary)
         );
-
     const finalEmbed = new EmbedBuilder()
         .setTitle('🏴‍☠️ Devil Fruit Claimed!')
         .setDescription(finalContent)
