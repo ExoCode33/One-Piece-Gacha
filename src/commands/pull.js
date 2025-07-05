@@ -13,23 +13,32 @@ module.exports = {
             const userId = interaction.user.id;
             
             // Check cooldown (1 hour = 3600000 ms)
-            const cooldownKey = `pull_${userId}`;
-            const lastPull = await DatabaseManager.getCooldown(cooldownKey);
             const cooldownTime = 3600000; // 1 hour
+            let lastPull = null;
+            let shouldSetCooldown = true;
             
-            if (lastPull && Date.now() - lastPull < cooldownTime) {
-                const remainingTime = Math.ceil((cooldownTime - (Date.now() - lastPull)) / 1000 / 60);
-                const embed = new EmbedBuilder()
-                    .setColor(0xff6b6b)
-                    .setTitle('🕐 Devil Fruit Hunt Cooldown')
-                    .setDescription(`You need to wait **${remainingTime} minutes** before hunting again!`)
-                    .setFooter({ text: 'Come back when your energy has recovered!' });
+            try {
+                const cooldownKey = `pull_${userId}`;
+                lastPull = await DatabaseManager.getCooldown(cooldownKey);
                 
-                return await interaction.reply({ embeds: [embed], ephemeral: true });
+                if (lastPull && Date.now() - lastPull < cooldownTime) {
+                    const remainingTime = Math.ceil((cooldownTime - (Date.now() - lastPull)) / 1000 / 60);
+                    const embed = new EmbedBuilder()
+                        .setColor(0xff6b6b)
+                        .setTitle('🕐 Devil Fruit Hunt Cooldown')
+                        .setDescription(`You need to wait **${remainingTime} minutes** before hunting again!`)
+                        .setFooter({ text: 'Come back when your energy has recovered!' });
+                    
+                    return await interaction.reply({ embeds: [embed], ephemeral: true });
+                }
+                
+                // Set new cooldown with proper timestamp
+                await DatabaseManager.setCooldown(cooldownKey, Date.now());
+            } catch (cooldownError) {
+                console.log('Cooldown system error:', cooldownError);
+                // Continue without cooldown if there's a database issue
+                shouldSetCooldown = false;
             }
-
-            // Set new cooldown
-            await DatabaseManager.setCooldown(cooldownKey, Date.now());
 
             // Generate the Devil Fruit
             const targetFruit = performGachaPull();
@@ -87,24 +96,31 @@ module.exports = {
             const userId = interaction.user.id;
             
             // Check cooldown for hunt again
-            const cooldownKey = `pull_${userId}`;
-            const lastPull = await DatabaseManager.getCooldown(cooldownKey);
             const cooldownTime = 3600000; // 1 hour
+            let lastPull = null;
             
-            if (lastPull && Date.now() - lastPull < cooldownTime) {
-                const remainingTime = Math.ceil((cooldownTime - (Date.now() - lastPull)) / 1000 / 60);
+            try {
+                const cooldownKey = `pull_${userId}`;
+                lastPull = await DatabaseManager.getCooldown(cooldownKey);
                 
-                const cooldownEmbed = new EmbedBuilder()
-                    .setColor(0xff6b6b)
-                    .setTitle('🕐 Hunt Again Cooldown')
-                    .setDescription(`You need to wait **${remainingTime} minutes** before hunting again!\n\nUse this time to:\n🔍 View your collection\n📊 Plan your strategy\n⚔️ Check your combat power`)
-                    .setFooter({ text: 'Patience makes the heart grow stronger!' });
-                
-                return await interaction.reply({ embeds: [cooldownEmbed], ephemeral: true });
-            }
+                if (lastPull && Date.now() - lastPull < cooldownTime) {
+                    const remainingTime = Math.ceil((cooldownTime - (Date.now() - lastPull)) / 1000 / 60);
+                    
+                    const cooldownEmbed = new EmbedBuilder()
+                        .setColor(0xff6b6b)
+                        .setTitle('🕐 Hunt Again Cooldown')
+                        .setDescription(`You need to wait **${remainingTime} minutes** before hunting again!\n\nUse this time to:\n🔍 View your collection\n📊 Plan your strategy\n⚔️ Check your combat power`)
+                        .setFooter({ text: 'Patience makes the heart grow stronger!' });
+                    
+                    return await interaction.reply({ embeds: [cooldownEmbed], ephemeral: true });
+                }
 
-            // Set new cooldown
-            await DatabaseManager.setCooldown(cooldownKey, Date.now());
+                // Set new cooldown
+                await DatabaseManager.setCooldown(cooldownKey, Date.now());
+            } catch (cooldownError) {
+                console.log('Hunt Again cooldown error:', cooldownError);
+                // Continue without cooldown check if there's a database issue
+            }
 
             // Generate new fruit and start animation
             const newFruit = performGachaPull();
