@@ -120,11 +120,7 @@ module.exports = {
                     )
                     .setFooter({ text: 'Start your journey to become the Pirate King!' });
                 
-                if (interaction.deferred) {
-                    await interaction.editReply({ embeds: [embed] });
-                } else {
-                    await interaction.update({ embeds: [embed], components: [] });
-                }
+                await interaction.followUp({ embeds: [embed], ephemeral: true });
                 return;
             }
 
@@ -233,12 +229,8 @@ module.exports = {
                 inline: false 
             });
 
-            // Use update instead of reply since this is a button interaction
-            if (interaction.deferred) {
-                await interaction.editReply({ embeds: [embed] });
-            } else {
-                await interaction.update({ embeds: [embed], components: [] });
-            }
+            // Use followUp instead of update/editReply since this is a button interaction
+            await interaction.followUp({ embeds: [embed], ephemeral: true });
 
         } catch (error) {
             console.log('Collection display error:', error);
