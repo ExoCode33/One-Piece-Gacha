@@ -59,12 +59,10 @@ client.once('ready', async () => {
     console.log(`📊 Serving ${client.guilds.cache.size} server(s)`);
     console.log(`👥 Connected to ${client.users.cache.size} user(s)`);
     
-    // Initialize database
+    // Initialize database using the persistent DatabaseManager method
     try {
-        const { initializeDatabase } = require('./src/database/setup');
-        await initializeDatabase();
-        console.log('✅ Database initialization complete');
-        console.log('🗄️ PostgreSQL database ready for Devil Fruit data!');
+        const DatabaseManager = require('./src/database/manager');
+        await DatabaseManager.initializeDatabase();
     } catch (error) {
         console.error('❌ Database initialization failed:', error.message);
         console.log('⚠️ Bot will continue but data will not persist!');
