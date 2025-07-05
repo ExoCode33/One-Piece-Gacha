@@ -6,11 +6,9 @@ const { generateRandomDevilFruit } = require('../data/devilfruit');
 const { generateParticles } = require('../animations/particles');
 const { getChangingIndicators } = require('../animations/indicators');
 
-// Rainbow colors for button animations
 const rainbowEmbedColors = [0xFF0000, 0xFF7F00, 0xFFFF00, 0x00FF00, 0x0000FF, 0x8000FF, 0x8B4513];
 const rainbowColors = ['🟥', '🟧', '🟨', '🟩', '🟦', '🟪', '🟫'];
 
-// Rarity color mappings
 const rarityColors = {
     common: { emoji: '🟫', embed: 0x8B4513 },
     uncommon: { emoji: '🟩', embed: 0x00FF00 },
@@ -30,7 +28,6 @@ module.exports = {
         try {
             console.log(`🎮 ${interaction.user.username} used /pull`);
             
-            // Check cooldown
             const userId = interaction.user.id;
             const cooldownEnd = await DatabaseManager.getCooldown(userId, 'pull');
             
@@ -54,6 +51,41 @@ module.exports = {
                 });
             }
         }
+    },
+
+    async handleButtonInteraction(interaction) {
+        try {
+            const customId = interaction.customId;
+            
+            switch (customId) {
+                case 'huntAgain':
+                    await handleHuntAgain(interaction);
+                    break;
+                case 'collection':
+                    await handleCollection(interaction);
+                    break;
+                case 'fullCollection':
+                    await handleFullCollection(interaction);
+                    break;
+                default:
+                    await interaction.reply({
+                        content: '❌ Unknown action.',
+                        ephemeral: true
+                    });
+            }
+        } catch (error) {
+            console.error(`Button interaction error:`, error);
+            try {
+                if (!interaction.replied && !interaction.deferred) {
+                    await interaction.reply({
+                        content: '⚠️ Something went wrong with that action.',
+                        ephemeral: true
+                    });
+                }
+            } catch (replyError) {
+                console.error('Failed to send error message:', replyError);
+            }
+        }
     }
 };
 
@@ -61,17 +93,12 @@ async function handleSingleHunt(interaction) {
     try {
         console.log(`🎮 ${interaction.user.username} initiated single Devil Fruit hunt`);
         
-        // Set cooldown (5 seconds)
         await DatabaseManager.setCooldown(interaction.user.id, 'pull', Date.now() + 5000);
-        
-        // Ensure user exists in database
         await DatabaseManager.ensureUser(interaction.user.id, interaction.user.username);
         
-        // Get user level for combat power calculation
         const userData = await DatabaseManager.getUser(interaction.user.id);
         const userLevel = userData ? userData.level : 0;
         
-        // Start the ultimate cinematic experience
         await createUltimateCinematicExperience(interaction, userLevel);
         
         console.log(`🎊 Single hunt success for ${interaction.user.username}`);
@@ -82,44 +109,8 @@ async function handleSingleHunt(interaction) {
     }
 }
 
-async function handleButtonInteraction(interaction) {
-    try {
-        const customId = interaction.customId;
-        
-        switch (customId) {
-            case 'huntAgain':
-                await handleHuntAgain(interaction);
-                break;
-            case 'collection':
-                await handleCollection(interaction);
-                break;
-            case 'fullCollection':
-                await handleFullCollection(interaction);
-                break;
-            default:
-                await interaction.reply({
-                    content: '❌ Unknown action.',
-                    ephemeral: true
-                });
-        }
-    } catch (error) {
-        console.error(`Button interaction error:`, error);
-        try {
-            if (!interaction.replied && !interaction.deferred) {
-                await interaction.reply({
-                    content: '⚠️ Something went wrong with that action.',
-                    ephemeral: true
-                });
-            }
-        } catch (replyError) {
-            console.error('Failed to send error message:', replyError);
-        }
-    }
-}
-
 async function handleHuntAgain(interaction) {
     try {
-        // Check cooldown
         const userId = interaction.user.id;
         const cooldownEnd = await DatabaseManager.getCooldown(userId, 'pull');
         
@@ -131,14 +122,11 @@ async function handleHuntAgain(interaction) {
             });
         }
 
-        // Set cooldown (5 seconds)
         await DatabaseManager.setCooldown(interaction.user.id, 'pull', Date.now() + 5000);
         
-        // Get user level for combat power calculation
         const userData = await DatabaseManager.getUser(interaction.user.id);
         const userLevel = userData ? userData.level : 0;
         
-        // Start the ultimate cinematic experience
         await createUltimateCinematicExperience(interaction, userLevel);
         
     } catch (error) {
@@ -162,7 +150,6 @@ async function handleCollection(interaction) {
             });
         }
 
-        // Sort by rarity and then by name
         const rarityOrder = ['omnipotent', 'mythical', 'legendary', 'epic', 'rare', 'uncommon', 'common'];
         collection.sort((a, b) => {
             const rarityA = rarityOrder.indexOf(a.rarity);
@@ -178,7 +165,6 @@ async function handleCollection(interaction) {
             .setColor(0x00FF00)
             .setDescription(`**Total Unique Fruits:** ${collection.length}/150\n\n`);
 
-        // Group by rarity
         const rarityGroups = {};
         collection.forEach(fruit => {
             if (!rarityGroups[fruit.rarity]) {
@@ -188,7 +174,6 @@ async function handleCollection(interaction) {
             rarityGroups[fruit.rarity].push(`${fruit.name}${duplicateText}`);
         });
 
-        // Add fields for each rarity
         rarityOrder.forEach(rarity => {
             if (rarityGroups[rarity] && rarityGroups[rarity].length > 0) {
                 const rarityEmoji = rarityColors[rarity]?.emoji || '❓';
@@ -223,7 +208,6 @@ async function handleFullCollection(interaction) {
             });
         }
 
-        // Create detailed collection display
         const rarityOrder = ['omnipotent', 'mythical', 'legendary', 'epic', 'rare', 'uncommon', 'common'];
         const rarityGroups = {};
         
@@ -246,7 +230,6 @@ async function handleFullCollection(interaction) {
             }
         });
 
-        // Send in chunks if too long
         const maxLength = 2000;
         if (response.length > maxLength) {
             const chunks = [];
@@ -283,6 +266,3 @@ async function handleFullCollection(interaction) {
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
-
-// Export the button handler for the interaction event
-module.exports.handleButtonInteraction = handleButtonInteraction;
