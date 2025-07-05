@@ -82,18 +82,6 @@ async function handleSingleHunt(interaction) {
     }
 }
 
-// You may include your other handlers (collection, fullCollection, button logic, etc) below as needed
-// Make sure they are not partially duplicated or incomplete!
-
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-// Export the button handler for the interaction event, if your event system uses it:
-module.exports.handleButtonInteraction = handleButtonInteraction;
-
-// ===== Helper Button Handler Example (keep only ONE definition for each function) =====
-
 async function handleButtonInteraction(interaction) {
     try {
         const customId = interaction.customId;
@@ -129,6 +117,172 @@ async function handleButtonInteraction(interaction) {
     }
 }
 
-// ---- You can keep your other button functions below, but only once each! ----
-// (If you want me to paste your full collection/animation/duplicate/crown-jewel code in, let me know!)
+async function handleHuntAgain(interaction) {
+    try {
+        // Check cooldown
+        const userId = interaction.user.id;
+        const cooldownEnd = await DatabaseManager.getCooldown(userId, 'pull');
+        
+        if (cooldownEnd && Date.now() < cooldownEnd) {
+            const timeLeft = Math.ceil((cooldownEnd - Date.now()) / 1000);
+            return await interaction.reply({
+                content: `⏰ Your crew is still recovering from the last hunt! Wait **${timeLeft}** more seconds before searching for another Devil Fruit.`,
+                ephemeral: true
+            });
+        }
 
+        // Set cooldown (5 seconds)
+        await DatabaseManager.setCooldown(interaction.user.id, 'pull', Date.now() + 5000);
+        
+        // Get user level for combat power calculation
+        const userData = await DatabaseManager.getUser(interaction.user.id);
+        const userLevel = userData ? userData.level : 0;
+        
+        // Start the ultimate cinematic experience
+        await createUltimateCinematicExperience(interaction, userLevel);
+        
+    } catch (error) {
+        console.error('Hunt again error:', error);
+        await interaction.reply({
+            content: '⚠️ Something went wrong during your Devil Fruit hunt! Please try again.',
+            ephemeral: true
+        });
+    }
+}
+
+async function handleCollection(interaction) {
+    try {
+        const userId = interaction.user.id;
+        const collection = await DatabaseManager.getUserCollection(userId);
+        
+        if (!collection || collection.length === 0) {
+            return await interaction.reply({
+                content: '🍈 Your Devil Fruit collection is empty! Use `/pull` to start hunting for Devil Fruits.',
+                ephemeral: true
+            });
+        }
+
+        // Sort by rarity and then by name
+        const rarityOrder = ['omnipotent', 'mythical', 'legendary', 'epic', 'rare', 'uncommon', 'common'];
+        collection.sort((a, b) => {
+            const rarityA = rarityOrder.indexOf(a.rarity);
+            const rarityB = rarityOrder.indexOf(b.rarity);
+            if (rarityA !== rarityB) {
+                return rarityA - rarityB;
+            }
+            return a.name.localeCompare(b.name);
+        });
+
+        const embed = new EmbedBuilder()
+            .setTitle('🍈 Your Devil Fruit Collection')
+            .setColor(0x00FF00)
+            .setDescription(`**Total Unique Fruits:** ${collection.length}/150\n\n`);
+
+        // Group by rarity
+        const rarityGroups = {};
+        collection.forEach(fruit => {
+            if (!rarityGroups[fruit.rarity]) {
+                rarityGroups[fruit.rarity] = [];
+            }
+            const duplicateText = fruit.duplicates > 0 ? ` (x${fruit.duplicates + 1})` : '';
+            rarityGroups[fruit.rarity].push(`${fruit.name}${duplicateText}`);
+        });
+
+        // Add fields for each rarity
+        rarityOrder.forEach(rarity => {
+            if (rarityGroups[rarity] && rarityGroups[rarity].length > 0) {
+                const rarityEmoji = rarityColors[rarity]?.emoji || '❓';
+                embed.addFields({
+                    name: `${rarityEmoji} ${rarity.toUpperCase()} (${rarityGroups[rarity].length})`,
+                    value: rarityGroups[rarity].join(', '),
+                    inline: false
+                });
+            }
+        });
+
+        await interaction.reply({ embeds: [embed], ephemeral: true });
+        
+    } catch (error) {
+        console.error('Collection error:', error);
+        await interaction.reply({
+            content: '⚠️ Something went wrong while fetching your collection.',
+            ephemeral: true
+        });
+    }
+}
+
+async function handleFullCollection(interaction) {
+    try {
+        const userId = interaction.user.id;
+        const collection = await DatabaseManager.getUserCollection(userId);
+        
+        if (!collection || collection.length === 0) {
+            return await interaction.reply({
+                content: '🍈 Your Devil Fruit collection is empty! Use `/pull` to start hunting for Devil Fruits.',
+                ephemeral: true
+            });
+        }
+
+        // Create detailed collection display
+        const rarityOrder = ['omnipotent', 'mythical', 'legendary', 'epic', 'rare', 'uncommon', 'common'];
+        const rarityGroups = {};
+        
+        collection.forEach(fruit => {
+            if (!rarityGroups[fruit.rarity]) {
+                rarityGroups[fruit.rarity] = [];
+            }
+            const duplicateText = fruit.duplicates > 0 ? ` (x${fruit.duplicates + 1})` : '';
+            const cpText = fruit.combat_power ? ` [${fruit.combat_power} CP]` : '';
+            rarityGroups[fruit.rarity].push(`${fruit.name}${duplicateText}${cpText}`);
+        });
+
+        let response = `🍈 **Your Complete Devil Fruit Collection** (${collection.length}/150)\n\n`;
+        
+        rarityOrder.forEach(rarity => {
+            if (rarityGroups[rarity] && rarityGroups[rarity].length > 0) {
+                const rarityEmoji = rarityColors[rarity]?.emoji || '❓';
+                response += `${rarityEmoji} **${rarity.toUpperCase()}** (${rarityGroups[rarity].length})\n`;
+                response += rarityGroups[rarity].join('\n') + '\n\n';
+            }
+        });
+
+        // Send in chunks if too long
+        const maxLength = 2000;
+        if (response.length > maxLength) {
+            const chunks = [];
+            let currentChunk = '';
+            const lines = response.split('\n');
+            
+            for (const line of lines) {
+                if (currentChunk.length + line.length > maxLength) {
+                    chunks.push(currentChunk);
+                    currentChunk = line + '\n';
+                } else {
+                    currentChunk += line + '\n';
+                }
+            }
+            if (currentChunk) chunks.push(currentChunk);
+            
+            await interaction.reply({ content: chunks[0], ephemeral: true });
+            for (let i = 1; i < chunks.length; i++) {
+                await interaction.followUp({ content: chunks[i], ephemeral: true });
+            }
+        } else {
+            await interaction.reply({ content: response, ephemeral: true });
+        }
+        
+    } catch (error) {
+        console.error('Full collection error:', error);
+        await interaction.reply({
+            content: '⚠️ Something went wrong while fetching your full collection.',
+            ephemeral: true
+        });
+    }
+}
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Export the button handler for the interaction event
+module.exports.handleButtonInteraction = handleButtonInteraction;
