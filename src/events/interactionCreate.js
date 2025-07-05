@@ -1,58 +1,42 @@
 module.exports = {
     name: 'interactionCreate',
     async execute(interaction) {
-        // Handle slash commands
-        if (interaction.isChatInputCommand()) {
-            const command = interaction.client.commands.get(interaction.commandName);
+        try {
+            // Handle slash commands
+            if (interaction.isChatInputCommand()) {
+                const command = interaction.client.commands.get(interaction.commandName);
 
-            if (!command) {
-                console.error(`No command matching ${interaction.commandName} was found.`);
-                return;
-            }
+                if (!command) {
+                    console.error(`No command matching ${interaction.commandName} was found.`);
+                    return;
+                }
 
-            try {
-                console.log(`🎮 ${interaction.user.username} used /${interaction.commandName}`);
                 await command.execute(interaction);
-            } catch (error) {
-                console.error(`Error executing ${interaction.commandName}:`);
-                console.error(error);
-                
-                const errorMessage = {
-                    content: '❌ There was an error while executing this command!',
-                    ephemeral: true
-                };
-                
-                try {
-                    if (interaction.replied || interaction.deferred) {
-                        await interaction.followUp(errorMessage);
-                    } else {
-                        await interaction.reply(errorMessage);
-                    }
-                } catch (replyError) {
-                    console.error('Failed to send error message:', replyError);
-                }
             }
-        }
-        
-        // Handle button interactions
-        if (interaction.isButton()) {
-            try {
+            
+            // Handle button interactions
+            else if (interaction.isButton()) {
+                // Button interactions are handled by collectors in the individual commands
+                // No need for global button handling here
                 console.log(`🔘 ${interaction.user.username} clicked button: ${interaction.customId}`);
-                
-                // Import button handler from pull command
-                const { handleButtonInteraction } = require('../commands/pull');
-                await handleButtonInteraction(interaction);
-                
-            } catch (error) {
-                console.error('Button interaction error:', error);
-                try {
-                    await interaction.reply({ 
-                        content: '❌ Something went wrong with that button!', 
-                        ephemeral: true 
-                    });
-                } catch (replyError) {
-                    console.error('Failed to send button error message:', replyError);
+            }
+
+        } catch (error) {
+            console.error('Interaction error:', error);
+            
+            const errorMessage = {
+                content: 'There was an error while executing this command!',
+                ephemeral: true
+            };
+
+            try {
+                if (interaction.replied || interaction.deferred) {
+                    await interaction.followUp(errorMessage);
+                } else {
+                    await interaction.reply(errorMessage);
                 }
+            } catch (replyError) {
+                console.error('Failed to send error message:', replyError);
             }
         }
     },
