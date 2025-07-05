@@ -459,4 +459,233 @@ async function revealInformationGraduallyButton(interaction, targetFruit, elemen
     const finalContent = currentContent + `\n${rewardBar}`;
     
     const actionRow = new ActionRowBuilder()
-        .add
+        .addComponents(
+            new ButtonBuilder()
+                .setCustomId('huntAgain')
+                .setLabel('🍈 Hunt Again')
+                .setStyle(ButtonStyle.Primary),
+            new ButtonBuilder()
+                .setCustomId('collection')
+                .setLabel('📚 My Collection')
+                .setStyle(ButtonStyle.Secondary)
+        );
+    
+    const finalEmbed = new EmbedBuilder()
+        .setTitle('🏴‍☠️ Devil Fruit Claimed!')
+        .setDescription(finalContent)
+        .setColor(rarityColors[targetFruit.rarity]?.embed || 0x8B4513)
+        .setTimestamp();
+    
+    await interaction.editReply({ 
+        embeds: [finalEmbed], 
+        components: [actionRow] 
+    });
+}
+
+async function handleCollection(interaction) {
+    try {
+        await interaction.deferReply({ ephemeral: true });
+        
+        const userId = interaction.user.id;
+        const username = interaction.user.username;
+        
+        // Ensure user exists
+        await DatabaseManager.ensureUser(userId, username);
+        
+        // Get comprehensive collection data
+        const userData = await DatabaseManager.getUser(userId);
+        const userFruits = await DatabaseManager.getUserFruits(userId);
+        const rarityStats = await DatabaseManager.getUserRarityStats(userId);
+        const typeStats = await DatabaseManager.getUserTypeStats(userId);
+        
+        if (userFruits.length === 0) {
+            const emptyEmbed = new EmbedBuilder()
+                .setTitle('📚 Your Devil Fruit Collection')
+                .setDescription('🍈 **No Devil Fruits Found**\n\nYou haven\'t discovered any Devil Fruits yet! Use `/pull` to start your adventure in the Grand Line.')
+                .setColor(0x3498DB)
+                .setFooter({ text: 'Start your journey • One Piece Devil Fruit Collection' })
+                .setTimestamp();
+            
+            return await interaction.editReply({ embeds: [emptyEmbed] });
+        }
+        
+        // Calculate enhanced stats
+        const userLevel = userData ? userData.level : 0;
+        const levelMultiplier = CombatSystem.getLevelMultiplier(userLevel);
+        
+        // Enhanced collection analysis
+        const collectionAnalysis = analyzeCollection(userFruits, userLevel);
+        
+        // Create main collection embed
+        const mainEmbed = createMainCollectionEmbed(username, userData, collectionAnalysis, userLevel);
+        
+        // Create detailed breakdown embeds
+        const rarityEmbed = createRarityBreakdownEmbed(collectionAnalysis);
+        const powerEmbed = createPowerAnalysisEmbed(collectionAnalysis, userLevel);
+        const treasuresEmbed = createTreasuresEmbed(collectionAnalysis);
+        
+        // Create action buttons
+        const actionRow = new ActionRowBuilder()
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId('collection_detailed')
+                    .setLabel('📊 Detailed View')
+                    .setStyle(ButtonStyle.Secondary)
+                    .setEmoji('📊'),
+                new ButtonBuilder()
+                    .setCustomId('collection_search')
+                    .setLabel('🔍 Search')
+                    .setStyle(ButtonStyle.Secondary)
+                    .setEmoji('🔍'),
+                new ButtonBuilder()
+                    .setCustomId('huntAgain')
+                    .setLabel('🍈 Hunt More')
+                    .setStyle(ButtonStyle.Primary)
+                    .setEmoji('🍈')
+            );
+        
+        // Send all embeds
+        await interaction.editReply({ 
+            embeds: [mainEmbed, rarityEmbed, powerEmbed, treasuresEmbed],
+            components: [actionRow]
+        });
+        
+    } catch (error) {
+        console.error('Collection error:', error);
+        await interaction.editReply({
+            content: '⚠️ Error displaying collection. Please try again.'
+        });
+    }
+}
+
+// Collection analysis functions (simplified versions for this file)
+function analyzeCollection(userFruits, userLevel = 0) {
+    const analysis = {
+        totalFruits: userFruits.length,
+        uniqueFruits: new Set(userFruits.map(f => f.fruit_id)).size,
+        topFruits: [],
+        totalCombatPower: 0,
+        collectionValue: 0
+    };
+    
+    const levelMultiplier = CombatSystem.getLevelMultiplier(userLevel);
+    
+    userFruits.forEach(fruit => {
+        const basePower = CombatSystem.calculateBasePower(fruit.rarity);
+        const combatPower = Math.floor(basePower * levelMultiplier);
+        analysis.totalCombatPower += combatPower;
+        analysis.collectionValue += getRarityValue(fruit.rarity);
+        
+        analysis.topFruits.push({ ...fruit, combatPower });
+    });
+    
+    analysis.topFruits.sort((a, b) => b.combatPower - a.combatPower);
+    analysis.topFruits = analysis.topFruits.slice(0, 5);
+    
+    return analysis;
+}
+
+function createMainCollectionEmbed(username, userData, analysis, userLevel) {
+    const embed = new EmbedBuilder()
+        .setTitle(`🏴‍☠️ ${username}'s Devil Fruit Collection`)
+        .setColor(0x2F3136);
+    
+    let overview = `📊 **Collection Overview**\n`;
+    overview += `🍈 **Total Fruits:** ${analysis.totalFruits}\n`;
+    overview += `✨ **Unique Fruits:** ${analysis.uniqueFruits}\n`;
+    overview += `🎯 **Discovery Rate:** ${userData?.discovery_rate || 0}%\n`;
+    overview += `🏴‍☠️ **Total Hunts:** ${userData?.total_hunts || 0}\n\n`;
+    
+    if (userLevel > 0) {
+        const powerRank = CombatSystem.getPowerRank(analysis.totalCombatPower);
+        overview += `⚔️ **Combat Analysis**\n`;
+        overview += `🎖️ **Level:** ${userLevel}\n`;
+        overview += `💪 **Total Power:** ${analysis.totalCombatPower.toLocaleString()} CP\n`;
+        overview += `🏆 **Power Rank:** ${powerRank}\n\n`;
+    }
+    
+    overview += `💎 **Collection Value**\n`;
+    overview += `💰 **Estimated Worth:** ${analysis.collectionValue.toLocaleString()} berries\n`;
+    
+    embed.setDescription(overview);
+    embed.setTimestamp();
+    
+    return embed;
+}
+
+function createRarityBreakdownEmbed(analysis) {
+    return new EmbedBuilder()
+        .setTitle('🌟 Rarity Distribution')
+        .setDescription('*Your collection organized by rarity levels*')
+        .setColor(0x9B59B6);
+}
+
+function createPowerAnalysisEmbed(analysis, userLevel) {
+    return new EmbedBuilder()
+        .setTitle('⚔️ Power Analysis')
+        .setDescription(userLevel > 0 ? '*Combat power breakdown by categories*' : '*Reach Level 1 to unlock power analysis*')
+        .setColor(0xE74C3C);
+}
+
+function createTreasuresEmbed(analysis) {
+    const embed = new EmbedBuilder()
+        .setTitle('💎 Crown Jewels')
+        .setColor(0xF39C12);
+    
+    if (analysis.topFruits.length === 0) {
+        embed.setDescription('*No treasures to display*');
+        return embed;
+    }
+    
+    let treasuresText = `🏆 **Top 5 Most Powerful Fruits**\n\n`;
+    
+    for (let i = 0; i < Math.min(5, analysis.topFruits.length); i++) {
+        const fruit = analysis.topFruits[i];
+        const rank = ['👑', '🥈', '🥉', '4️⃣', '5️⃣'][i];
+        
+        treasuresText += `${rank} **${fruit.name}**\n`;
+        treasuresText += `${getRarityEmoji(fruit.rarity)} ${fruit.type}\n\n`;
+    }
+    
+    embed.setDescription(treasuresText);
+    return embed;
+}
+
+function getRarityEmoji(rarity) {
+    const emojis = {
+        common: '🟫',
+        uncommon: '🟩',
+        rare: '🟦',
+        epic: '🟪',
+        legendary: '🟨',
+        mythical: '🟥',
+        omnipotent: '⬜'
+    };
+    return emojis[rarity] || '🍈';
+}
+
+function getRarityValue(rarity) {
+    const values = {
+        common: 1000,
+        uncommon: 5000,
+        rare: 25000,
+        epic: 100000,
+        legendary: 500000,
+        mythical: 2500000,
+        omnipotent: 10000000
+    };
+    return values[rarity] || 1000;
+}
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// --- MAIN EXPORT (all handlers) ---
+module.exports = {
+    data: new SlashCommandBuilder()
+        .setName('pull')
+        .setDescription('🍈 Hunt for Devil Fruits in the Grand Line!'),
+    execute,
+    handleButtonInteraction
+};
