@@ -1,356 +1,307 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const CombatSystem = require('../systems/combat');
-const RaidCombatSystem = require('../systems/raid');
+// RAID COMBAT SYSTEM
+// PvP raids to steal berries and devil fruits
 
-module.exports = {
-    data: new SlashCommandBuilder()
-        .setName('raid')
-        .setDescription('Raid another player or fight the test NPC!')
-        .addUserOption(option =>
-            option.setName('target')
-                .setDescription('The player you want to raid (leave empty to fight test NPC)')
-                .setRequired(false)
-        ),
+const DatabaseManager = require('../database/manager');
 
-    async execute(interaction) {
-        const attacker = interaction.user;
-        const target = interaction.options.getUser('target');
-
+class RaidCombatSystem {
+    // Check if user can raid (cooldown check)
+    async canRaid(userId) {
         try {
-            if (!target) {
-                // Fight NPC - no cooldowns or restrictions
-                console.log(`🤖 ${attacker.username} is fighting the test NPC`);
-                
-                // Start NPC combat
-                const combatResult = await CombatSystem.startNPCCombat(attacker.id, attacker.username);
-                
-                if (!combatResult.success) {
-                    return await interaction.reply({
-                        content: `❌ **Combat Error**\n${combatResult.error}`,
-                        ephemeral: true
-                    });
-                }
-
-                // Create combat result embed
-                const embed = new EmbedBuilder()
-                    .setTitle('⚔️ NPC Raid Complete!')
-                    .setDescription(`**${attacker.username}** vs **Monkey D. Tester** (Level 25)`)
-                    .addFields(
-                        { name: '🏆 Result', value: combatResult.result === 'victory' ? '**VICTORY!**' : '**DEFEAT!**', inline: true },
-                        { name: '💖 Your HP', value: `${combatResult.attackerHP}/100`, inline: true },
-                        { name: '💖 NPC HP', value: `${combatResult.defenderHP}/100`, inline: true },
-                        { name: '⚔️ Combat Log', value: combatResult.combatLog.join('\n'), inline: false }
-                    )
-                    .setColor(combatResult.result === 'victory' ? 0x00FF00 : 0xFF0000)
-                    .setTimestamp();
-
-                if (combatResult.result === 'victory' && combatResult.rewards) {
-                    let rewardText = '';
-                    if (combatResult.rewards.berries > 0) {
-                        rewardText += `🫐 **+${combatResult.rewards.berries.toLocaleString()} berries**\n`;
-                    }
-                    if (combatResult.rewards.fruits && combatResult.rewards.fruits.length > 0) {
-                        rewardText += `🍈 **Fruits stolen:**\n${combatResult.rewards.fruits.map(f => `• ${f.name}`).join('\n')}`;
-                    }
-                    if (rewardText) {
-                        embed.addFields({ name: '🎁 Rewards', value: rewardText, inline: false });
-                    }
-                }
-
-                // Create action buttons
-                const row = new ActionRowBuilder()
-                    .addComponents(
-                        new ButtonBuilder()
-                            .setCustomId('fight_again')
-                            .setLabel('⚔️ Fight Again')
-                            .setStyle(ButtonStyle.Primary),
-                        new ButtonBuilder()
-                            .setCustomId('check_stats')
-                            .setLabel('📊 My Stats')
-                            .setStyle(ButtonStyle.Secondary)
-                    );
-
-                const response = await interaction.reply({
-                    embeds: [embed],
-                    components: [row]
-                });
-
-                // Handle button interactions
-                const collector = response.createMessageComponentCollector({ time: 60000 });
-
-                collector.on('collect', async (buttonInteraction) => {
-                    if (buttonInteraction.user.id !== attacker.id) {
-                        return await buttonInteraction.reply({
-                            content: '❌ This is not your raid!',
-                            ephemeral: true
-                        });
-                    }
-
-                    try {
-                        if (buttonInteraction.customId === 'fight_again') {
-                            // Start another NPC fight
-                            await buttonInteraction.deferReply({ ephemeral: true });
-                            const newCombat = await CombatSystem.startNPCCombat(attacker.id, attacker.username);
-                            
-                            if (newCombat.success) {
-                                const quickEmbed = new EmbedBuilder()
-                                    .setTitle('⚔️ Quick NPC Battle')
-                                    .setDescription(`**${newCombat.result === 'victory' ? 'VICTORY!' : 'DEFEAT!'}**`)
-                                    .addFields(
-                                        { name: '💖 Your HP', value: `${newCombat.attackerHP}/100`, inline: true },
-                                        { name: '💖 NPC HP', value: `${newCombat.defenderHP}/100`, inline: true }
-                                    )
-                                    .setColor(newCombat.result === 'victory' ? 0x00FF00 : 0xFF0000);
-
-                                if (newCombat.result === 'victory' && newCombat.rewards) {
-                                    let quickReward = '';
-                                    if (newCombat.rewards.berries > 0) {
-                                        quickReward += `🫐 +${newCombat.rewards.berries.toLocaleString()} berries\n`;
-                                    }
-                                    if (newCombat.rewards.fruits && newCombat.rewards.fruits.length > 0) {
-                                        quickReward += `🍈 +${newCombat.rewards.fruits.length} fruit(s)`;
-                                    }
-                                    if (quickReward) {
-                                        quickEmbed.addFields({ name: '🎁 Rewards', value: quickReward, inline: false });
-                                    }
-                                }
-
-                                await buttonInteraction.editReply({ embeds: [quickEmbed] });
-                            } else {
-                                await buttonInteraction.editReply({ content: `❌ Combat failed: ${newCombat.error}` });
-                            }
-
-                        } else if (buttonInteraction.customId === 'check_stats') {
-                            await buttonInteraction.deferReply({ ephemeral: true });
-                            
-                            // Get user stats
-                            const userStats = await CombatSystem.getUserStats(attacker.id);
-                            
-                            const statsEmbed = new EmbedBuilder()
-                                .setTitle('📊 Your Battle Stats')
-                                .setDescription(`**${attacker.username}**'s Current Status`)
-                                .addFields(
-                                    { name: '🍈 Fruits', value: userStats.totalFruits?.toString() || '0', inline: true },
-                                    { name: '⚔️ Combat Power', value: userStats.totalCP?.toString() || '0', inline: true },
-                                    { name: '🏆 vs NPC', value: 'Unlimited fights!', inline: true }
-                                )
-                                .setColor(0x3498db)
-                                .setTimestamp();
-
-                            await buttonInteraction.editReply({ embeds: [statsEmbed] });
-                        }
-                    } catch (error) {
-                        console.error('Button interaction error:', error);
-                        try {
-                            await buttonInteraction.editReply({ content: '❌ An error occurred processing your request.' });
-                        } catch (editError) {
-                            console.error('Failed to edit reply:', editError);
-                        }
-                    }
-                });
-
-                collector.on('end', () => {
-                    // Disable buttons after timeout
-                    const disabledRow = new ActionRowBuilder()
-                        .addComponents(
-                            new ButtonBuilder()
-                                .setCustomId('fight_again')
-                                .setLabel('⚔️ Fight Again')
-                                .setStyle(ButtonStyle.Primary)
-                                .setDisabled(true),
-                            new ButtonBuilder()
-                                .setCustomId('check_stats')
-                                .setLabel('📊 My Stats')
-                                .setStyle(ButtonStyle.Secondary)
-                                .setDisabled(true)
-                        );
-
-                    interaction.editReply({ components: [disabledRow] }).catch(() => {});
-                });
-
-                return;
+            // 2 hours = 7200000 ms
+            const cooldownMs = 2 * 60 * 60 * 1000;
+            const query = `
+                SELECT expires_at 
+                FROM user_cooldowns 
+                WHERE user_id = $1 AND cooldown_type = 'raid'
+                ORDER BY expires_at DESC 
+                LIMIT 1
+            `;
+            
+            const result = await DatabaseManager.query(query, [userId]);
+            
+            if (result.rows.length === 0) {
+                return { allowed: true, timeLeft: 0 };
             }
-
-            // PvP Raid Logic
-            const attackerId = attacker.id;
-            const targetId = target.id;
-
-            // Check if trying to raid themselves
-            if (attackerId === targetId) {
-                return await interaction.reply({
-                    content: '❌ You cannot raid yourself! Use `/raid` without a target to fight the test NPC.',
-                    ephemeral: true
-                });
+            
+            const expiresAt = new Date(result.rows[0].expires_at);
+            const now = new Date();
+            
+            if (now >= expiresAt) {
+                return { allowed: true, timeLeft: 0 };
             }
-
-            // Check if target is a bot
-            if (target.bot) {
-                return await interaction.reply({
-                    content: '❌ You cannot raid bots! Use `/raid` without a target to fight the test NPC.',
-                    ephemeral: true
-                });
-            }
-
-            // Check raid cooldown
-            const canRaid = await RaidCombatSystem.canRaid(attackerId);
-            if (!canRaid.allowed) {
-                const timeLeft = Math.ceil(canRaid.timeLeft / (1000 * 60)); // Convert to minutes
-                return await interaction.reply({
-                    content: `⏰ **Raid Cooldown**\nYou must wait **${timeLeft} minutes** before raiding again!\n\n💡 *Tip: Use \`/raid\` without a target to fight the test NPC (no cooldown)*`,
-                    ephemeral: true
-                });
-            }
-
-            // Check if target is protected
-            const isProtected = await RaidCombatSystem.isProtected(targetId);
-            if (isProtected.protected) {
-                const timeLeft = Math.ceil(isProtected.timeLeft / (1000 * 60)); // Convert to minutes
-                return await interaction.reply({
-                    content: `🛡️ **Target Protected**\n${target.username} is protected from raids for **${timeLeft} minutes**!\n\n💡 *Tip: Use \`/raid\` without a target to fight the test NPC instead*`,
-                    ephemeral: true
-                });
-            }
-
-            // Get combat stats for both players
-            const attackerStats = await RaidCombatSystem.getUserStats(attackerId);
-            const targetStats = await RaidCombatSystem.getUserStats(targetId);
-
-            if (attackerStats.totalCP === 0) {
-                return await interaction.reply({
-                    content: '❌ **No Combat Power**\nYou need Devil Fruits to participate in raids!\n\n💡 *Use `/pull` to get Devil Fruits, or fight the test NPC with `/raid`*',
-                    ephemeral: true
-                });
-            }
-
-            if (targetStats.totalCP === 0) {
-                return await interaction.reply({
-                    content: '❌ **Invalid Target**\nTarget has no Devil Fruits to raid!\n\n💡 *Try fighting the test NPC with `/raid` instead*',
-                    ephemeral: true
-                });
-            }
-
-            // Calculate battle prediction
-            const prediction = RaidCombatSystem.calculateBattlePrediction(attackerStats.totalCP, targetStats.totalCP);
-
-            // Create pre-raid embed
-            const preRaidEmbed = new EmbedBuilder()
-                .setTitle('⚔️ Raid Analysis')
-                .setDescription(`**${attacker.username}** vs **${target.username}**`)
-                .addFields(
-                    { name: '👤 Your Stats', value: `⚔️ ${attackerStats.totalCP} CP\n🍈 ${attackerStats.totalFruits} fruits`, inline: true },
-                    { name: '🎯 Target Stats', value: `⚔️ ${targetStats.totalCP} CP\n🍈 ${targetStats.totalFruits} fruits`, inline: true },
-                    { name: '📊 Win Prediction', value: `**${prediction.winChance}%** chance\n${prediction.outcome}`, inline: true }
-                )
-                .setColor(prediction.winChance >= 50 ? 0x00FF00 : 0xFF8000)
-                .setTimestamp();
-
-            // Create confirmation buttons
-            const confirmRow = new ActionRowBuilder()
-                .addComponents(
-                    new ButtonBuilder()
-                        .setCustomId('confirm_raid')
-                        .setLabel('⚔️ Attack!')
-                        .setStyle(ButtonStyle.Danger),
-                    new ButtonBuilder()
-                        .setCustomId('cancel_raid')
-                        .setLabel('❌ Cancel')
-                        .setStyle(ButtonStyle.Secondary)
-                );
-
-            const response = await interaction.reply({
-                embeds: [preRaidEmbed],
-                components: [confirmRow]
-            });
-
-            // Handle raid confirmation
-            const confirmCollector = response.createMessageComponentCollector({ time: 30000 });
-
-            confirmCollector.on('collect', async (confirmInteraction) => {
-                if (confirmInteraction.user.id !== attackerId) {
-                    return await confirmInteraction.reply({
-                        content: '❌ This is not your raid!',
-                        ephemeral: true
-                    });
-                }
-
-                if (confirmInteraction.customId === 'cancel_raid') {
-                    await confirmInteraction.update({
-                        content: '❌ **Raid Cancelled**\nYou decided not to attack.',
-                        embeds: [],
-                        components: []
-                    });
-                    return;
-                }
-
-                if (confirmInteraction.customId === 'confirm_raid') {
-                    await confirmInteraction.deferUpdate();
-
-                    // Execute the raid
-                    const result = await RaidCombatSystem.executeRaid(attackerId, targetId, attacker.username, target.username);
-
-                    if (!result.success) {
-                        await confirmInteraction.editReply({
-                            content: `❌ **Raid Failed**\n${result.error}`,
-                            embeds: [],
-                            components: []
-                        });
-                        return;
-                    }
-
-                    // Create result embed
-                    const resultEmbed = new EmbedBuilder()
-                        .setTitle('⚔️ Raid Complete!')
-                        .setDescription(`**${attacker.username}** attacked **${target.username}**`)
-                        .addFields(
-                            { name: '🏆 Result', value: result.victory ? '**VICTORY!**' : '**DEFEAT!**', inline: true },
-                            { name: '🎲 Battle Roll', value: `${result.battleRoll}/100`, inline: true },
-                            { name: '📊 Win Chance', value: `${result.winChance}%`, inline: true }
-                        )
-                        .setColor(result.victory ? 0x00FF00 : 0xFF0000)
-                        .setTimestamp();
-
-                    if (result.victory && result.loot) {
-                        let lootText = '';
-                        if (result.loot.berries > 0) {
-                            lootText += `🫐 **${result.loot.berries.toLocaleString()} berries** stolen\n`;
-                        }
-                        if (result.loot.fruits && result.loot.fruits.length > 0) {
-                            lootText += `🍈 **Fruits stolen:**\n${result.loot.fruits.map(f => `• ${f.name} (${f.rarity})`).join('\n')}`;
-                        }
-                        if (lootText) {
-                            resultEmbed.addFields({ name: '💰 Loot', value: lootText, inline: false });
-                        }
-                    }
-
-                    await confirmInteraction.editReply({
-                        embeds: [resultEmbed],
-                        components: []
-                    });
-                }
-            });
-
-            confirmCollector.on('end', async () => {
-                try {
-                    await interaction.editReply({
-                        content: '⏰ **Raid Expired**\nRaid confirmation timed out.',
-                        embeds: [],
-                        components: []
-                    });
-                } catch (error) {
-                    // Interaction might already be handled
-                }
-            });
-
+            
+            const timeLeft = expiresAt.getTime() - now.getTime();
+            return { allowed: false, timeLeft };
+            
         } catch (error) {
-            console.error('Raid command error:', error);
-            try {
-                await interaction.reply({
-                    content: '❌ **System Error**\nSomething went wrong with the raid system. Please try again.',
-                    ephemeral: true
-                });
-            } catch (replyError) {
-                console.error('Failed to send error reply:', replyError);
-            }
+            console.error('Error checking raid cooldown:', error);
+            // If cooldown table doesn't exist, allow raid
+            return { allowed: true, timeLeft: 0 };
         }
     }
-};
+    
+    // Check if target is protected from raids
+    async isProtected(userId) {
+        try {
+            // 1 hour = 3600000 ms
+            const protectionMs = 60 * 60 * 1000;
+            const query = `
+                SELECT created_at 
+                FROM battle_history 
+                WHERE defender_id = $1 
+                ORDER BY created_at DESC 
+                LIMIT 1
+            `;
+            
+            const result = await DatabaseManager.query(query, [userId]);
+            
+            if (result.rows.length === 0) {
+                return { protected: false, timeLeft: 0 };
+            }
+            
+            const lastBattle = new Date(result.rows[0].created_at);
+            const protectionEnds = new Date(lastBattle.getTime() + protectionMs);
+            const now = new Date();
+            
+            if (now >= protectionEnds) {
+                return { protected: false, timeLeft: 0 };
+            }
+            
+            const timeLeft = protectionEnds.getTime() - now.getTime();
+            return { protected: true, timeLeft };
+            
+        } catch (error) {
+            console.error('Error checking protection status:', error);
+            // If battle history doesn't exist, no protection
+            return { protected: false, timeLeft: 0 };
+        }
+    }
+    
+    // Execute a PvP raid
+    async executeRaid(attackerId, defenderId, attackerName, defenderName) {
+        try {
+            // Get both players' stats
+            const attackerStats = await this.getUserStats(attackerId);
+            const defenderStats = await this.getUserStats(defenderId);
+            
+            // Calculate battle outcome
+            const prediction = this.calculateBattlePrediction(attackerStats.totalCP, defenderStats.totalCP);
+            const battleRoll = Math.floor(Math.random() * 100) + 1;
+            const victory = battleRoll <= prediction.winChance;
+            
+            // Set raid cooldown for attacker
+            await this.setRaidCooldown(attackerId);
+            
+            // Set protection for defender
+            await this.setProtection(defenderId);
+            
+            let loot = null;
+            
+            if (victory) {
+                // Calculate loot
+                loot = await this.calculateLoot(defenderId);
+                
+                // Transfer loot to attacker
+                if (loot.berries > 0) {
+                    await this.transferBerries(defenderId, attackerId, loot.berries);
+                }
+                
+                if (loot.fruits && loot.fruits.length > 0) {
+                    await this.transferFruits(defenderId, attackerId, loot.fruits);
+                }
+            }
+            
+            // Record battle in history
+            await this.recordBattle(attackerId, defenderId, victory, loot);
+            
+            return {
+                success: true,
+                victory,
+                battleRoll,
+                winChance: prediction.winChance,
+                loot
+            };
+            
+        } catch (error) {
+            console.error('Error executing raid:', error);
+            return {
+                success: false,
+                error: 'Raid execution failed. Please try again.'
+            };
+        }
+    }
+    
+    // Calculate battle prediction
+    calculateBattlePrediction(attackerCP, defenderCP) {
+        const cpDifference = attackerCP - defenderCP;
+        const baseChance = 50;
+        const cpBonus = Math.floor(cpDifference / 100) * 5;
+        const winChance = Math.max(10, Math.min(90, baseChance + cpBonus));
+        
+        let outcome;
+        if (winChance >= 70) {
+            outcome = 'Highly Favored';
+        } else if (winChance >= 55) {
+            outcome = 'Favored';
+        } else if (winChance >= 45) {
+            outcome = 'Even Match';
+        } else if (winChance >= 30) {
+            outcome = 'Underdog';
+        } else {
+            outcome = 'Heavy Underdog';
+        }
+        
+        return { winChance, outcome };
+    }
+    
+    // Get user stats (simplified version)
+    async getUserStats(userId) {
+        try {
+            const query = `
+                SELECT 
+                    COUNT(*) as total_fruits,
+                    COALESCE(SUM(CASE 
+                        WHEN rarity = 'common' THEN 50 * (1 + duplicate_count * 0.01)
+                        WHEN rarity = 'uncommon' THEN 150 * (1 + duplicate_count * 0.01)
+                        WHEN rarity = 'rare' THEN 400 * (1 + duplicate_count * 0.01)
+                        WHEN rarity = 'epic' THEN 800 * (1 + duplicate_count * 0.01)
+                        WHEN rarity = 'legendary' THEN 1500 * (1 + duplicate_count * 0.01)
+                        WHEN rarity = 'mythical' THEN 2500 * (1 + duplicate_count * 0.01)
+                        WHEN rarity = 'omnipotent' THEN 5000 * (1 + duplicate_count * 0.01)
+                        ELSE 50
+                    END), 0) as total_cp
+                FROM user_devil_fruits
+                WHERE user_id = $1
+            `;
+            
+            const result = await DatabaseManager.query(query, [userId]);
+            const stats = result.rows[0];
+            
+            return {
+                totalFruits: parseInt(stats.total_fruits) || 0,
+                totalCP: Math.floor(parseFloat(stats.total_cp)) || 0
+            };
+            
+        } catch (error) {
+            console.error('Error getting user stats for raid:', error);
+            return { totalFruits: 0, totalCP: 0 };
+        }
+    }
+    
+    // Set raid cooldown
+    async setRaidCooldown(userId) {
+        try {
+            const expiresAt = new Date(Date.now() + EconomyConfig.getRaidCooldownMs());
+            const query = `
+                INSERT INTO user_cooldowns (user_id, cooldown_type, expires_at)
+                VALUES ($1, 'raid', $2)
+                ON CONFLICT (user_id, cooldown_type) 
+                DO UPDATE SET expires_at = $2
+            `;
+            await DatabaseManager.query(query, [userId, expiresAt]);
+        } catch (error) {
+            console.error('Error setting raid cooldown:', error);
+        }
+    }
+    
+    // Set protection for defender
+    async setProtection(userId) {
+        try {
+            const query = `
+                INSERT INTO battle_history (defender_id, created_at)
+                VALUES ($1, NOW())
+            `;
+            await DatabaseManager.query(query, [userId]);
+        } catch (error) {
+            console.error('Error setting protection:', error);
+        }
+    }
+    
+    // Calculate loot for successful raid
+    async calculateLoot(defenderId) {
+        try {
+            const loot = { berries: 0, fruits: [] };
+            
+            // Try to get berries (would need BerryEconomySystem)
+            try {
+                const BerryEconomySystem = require('./economy');
+                const defenderBerries = await BerryEconomySystem.getBerries(defenderId);
+                const stealPercentage = EconomyConfig.getRandomBerrySteal();
+                loot.berries = Math.floor(defenderBerries * stealPercentage);
+            } catch (error) {
+                console.warn('Berry system not available for loot calculation');
+            }
+            
+            // Try to steal fruits
+            const defenderFruits = await this.getRandomUserFruits(defenderId, EconomyConfig.maxFruitsStolen);
+            for (const fruit of defenderFruits) {
+                if (Math.random() < EconomyConfig.fruitStealChance) {
+                    loot.fruits.push(fruit);
+                }
+            }
+            
+            return loot;
+            
+        } catch (error) {
+            console.error('Error calculating loot:', error);
+            return { berries: 0, fruits: [] };
+        }
+    }
+    
+    // Get random fruits from user
+    async getRandomUserFruits(userId, maxFruits) {
+        try {
+            const query = `
+                SELECT fruit_name, rarity
+                FROM user_devil_fruits
+                WHERE user_id = $1
+                ORDER BY RANDOM()
+                LIMIT $2
+            `;
+            const result = await DatabaseManager.query(query, [userId, maxFruits]);
+            return result.rows.map(row => ({ name: row.fruit_name, rarity: row.rarity }));
+        } catch (error) {
+            console.error('Error getting random user fruits:', error);
+            return [];
+        }
+    }
+    
+    // Transfer berries between users
+    async transferBerries(fromUserId, toUserId, amount) {
+        try {
+            const BerryEconomySystem = require('./economy');
+            await BerryEconomySystem.removeBerries(fromUserId, amount, `Raided by user ${toUserId}`);
+            await BerryEconomySystem.addBerries(toUserId, amount, `Raid victory vs user ${fromUserId}`);
+        } catch (error) {
+            console.warn('Berry transfer failed:', error);
+        }
+    }
+    
+    // Transfer fruits between users
+    async transferFruits(fromUserId, toUserId, fruits) {
+        try {
+            // This would need more complex implementation with your database structure
+            console.log(`Would transfer ${fruits.length} fruits from ${fromUserId} to ${toUserId}`);
+            // For now, just log it - implementation depends on your exact table structure
+        } catch (error) {
+            console.error('Error transferring fruits:', error);
+        }
+    }
+    
+    // Record battle in history
+    async recordBattle(attackerId, defenderId, victory, loot) {
+        try {
+            const query = `
+                INSERT INTO battle_history (attacker_id, defender_id, victory, loot_berries, loot_fruits, created_at)
+                VALUES ($1, $2, $3, $4, $5, NOW())
+            `;
+            const lootBerries = loot ? loot.berries : 0;
+            const lootFruits = loot && loot.fruits ? loot.fruits.length : 0;
+            await DatabaseManager.query(query, [attackerId, defenderId, victory, lootBerries, lootFruits]);
+        } catch (error) {
+            console.error('Error recording battle:', error);
+        }
+    }
+}
+
+module.exports = new RaidCombatSystem();
