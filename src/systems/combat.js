@@ -86,43 +86,31 @@ class CombatSystem {
     // Get user statistics using your existing database structure
     async getUserStats(userId) {
         try {
-            // First, let's see what tables exist
-            const tables = await this.listTables();
-            console.log('Available tables:', tables);
+            // Use the actual table structure we discovered
+            const query = `
+                SELECT 
+                    COUNT(*) as total_fruits,
+                    COALESCE(SUM(CASE 
+                        WHEN rarity = 'common' THEN 50 * (1 + duplicate_count * 0.01)
+                        WHEN rarity = 'uncommon' THEN 150 * (1 + duplicate_count * 0.01)
+                        WHEN rarity = 'rare' THEN 400 * (1 + duplicate_count * 0.01)
+                        WHEN rarity = 'epic' THEN 800 * (1 + duplicate_count * 0.01)
+                        WHEN rarity = 'legendary' THEN 1500 * (1 + duplicate_count * 0.01)
+                        WHEN rarity = 'mythical' THEN 2500 * (1 + duplicate_count * 0.01)
+                        WHEN rarity = 'omnipotent' THEN 5000 * (1 + duplicate_count * 0.01)
+                        ELSE 50
+                    END), 0) as total_cp
+                FROM user_devil_fruits
+                WHERE user_id = $1
+            `;
             
-            // Try to find a table with user data
-            let userCP = 0;
-            let userFruits = 0;
+            const result = await DatabaseManager.query(query, [userId]);
+            const stats = result.rows[0];
             
-            // Check if using the same method as your pull command
-            if (tables.includes('devil_fruit_collection')) {
-                const query = `
-                    SELECT 
-                        COUNT(*) as total_fruits,
-                        COALESCE(SUM(CASE 
-                            WHEN rarity = 'common' THEN 50 * (1 + duplicate_count * 0.01)
-                            WHEN rarity = 'uncommon' THEN 150 * (1 + duplicate_count * 0.01)
-                            WHEN rarity = 'rare' THEN 400 * (1 + duplicate_count * 0.01)
-                            WHEN rarity = 'epic' THEN 800 * (1 + duplicate_count * 0.01)
-                            WHEN rarity = 'legendary' THEN 1500 * (1 + duplicate_count * 0.01)
-                            WHEN rarity = 'mythical' THEN 2500 * (1 + duplicate_count * 0.01)
-                            WHEN rarity = 'omnipotent' THEN 5000 * (1 + duplicate_count * 0.01)
-                            ELSE 50
-                        END), 0) as total_cp
-                    FROM devil_fruit_collection
-                    WHERE user_id = $1
-                `;
-                
-                const result = await DatabaseManager.query(query, [userId]);
-                const stats = result.rows[0];
-                
-                userFruits = parseInt(stats.total_fruits) || 0;
-                userCP = Math.floor(parseFloat(stats.total_cp)) || 0;
-            } else {
-                // Fallback: assume user has some power if they've used /pull
-                userCP = 100; // Minimum CP for testing
-                userFruits = 1;
-            }
+            const userFruits = parseInt(stats.total_fruits) || 0;
+            const userCP = Math.floor(parseFloat(stats.total_cp)) || 0;
+            
+            console.log(`📊 User ${userId} stats: ${userFruits} fruits, ${userCP} CP`);
             
             return {
                 totalFruits: userFruits,
