@@ -8,8 +8,17 @@ class CombatSystem {
         try {
             console.log(`🤖 Starting NPC combat for ${username}`);
             
+            // Check if user has any fruits first
+            const userExists = await this.checkUserExists(userId);
+            if (!userExists) {
+                return {
+                    success: false,
+                    error: 'You need Devil Fruits to fight! Use `/pull` to get some first.'
+                };
+            }
+            
             // Get user's stats
-            const userStats = await DatabaseManager.getUserStats(userId);
+            const userStats = await this.getUserStats(userId);
             if (userStats.totalCP === 0) {
                 return {
                     success: false,
@@ -79,6 +88,46 @@ class CombatSystem {
             return {
                 success: false,
                 error: 'Combat system error. Please try again.'
+            };
+        }
+    }
+    
+    // Helper method to check if user exists
+    async checkUserExists(userId) {
+        try {
+            const query = 'SELECT 1 FROM user_fruits WHERE user_id = $1 LIMIT 1';
+            const result = await DatabaseManager.query(query, [userId]);
+            return result.rows.length > 0;
+        } catch (error) {
+            console.error('Error checking user existence:', error);
+            return false;
+        }
+    }
+    
+    // Get user statistics
+    async getUserStats(userId) {
+        try {
+            const query = `
+                SELECT 
+                    COUNT(*) as total_fruits,
+                    COALESCE(SUM(df.combat_power * (1 + (uf.duplicate_count * 0.01))), 0) as total_cp
+                FROM user_fruits uf
+                LEFT JOIN devil_fruits df ON uf.fruit_id = df.id
+                WHERE uf.user_id = $1
+            `;
+            
+            const result = await DatabaseManager.query(query, [userId]);
+            const stats = result.rows[0];
+            
+            return {
+                totalFruits: parseInt(stats.total_fruits) || 0,
+                totalCP: Math.floor(parseFloat(stats.total_cp)) || 0
+            };
+        } catch (error) {
+            console.error('Error getting user stats:', error);
+            return {
+                totalFruits: 0,
+                totalCP: 0
             };
         }
     }
