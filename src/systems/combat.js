@@ -95,9 +95,23 @@ class CombatSystem {
     // Helper method to check if user exists
     async checkUserExists(userId) {
         try {
-            const query = 'SELECT 1 FROM user_fruits WHERE user_id = $1 LIMIT 1';
-            const result = await DatabaseManager.query(query, [userId]);
-            return result.rows.length > 0;
+            // Try different possible table names
+            const possibleTables = ['user_fruits', 'fruits', 'user_devil_fruits', 'devil_fruit_collection'];
+            
+            for (const tableName of possibleTables) {
+                try {
+                    const query = `SELECT 1 FROM ${tableName} WHERE user_id = $1 LIMIT 1`;
+                    const result = await DatabaseManager.query(query, [userId]);
+                    if (result.rows.length > 0) {
+                        this.userTableName = tableName;
+                        return true;
+                    }
+                } catch (err) {
+                    // Table doesn't exist, try next one
+                    continue;
+                }
+            }
+            return false;
         } catch (error) {
             console.error('Error checking user existence:', error);
             return false;
@@ -107,13 +121,15 @@ class CombatSystem {
     // Get user statistics
     async getUserStats(userId) {
         try {
+            // Use the table name we found, or default to 'fruits'
+            const tableName = this.userTableName || 'fruits';
+            
             const query = `
                 SELECT 
                     COUNT(*) as total_fruits,
-                    COALESCE(SUM(df.combat_power * (1 + (uf.duplicate_count * 0.01))), 0) as total_cp
-                FROM user_fruits uf
-                LEFT JOIN devil_fruits df ON uf.fruit_id = df.id
-                WHERE uf.user_id = $1
+                    COALESCE(SUM(f.combat_power * (1 + (f.duplicate_count * 0.01))), 0) as total_cp
+                FROM ${tableName} f
+                WHERE f.user_id = $1
             `;
             
             const result = await DatabaseManager.query(query, [userId]);
@@ -125,10 +141,30 @@ class CombatSystem {
             };
         } catch (error) {
             console.error('Error getting user stats:', error);
-            return {
-                totalFruits: 0,
-                totalCP: 0
-            };
+            // Try alternative query for simpler table structure
+            try {
+                const query = `
+                    SELECT 
+                        COUNT(*) as total_fruits,
+                        COALESCE(SUM(combat_power), 0) as total_cp
+                    FROM fruits
+                    WHERE user_id = $1
+                `;
+                
+                const result = await DatabaseManager.query(query, [userId]);
+                const stats = result.rows[0];
+                
+                return {
+                    totalFruits: parseInt(stats.total_fruits) || 0,
+                    totalCP: Math.floor(parseFloat(stats.total_cp)) || 0
+                };
+            } catch (fallbackError) {
+                console.error('Fallback query also failed:', fallbackError);
+                return {
+                    totalFruits: 0,
+                    totalCP: 0
+                };
+            }
         }
     }
     
