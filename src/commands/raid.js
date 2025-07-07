@@ -118,7 +118,7 @@ module.exports = {
                 const CombatSystem = require('../systems/combat');
                 combatResult = await CombatSystem.startNPCCombat(user.id, user.username);
             } catch (error) {
-                console.warn('Combat system not available, using fallback');
+                console.error('Combat system error:', error);
                 // Simple fallback combat
                 const victory = Math.random() > 0.5;
                 combatResult = {
@@ -141,10 +141,10 @@ module.exports = {
                 });
             }
 
-            // Create result embed
+            // Create result embed with detailed combat log
             const embed = new EmbedBuilder()
                 .setTitle('⚔️ NPC Battle Complete!')
-                .setDescription(`**${user.username}** vs **Test NPC**`)
+                .setDescription(`**${user.username}** vs **Monkey D. Tester**`)
                 .addFields(
                     { name: '🏆 Result', value: combatResult.result === 'victory' ? '**VICTORY!** 🎉' : '**DEFEAT!** 💀', inline: true },
                     { name: '💖 Your HP', value: `${combatResult.attackerHP}/100`, inline: true },
@@ -153,11 +153,33 @@ module.exports = {
                 .setColor(combatResult.result === 'victory' ? 0x00FF00 : 0xFF0000)
                 .setTimestamp();
 
-            // Add combat log if available
+            // Add detailed combat log - split into chunks if too long
             if (combatResult.combatLog && combatResult.combatLog.length > 0) {
-                const logText = combatResult.combatLog.join('\n');
-                if (logText.length <= 1024) {
-                    embed.addFields({ name: '⚔️ Battle Log', value: logText, inline: false });
+                const fullLog = combatResult.combatLog.join('\n');
+                
+                // Discord has a 1024 character limit per field, so we need to split long logs
+                if (fullLog.length <= 1024) {
+                    embed.addFields({ name: '⚔️ Detailed Battle Log', value: fullLog, inline: false });
+                } else {
+                    // Split into multiple fields
+                    const logChunks = [];
+                    let currentChunk = '';
+                    
+                    for (const line of combatResult.combatLog) {
+                        if ((currentChunk + line + '\n').length > 1024) {
+                            if (currentChunk) logChunks.push(currentChunk);
+                            currentChunk = line + '\n';
+                        } else {
+                            currentChunk += line + '\n';
+                        }
+                    }
+                    if (currentChunk) logChunks.push(currentChunk);
+                    
+                    // Add up to 3 log chunks (Discord embed limit is 25 fields total)
+                    for (let i = 0; i < Math.min(logChunks.length, 3); i++) {
+                        const fieldName = i === 0 ? '⚔️ Detailed Battle Log' : `⚔️ Battle Log (Part ${i + 1})`;
+                        embed.addFields({ name: fieldName, value: logChunks[i], inline: false });
+                    }
                 }
             }
 
