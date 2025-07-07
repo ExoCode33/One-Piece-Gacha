@@ -1,4 +1,4 @@
-// NEW DETAILED 3-TURN COMBAT SYSTEM
+// COMPLETE 3-TURN COMBAT SYSTEM
 // Turn-based combat with elemental advantages and detailed logs
 
 const DatabaseManager = require('../database/manager');
@@ -18,135 +18,6 @@ class CombatSystem {
             'gravity': ['all'],
             'soul': ['neutral'],
             'neutral': []
-        }
-
-    // Start PvP combat with detailed turns
-    async startPvPCombat(attackerId, defenderId, attackerName, defenderName) {
-        try {
-            console.log(`⚔️ Starting DETAILED PvP combat: ${attackerName} vs ${defenderName}`);
-            
-            // Get both players' stats and fruits
-            const attackerStats = await this.getUserStats(attackerId);
-            const defenderStats = await this.getUserStats(defenderId);
-            
-            const attackerFruits = await this.getUserFruits(attackerId);
-            const defenderFruits = await this.getUserFruits(defenderId);
-            
-            // Fallback fruits if needed
-            const attackerActiveFruits = attackerFruits.length > 0 ? attackerFruits : [{ fruit_name: 'Gomu Gomu no Mi', rarity: 'common', duplicate_count: 1 }];
-            const defenderActiveFruits = defenderFruits.length > 0 ? defenderFruits : [{ fruit_name: 'Bara Bara no Mi', rarity: 'common', duplicate_count: 1 }];
-            
-            // Initialize combat
-            let attackerHP = 100;
-            let defenderHP = 100;
-            const combatLog = [];
-            
-            combatLog.push(`🏟️ **PvP BATTLE BEGINS!**`);
-            combatLog.push(`👤 **${attackerName}** (${attackerStats.totalCP} CP) vs 👥 **${defenderName}** (${defenderStats.totalCP} CP)`);
-            combatLog.push(`💖 Both fighters start at 100/100 HP\n`);
-            
-            // 3 detailed turns of PvP combat
-            for (let turn = 1; turn <= 3 && attackerHP > 0 && defenderHP > 0; turn++) {
-                combatLog.push(`═══════════════════════════════════════`);
-                combatLog.push(`🗡️ **TURN ${turn}**`);
-                combatLog.push(`═══════════════════════════════════════`);
-                
-                // === ATTACKER'S TURN ===
-                combatLog.push(`\n👤 **${attackerName}'s Attack:**`);
-                const attackerFruit = attackerActiveFruits[Math.floor(Math.random() * attackerActiveFruits.length)];
-                const defenderDefenseFruit = defenderActiveFruits[Math.floor(Math.random() * defenderActiveFruits.length)];
-                
-                const attackerAttack = this.calculateDamage(attackerStats.totalCP, attackerFruit, defenderDefenseFruit);
-                
-                combatLog.push(`🍈 Using: **${attackerFruit.fruit_name}** (${attackerAttack.attackerElement.toUpperCase()})`);
-                combatLog.push(`🛡️ ${defenderName} defends with: **${defenderDefenseFruit.fruit_name}** (${attackerAttack.defenderElement.toUpperCase()})`);
-                combatLog.push(this.getElementalDescription(attackerAttack.attackerElement, attackerAttack.defenderElement, attackerAttack.elementalMultiplier));
-                
-                if (attackerAttack.isCritical) {
-                    combatLog.push(`⭐ **CRITICAL HIT!** ${attackerName} gets a rarity bonus!`);
-                }
-                
-                const oldDefenderHP = defenderHP;
-                defenderHP = Math.max(0, defenderHP - attackerAttack.damage);
-                combatLog.push(`💥 **${attackerAttack.damage}** damage dealt!`);
-                combatLog.push(`👥 ${defenderName}: ${oldDefenderHP}/100 → **${defenderHP}/100 HP**`);
-                
-                if (defenderHP <= 0) {
-                    combatLog.push(`\n🏆 **KNOCKOUT!** ${defenderName} is defeated in Turn ${turn}!`);
-                    break;
-                }
-                
-                // === DEFENDER'S TURN ===
-                combatLog.push(`\n👥 **${defenderName}'s Counter-Attack:**`);
-                const defenderAttackFruit = defenderActiveFruits[Math.floor(Math.random() * defenderActiveFruits.length)];
-                const attackerDefenseFruit = attackerActiveFruits[Math.floor(Math.random() * attackerActiveFruits.length)];
-                
-                const defenderAttack = this.calculateDamage(defenderStats.totalCP, defenderAttackFruit, attackerDefenseFruit);
-                
-                combatLog.push(`🍈 Using: **${defenderAttackFruit.fruit_name}** (${defenderAttack.attackerElement.toUpperCase()})`);
-                combatLog.push(`🛡️ ${attackerName} defends with: **${attackerDefenseFruit.fruit_name}** (${defenderAttack.defenderElement.toUpperCase()})`);
-                combatLog.push(this.getElementalDescription(defenderAttack.attackerElement, defenderAttack.defenderElement, defenderAttack.elementalMultiplier));
-                
-                if (defenderAttack.isCritical) {
-                    combatLog.push(`⭐ **CRITICAL HIT!** ${defenderName} gets lucky!`);
-                }
-                
-                const oldAttackerHP = attackerHP;
-                attackerHP = Math.max(0, attackerHP - defenderAttack.damage);
-                combatLog.push(`💥 **${defenderAttack.damage}** damage dealt!`);
-                combatLog.push(`👤 ${attackerName}: ${oldAttackerHP}/100 → **${attackerHP}/100 HP**`);
-                
-                if (attackerHP <= 0) {
-                    combatLog.push(`\n💀 **KNOCKOUT!** ${attackerName} is defeated in Turn ${turn}!`);
-                    break;
-                }
-                
-                // Turn summary
-                combatLog.push(`\n📊 **Turn ${turn} Summary:**`);
-                combatLog.push(`👤 ${attackerName}: ${attackerHP}/100 HP | 👥 ${defenderName}: ${defenderHP}/100 HP`);
-                
-                if (turn < 3 && attackerHP > 0 && defenderHP > 0) {
-                    combatLog.push(`⏭️ Moving to Turn ${turn + 1}...\n`);
-                }
-            }
-            
-            // Final result
-            combatLog.push(`\n🏁 **PvP BATTLE CONCLUDED!**`);
-            const result = attackerHP > defenderHP ? 'victory' : 'defeat';
-            
-            if (result === 'victory') {
-                combatLog.push(`🎉 **VICTORY!** ${attackerName} defeated ${defenderName}!`);
-            } else {
-                combatLog.push(`💀 **DEFEAT!** ${defenderName} proved too strong!`);
-            }
-            
-            // Calculate rewards for victory
-            let rewards = null;
-            if (result === 'victory') {
-                const berryReward = Math.floor(Math.random() * 500) + 200;
-                rewards = {
-                    berries: berryReward,
-                    fruits: []
-                };
-            }
-            
-            console.log(`🎯 DETAILED PvP result: ${result} for ${attackerName} vs ${defenderName}`);
-            
-            return {
-                success: true,
-                result,
-                attackerHP: attackerHP,
-                defenderHP: defenderHP,
-                combatLog,
-                rewards
-            };
-            
-        } catch (error) {
-            console.error('Detailed PvP combat error:', error);
-            return {
-                success: false,
-                error: 'PvP combat system error. Please try again.'
-            };
         };
 
         // Rarity-based critical hit chances
@@ -256,7 +127,6 @@ class CombatSystem {
 
     async performDetailedCombat(userId, username, userStats, userFruits) {
         try {
-
             // NPC data with detailed fruits
             const npcFruits = [
                 { fruit_name: 'Mera Mera no Mi', rarity: 'rare' },
@@ -384,6 +254,136 @@ class CombatSystem {
             return {
                 success: false,
                 error: 'Combat execution error. Please try again.'
+            };
+        }
+    }
+
+    // Start PvP combat with detailed turns
+    async startPvPCombat(attackerId, defenderId, attackerName, defenderName) {
+        try {
+            console.log(`⚔️ Starting DETAILED PvP combat: ${attackerName} vs ${defenderName}`);
+            
+            // Get both players' stats and fruits
+            const attackerStats = await this.getUserStats(attackerId);
+            const defenderStats = await this.getUserStats(defenderId);
+            
+            const attackerFruits = await this.getUserFruits(attackerId);
+            const defenderFruits = await this.getUserFruits(defenderId);
+            
+            // Fallback fruits if needed
+            const attackerActiveFruits = attackerFruits.length > 0 ? attackerFruits : [{ fruit_name: 'Gomu Gomu no Mi', rarity: 'common', duplicate_count: 1 }];
+            const defenderActiveFruits = defenderFruits.length > 0 ? defenderFruits : [{ fruit_name: 'Bara Bara no Mi', rarity: 'common', duplicate_count: 1 }];
+            
+            // Initialize combat
+            let attackerHP = 100;
+            let defenderHP = 100;
+            const combatLog = [];
+            
+            combatLog.push(`🏟️ **PvP BATTLE BEGINS!**`);
+            combatLog.push(`👤 **${attackerName}** (${attackerStats.totalCP} CP) vs 👥 **${defenderName}** (${defenderStats.totalCP} CP)`);
+            combatLog.push(`💖 Both fighters start at 100/100 HP\n`);
+            
+            // 3 detailed turns of PvP combat
+            for (let turn = 1; turn <= 3 && attackerHP > 0 && defenderHP > 0; turn++) {
+                combatLog.push(`═══════════════════════════════════════`);
+                combatLog.push(`🗡️ **TURN ${turn}**`);
+                combatLog.push(`═══════════════════════════════════════`);
+                
+                // === ATTACKER'S TURN ===
+                combatLog.push(`\n👤 **${attackerName}'s Attack:**`);
+                const attackerFruit = attackerActiveFruits[Math.floor(Math.random() * attackerActiveFruits.length)];
+                const defenderDefenseFruit = defenderActiveFruits[Math.floor(Math.random() * defenderActiveFruits.length)];
+                
+                const attackerAttack = this.calculateDamage(attackerStats.totalCP, attackerFruit, defenderDefenseFruit);
+                
+                combatLog.push(`🍈 Using: **${attackerFruit.fruit_name}** (${attackerAttack.attackerElement.toUpperCase()})`);
+                combatLog.push(`🛡️ ${defenderName} defends with: **${defenderDefenseFruit.fruit_name}** (${attackerAttack.defenderElement.toUpperCase()})`);
+                combatLog.push(this.getElementalDescription(attackerAttack.attackerElement, attackerAttack.defenderElement, attackerAttack.elementalMultiplier));
+                
+                if (attackerAttack.isCritical) {
+                    combatLog.push(`⭐ **CRITICAL HIT!** ${attackerName} gets a rarity bonus!`);
+                }
+                
+                const oldDefenderHP = defenderHP;
+                defenderHP = Math.max(0, defenderHP - attackerAttack.damage);
+                combatLog.push(`💥 **${attackerAttack.damage}** damage dealt!`);
+                combatLog.push(`👥 ${defenderName}: ${oldDefenderHP}/100 → **${defenderHP}/100 HP**`);
+                
+                if (defenderHP <= 0) {
+                    combatLog.push(`\n🏆 **KNOCKOUT!** ${defenderName} is defeated in Turn ${turn}!`);
+                    break;
+                }
+                
+                // === DEFENDER'S TURN ===
+                combatLog.push(`\n👥 **${defenderName}'s Counter-Attack:**`);
+                const defenderAttackFruit = defenderActiveFruits[Math.floor(Math.random() * defenderActiveFruits.length)];
+                const attackerDefenseFruit = attackerActiveFruits[Math.floor(Math.random() * attackerActiveFruits.length)];
+                
+                const defenderAttack = this.calculateDamage(defenderStats.totalCP, defenderAttackFruit, attackerDefenseFruit);
+                
+                combatLog.push(`🍈 Using: **${defenderAttackFruit.fruit_name}** (${defenderAttack.attackerElement.toUpperCase()})`);
+                combatLog.push(`🛡️ ${attackerName} defends with: **${attackerDefenseFruit.fruit_name}** (${defenderAttack.defenderElement.toUpperCase()})`);
+                combatLog.push(this.getElementalDescription(defenderAttack.attackerElement, defenderAttack.defenderElement, defenderAttack.elementalMultiplier));
+                
+                if (defenderAttack.isCritical) {
+                    combatLog.push(`⭐ **CRITICAL HIT!** ${defenderName} gets lucky!`);
+                }
+                
+                const oldAttackerHP = attackerHP;
+                attackerHP = Math.max(0, attackerHP - defenderAttack.damage);
+                combatLog.push(`💥 **${defenderAttack.damage}** damage dealt!`);
+                combatLog.push(`👤 ${attackerName}: ${oldAttackerHP}/100 → **${attackerHP}/100 HP**`);
+                
+                if (attackerHP <= 0) {
+                    combatLog.push(`\n💀 **KNOCKOUT!** ${attackerName} is defeated in Turn ${turn}!`);
+                    break;
+                }
+                
+                // Turn summary
+                combatLog.push(`\n📊 **Turn ${turn} Summary:**`);
+                combatLog.push(`👤 ${attackerName}: ${attackerHP}/100 HP | 👥 ${defenderName}: ${defenderHP}/100 HP`);
+                
+                if (turn < 3 && attackerHP > 0 && defenderHP > 0) {
+                    combatLog.push(`⏭️ Moving to Turn ${turn + 1}...\n`);
+                }
+            }
+            
+            // Final result
+            combatLog.push(`\n🏁 **PvP BATTLE CONCLUDED!**`);
+            const result = attackerHP > defenderHP ? 'victory' : 'defeat';
+            
+            if (result === 'victory') {
+                combatLog.push(`🎉 **VICTORY!** ${attackerName} defeated ${defenderName}!`);
+            } else {
+                combatLog.push(`💀 **DEFEAT!** ${defenderName} proved too strong!`);
+            }
+            
+            // Calculate rewards for victory
+            let rewards = null;
+            if (result === 'victory') {
+                const berryReward = Math.floor(Math.random() * 500) + 200;
+                rewards = {
+                    berries: berryReward,
+                    fruits: []
+                };
+            }
+            
+            console.log(`🎯 DETAILED PvP result: ${result} for ${attackerName} vs ${defenderName}`);
+            
+            return {
+                success: true,
+                result,
+                attackerHP: attackerHP,
+                defenderHP: defenderHP,
+                combatLog,
+                rewards
+            };
+            
+        } catch (error) {
+            console.error('Detailed PvP combat error:', error);
+            return {
+                success: false,
+                error: 'PvP combat system error. Please try again.'
             };
         }
     }
