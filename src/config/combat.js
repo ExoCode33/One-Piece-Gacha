@@ -29,6 +29,8 @@ class CombatSystem {
             light: ['darkness'],
             darkness: ['light']
         };
+        
+        console.log('🔧 Enhanced Combat System initialized with animation support');
     }
 
     calculateTotalHP(totalCP) {
@@ -367,9 +369,25 @@ class CombatSystem {
         };
     }
 
+    // Debug method to verify combat system
+    getSystemInfo() {
+        return {
+            status: 'Combat System Loaded',
+            methods: [
+                'startNPCCombatWithAnimation',
+                'startPvPCombatWithAnimation', 
+                'performAdvancedCombat',
+                'getUserFruits',
+                'getUserStats'
+            ],
+            hasAnimation: typeof RaidAnimation !== 'undefined'
+        };
+    }
+
     async startNPCCombatWithAnimation(userId, username, interaction) {
         try {
             console.log(`🤖 Starting ULTIMATE NPC combat for ${username}`);
+            console.log(`🔧 Combat system methods available:`, Object.getOwnPropertyNames(this));
             
             const userFruits = await this.getUserFruits(userId);
             const userStats = await this.getUserStats(userId);
@@ -394,8 +412,14 @@ class CombatSystem {
             let playerHP = playerMaxHP;
             let npcHP = npcMaxHP;
 
-            // Play ship animation using external system
-            await RaidAnimation.playQuickAnimation(interaction, 'combat');
+            // Try animation system
+            try {
+                await RaidAnimation.playQuickAnimation(interaction, 'combat');
+            } catch (animError) {
+                console.error('Animation error, continuing without animation:', animError);
+                await interaction.editReply({ content: '🌊 Ship approaching...' });
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
 
             // Battle arena setup
             const arenaEmbed = {
@@ -482,10 +506,14 @@ class CombatSystem {
 
             await interaction.editReply({ embeds: [resultEmbed] });
 
-            // Play victory animation if won
+            // Try victory animation if won
             if (victory) {
-                await new Promise(resolve => setTimeout(resolve, 2000));
-                await RaidAnimation.playVictoryAnimation(interaction);
+                try {
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    await RaidAnimation.playVictoryAnimation(interaction);
+                } catch (animError) {
+                    console.log('Victory animation failed, skipping:', animError);
+                }
             }
 
             return {
@@ -503,7 +531,7 @@ class CombatSystem {
             console.error('Ultimate NPC combat error:', error);
             return {
                 success: false,
-                message: "❌ Combat system error occurred."
+                message: `❌ Combat system error: ${error.message}`
             };
         }
     }
@@ -646,7 +674,14 @@ class CombatSystem {
     }
 }
 
-module.exports = new CombatSystem();// ENHANCED COMBAT SYSTEM WITH FULL SHIP ANIMATION
+// Create and export the combat system instance
+const combatSystemInstance = new CombatSystem();
+
+// Add debugging to verify methods exist
+console.log('🔧 Combat System methods:', Object.getOwnPropertyNames(combatSystemInstance));
+console.log('🔧 startNPCCombatWithAnimation method exists:', typeof combatSystemInstance.startNPCCombatWithAnimation === 'function');
+
+module.exports = combatSystemInstance;// ENHANCED COMBAT SYSTEM WITH FULL SHIP ANIMATION
 // Complete left-to-right ship animation, all fruits attack, detailed defense system
 
 const DatabaseManager = require('../database/manager');
