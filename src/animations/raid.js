@@ -1,9 +1,7 @@
-// src/animations/raid.js - Enhanced RAID SHIP ANIMATION SYSTEM
-// Handles all ASCII ship animations for raid combat
-
+// src/animations/raid.js - Your Exact Ship Design with Proper Encoding
 class RaidAnimation {
     constructor() {
-        // Your exact ship design (preserved)
+        // Your exact ship design as provided
         this.shipDesign = [
             '⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⠀⠤⠴⠶⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀',
             '⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣶⣾⣿⡟⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀',
@@ -21,8 +19,8 @@ class RaidAnimation {
             '⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠉⠉⠉⠉⠉⠉⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀'
         ];
         
-        this.frameWidth = 70; // Width of the animation frame
-        this.emptyChar = '⠀'; // Empty space character
+        this.frameWidth = 70;
+        this.emptyChar = '⠀'; // Your original Braille empty character
     }
 
     // Create padding for positioning the ship
@@ -91,7 +89,7 @@ class RaidAnimation {
         return frames;
     }
 
-    // NEW METHOD: Quick 3-frame animation for faster combat (NEEDED BY COMBAT SYSTEM)
+    // Quick 3-frame animation for faster combat (NEEDED BY COMBAT SYSTEM)
     async playQuickAnimation(interaction, animationType = 'combat') {
         const quickFrames = [
             {
@@ -171,7 +169,7 @@ class RaidAnimation {
         };
     }
 
-    // NEW METHOD: Victory animation - ship sailing away (NEEDED BY COMBAT SYSTEM)
+    // Victory animation - ship sailing away (NEEDED BY COMBAT SYSTEM)
     async playVictoryAnimation(interaction) {
         const victoryFrames = [
             {
@@ -235,29 +233,6 @@ class RaidAnimation {
         }
     }
 
-    // Get animation titles for different combat types
-    getAnimationTitles(animationType) {
-        const titles = {
-            combat: {
-                start: '🌊 **Preparing for Combat...**',
-                middle: '⚔️ **Engaging in Battle...**',
-                end: '🏴‍☠️ **Combat Ready!**'
-            },
-            pvp: {
-                start: '🌊 **Challenger Approaching...**',
-                middle: '⚔️ **Duel Commencing...**',
-                end: '🏴‍☠️ **Let the Battle Begin!**'
-            },
-            raid: {
-                start: '🌊 **Raid Ship Incoming...**',
-                middle: '⚔️ **Raid in Progress...**',
-                end: '🏴‍☠️ **Raid Engaged!**'
-            }
-        };
-        
-        return titles[animationType] || titles.combat;
-    }
-
     // Test animation method for debugging
     async testAnimation(interaction) {
         try {
@@ -271,5 +246,5 @@ class RaidAnimation {
     }
 }
 
-// Export as singleton instance (like your original)
+// Export as singleton instance
 module.exports = new RaidAnimation();
