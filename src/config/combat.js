@@ -11,8 +11,8 @@ class CombatSystem {
         console.log(`🤖 Starting NPC combat for ${username}`);
         
         try {
-            // Use the improved slow ship animation
-            await this.playSlowShipAnimation(interaction, 'combat');
+            // Use the existing RaidAnimation system
+            await RaidAnimation.playQuickAnimation(interaction, 'combat');
             
             // Simple battle logic
             const victory = Math.random() > 0.4; // 60% win chance
@@ -35,7 +35,7 @@ class CombatSystem {
             // Victory animation
             if (victory) {
                 await new Promise(resolve => setTimeout(resolve, 1000));
-                await this.playVictoryAnimation(interaction);
+                await RaidAnimation.playVictoryAnimation(interaction);
             }
 
             return {
@@ -57,8 +57,8 @@ class CombatSystem {
         console.log(`⚔️ Starting PvP: ${attackerName} vs ${defenderName}`);
         
         try {
-            // Use the improved slow ship animation
-            await this.playSlowShipAnimation(interaction, 'pvp');
+            // Use the existing RaidAnimation system
+            await RaidAnimation.playQuickAnimation(interaction, 'pvp');
             
             // Simple PvP logic
             const attackerVictory = Math.random() > 0.5; // 50/50 chance
@@ -81,7 +81,7 @@ class CombatSystem {
             // Victory animation for winner
             if (attackerVictory) {
                 await new Promise(resolve => setTimeout(resolve, 1000));
-                await this.playVictoryAnimation(interaction);
+                await RaidAnimation.playVictoryAnimation(interaction);
             }
 
             return {
@@ -100,39 +100,40 @@ class CombatSystem {
         }
     }
 
-    // Improved slower ship animation
+    // Improved slower ship animation with ORIGINAL design
     async playSlowShipAnimation(interaction, animationType = 'combat') {
         const ship = [
-            "                    |\\",
-            "                    | \\",
-            "                    |  \\",
-            "               _____|   \\____",
-            "       _______/              \\_______",
-            "      /                              \\",
-            "     |    🏴‍☠️  ONE PIECE SHIP  🏴‍☠️    |",
-            "     |________________________________|",
-            "      \\______________________________/",
-            "        \\_________________________/",
-            "          \\____________________/",
-            "            \\_______________/",
-            "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+            "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⠀⠤⠴⠶⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣶⣾⣿⡟⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠀⠀⠂⠉⡇⠀⠀⠀⢰⣿⣿⣿⣿⣧⠀⠀⢀⣄⣀⠀⠀⠀⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠀⢠⣶⣶⣷⠀⠀⠀⠸⠟⠁⠀⡇⠀⠀⠀⠀⠀⢹⠀⠀⠀⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠀⠘⠟⢹⣋⣀⡀⢀⣤⣶⣿⣿⣿⣿⣿⡿⠛⣠⣼⣿⡟⠀⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⣴⣾⣿⣿⣿⣿⢁⣾⣿⣿⣿⣿⣿⣿⡿⢁⣾⣿⣿⣿⠁⠀⠀⠀⠀",
+            "⠀⠀⠀⠀⠸⣿⣿⣿⣿⣿⣿⢸⣿⣿⣿⣿⣿⣿⣿⡇⢸⣿⣿⣿⠿⠇⠀⠀⠀⠀",
+            "⠀⠀⠀⠳⣤⣙⠟⠛⢻⠿⣿⠸⣿⣿⣿⣿⣿⣿⣿⣇⠘⠉⠀⢸⠀⢀⣠⠀⠀⠀",
+            "⠀⠀⠀⠀⠈⠻⣷⣦⣼⠀⠀⠀⢻⣿⣿⠿⢿⡿⠿⣿⡄⠀⠀⣼⣷⣿⣿⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠀⠈⣿⣿⣿⣶⣄⡈⠉⠀⠀⢸⡇⠀⠀⠉⠂⠀⣿⣿⣿⣧⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠀⠀⠘⣿⣿⣿⣿⣿⣷⣤⣀⣸⣧⣠⣤⣴⣶⣾⣿⣿⣿⡿⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠇⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠀⠀⠀⠘⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠟⠛⠉⠀⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠉⠉⠉⠉⠉⠉⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"
         ];
 
         // Create smoother animation frames with proper positioning
         const frames = [
             {
                 title: '🌊 **A ship appears on the distant horizon...**',
-                ship: this.positionShip(ship, 30), // Far right
+                ship: this.positionShip(ship, 20), // Far right
                 delay: 2000
             },
             {
                 title: '🚢 **The battle ship sails closer...**',
-                ship: this.positionShip(ship, 20), // Moving in
+                ship: this.positionShip(ship, 15), // Moving in
                 delay: 1800
             },
             {
                 title: '⚔️ **Ship entering combat position...**',
-                ship: this.positionShip(ship, 10), // Getting closer
+                ship: this.positionShip(ship, 8), // Getting closer
                 delay: 1600
             },
             {
@@ -191,27 +192,60 @@ class CombatSystem {
         return colors[type] || colors.combat;
     }
 
-    // Victory animation - ship sailing away slowly
+    // Victory animation - ship sailing away slowly with ORIGINAL design
     async playVictoryAnimation(interaction) {
         const ship = [
-            "                    |\\",
-            "                    | \\",
-            "                    |  \\",
-            "               _____|   \\____",
-            "       _______/              \\_______",
-            "      /                              \\",
-            "     |    🏆  VICTORY SHIP  🏆      |",
-            "     |________________________________|",
-            "      \\______________________________/",
-            "        \\_________________________/",
-            "          \\____________________/",
-            "            \\_______________/",
-            "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+            "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⠀⠤⠴⠶⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣶⣾⣿⡟⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠀⠀⠂⠉⡇⠀⠀⠀⢰⣿⣿⣿⣿⣧⠀⠀⢀⣄⣀⠀⠀⠀⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠀⢠⣶⣶⣷⠀⠀⠀⠸⠟⠁⠀⡇⠀⠀⠀⠀⠀⢹⠀⠀⠀⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠀⠘⠟⢹⣋⣀⡀⢀⣤⣶⣿⣿⣿⣿⣿⡿⠛⣠⣼⣿⡟⠀⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⣴⣾⣿⣿⣿⣿⢁⣾⣿⣿⣿⣿⣿⣿⡿⢁⣾⣿⣿⣿⠁⠀⠀⠀⠀",
+            "⠀⠀⠀⠀⠸⣿⣿⣿⣿⣿⣿⢸⣿⣿⣿⣿⣿⣿⣿⡇⢸⣿⣿⣿⠿⠇⠀⠀⠀⠀",
+            "⠀⠀⠀⠳⣤⣙⠟⠛⢻⠿⣿⠸⣿⣿⣿⣿⣿⣿⣿⣇⠘⠉⠀⢸⠀⢀⣠⠀⠀⠀",
+            "⠀⠀⠀⠀⠈⠻⣷⣦⣼⠀⠀⠀⢻⣿⣿⠿⢿⡿⠿⣿⡄⠀⠀⣼⣷⣿⣿⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠀⠈⣿⣿⣿⣶⣄⡈⠉⠀⠀⢸⡇⠀⠀⠉⠂⠀⣿⣿⣿⣧⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠀⠀⠘⣿⣿⣿⣿⣿⣷⣤⣀⣸⣧⣠⣤⣴⣶⣾⣿⣿⣿⡿⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠇⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠀⠀⠀⠘⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠟⠛⠉⠀⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠉⠉⠉⠉⠉⠉⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"
         ];
 
         const victoryFrames = [
             {
                 title: '🏆 **VICTORY! Ship beginning departure...**',
+                ship: this.positionShip(ship, 0),
+                delay: 2000
+            },
+            {
+                title: '⛵ **Sailing towards the sunset...**',
+                ship: this.positionShip(ship, -8),
+                delay: 2000
+            },
+            {
+                title: '🌅 **Until the next adventure!**',
+                ship: this.positionShip(ship, -15),
+                delay: 1500
+            }
+        ];
+        
+        for (let i = 0; i < victoryFrames.length; i++) {
+            const frame = victoryFrames[i];
+            
+            const embed = {
+                title: frame.title,
+                description: `\`\`\`\n${frame.ship}\n\`\`\``,
+                color: 0x00FF00, // Victory green
+                timestamp: new Date().toISOString()
+            };
+            
+            await interaction.editReply({ embed: [embed] });
+            
+            if (i < victoryFrames.length - 1) {
+                await new Promise(resolve => setTimeout(resolve, frame.delay));
+            }
+        }
+    }...**',
                 ship: this.positionShip(ship, 0),
                 delay: 2000
             },
