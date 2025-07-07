@@ -1,4 +1,3 @@
-// ENHANCED COMBAT SYSTEM WITH TRUE LEFT-TO-RIGHT SHIP ANIMATION
 const DatabaseManager = require('../database/manager');
 
 class CombatSystem {
@@ -132,7 +131,7 @@ class CombatSystem {
         return Math.max(damage, 5);
     }
 
-    // TRUE LEFT-TO-RIGHT SHIP SAILING ANIMATION, NO DESIGN BREAK!
+    // LEFT-TO-RIGHT SHIP SAILING ANIMATION, NO DESIGN BREAK
     getShipAnimationFrames() {
         const ship = [
 "      ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣶⣾⣿⡟⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
@@ -150,13 +149,12 @@ class CombatSystem {
 "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠉⠉⠉⠉⠉⠉⠉⠉⠀⠀⠀⠀"
         ];
 
-        const maxWidth = 62; // adjust if needed for your Discord window
-        const totalFrames = maxWidth - 12; // fits full ship crossing
+        const maxWidth = 62;
+        const totalFrames = maxWidth - 12;
         const frames = [];
         for (let offset = 0; offset < totalFrames; offset++) {
             const paddedShip = ship.map(line => {
                 let lpad = " ".repeat(offset);
-                // Crop so no line exceeds maxWidth, always complete
                 return (lpad + line).slice(0, maxWidth);
             });
             frames.push({
@@ -245,21 +243,9 @@ class CombatSystem {
             title: `⚔️ **TURN ${turn} - ALL DEVIL FRUITS UNLEASHED!**`,
             description: `**${attackerName}** unleashes **ALL ${totalFruits} Devil Fruits** in a devastating barrage!`,
             fields: [
-                {
-                    name: '🍈 Attacking Fruits',
-                    value: attackerFruits.slice(0, 5).map(f => f.fruit_name).join('\n') + (totalFruits > 5 ? `\n+${totalFruits - 5} more...` : ''),
-                    inline: true
-                },
-                {
-                    name: '🛡️ Defending Fruits',
-                    value: defenderFruits.slice(0, 5).map(f => f.fruit_name).join('\n') + (defenderFruits.length > 5 ? `\n+${defenderFruits.length - 5} more...` : ''),
-                    inline: true
-                },
-                {
-                    name: '🎯 Combat Info',
-                    value: `Target: ${defenderName}\nHP: ${currentDefenderHP}/${defenderMaxHP}\nTotal Attacks: ${totalFruits}`,
-                    inline: true
-                }
+                { name: '🍈 Attacking Fruits', value: attackerFruits.slice(0, 5).map(f => f.fruit_name).join('\n') + (totalFruits > 5 ? `\n+${totalFruits - 5} more...` : ''), inline: true },
+                { name: '🛡️ Defending Fruits', value: defenderFruits.slice(0, 5).map(f => f.fruit_name).join('\n') + (defenderFruits.length > 5 ? `\n+${defenderFruits.length - 5} more...` : ''), inline: true },
+                { name: '🎯 Combat Info', value: `Target: ${defenderName}\nHP: ${currentDefenderHP}/${defenderMaxHP}\nTotal Attacks: ${totalFruits}`, inline: true }
             ],
             color: 0x8A2BE2,
             timestamp: new Date().toISOString()
@@ -297,7 +283,6 @@ class CombatSystem {
 
             const originalDamage = this.calculateDamage(attackerCP, attackerFruit, defenderFruits[0], defenderMaxHP, false, false);
             const finalDamage = this.calculateDamage(attackerCP, attackerFruit, defenderFruits[0], defenderMaxHP, blocked, resisted);
-            const beforeHP = currentDefenderHP;
             currentDefenderHP = Math.max(0, currentDefenderHP - finalDamage);
 
             // Track statistics
@@ -321,30 +306,10 @@ class CombatSystem {
                 title: `${defenseInfo.icon} **ATTACK ${i + 1}/${totalFruits} - ${defenseInfo.type}!**`,
                 description: defenseInfo.description,
                 fields: [
-                    {
-                        name: '🍈 Attacking Fruit',
-                        value: `${attackerFruit.fruit_name}\nElement: ${attackerElement.toUpperCase()}\nRarity: ${attackerFruit.rarity.toUpperCase()}`,
-                        inline: true
-                    },
-                    {
-                        name: '🛡️ Defense Analysis',
-                        value: blockingFruit ?
-                            `${blockingFruit.fruit_name}\nElement: ${this.getFruitElement(blockingFruit.fruit_name).toUpperCase()}\nType: ${defenseInfo.type}` :
-                            `No Defense\nElement: NONE\nType: VULNERABLE`,
-                        inline: true
-                    },
-                    {
-                        name: '💥 Damage Report',
-                        value: blocked ?
-                            `Original: ${originalDamage}\nFinal: 0\nReduction: 100%` :
-                            `Original: ${originalDamage}\nFinal: ${finalDamage}\nReduction: ${Math.floor(((originalDamage - finalDamage) / originalDamage) * 100)}%`,
-                        inline: true
-                    },
-                    {
-                        name: '💖 Health Status',
-                        value: `${hpBar.bar}\n${hpBar.text}\nStatus: ${hpBar.status}`,
-                        inline: false
-                    }
+                    { name: '🍈 Attacking Fruit', value: `${attackerFruit.fruit_name}\nElement: ${attackerElement.toUpperCase()}\nRarity: ${attackerFruit.rarity.toUpperCase()}`, inline: true },
+                    { name: '🛡️ Defense Analysis', value: blockingFruit ? `${blockingFruit.fruit_name}\nElement: ${this.getFruitElement(blockingFruit.fruit_name).toUpperCase()}\nType: ${defenseInfo.type}` : `No Defense\nElement: NONE\nType: VULNERABLE`, inline: true },
+                    { name: '💥 Damage Report', value: blocked ? `Original: ${originalDamage}\nFinal: 0\nReduction: 100%` : `Original: ${originalDamage}\nFinal: ${finalDamage}\nReduction: ${Math.floor(((originalDamage - finalDamage) / originalDamage) * 100)}%`, inline: true },
+                    { name: '💖 Health Status', value: `${hpBar.bar}\n${hpBar.text}\nStatus: ${hpBar.status}`, inline: false }
                 ],
                 color: defenseInfo.color,
                 timestamp: new Date().toISOString()
@@ -382,4 +347,29 @@ class CombatSystem {
                 { name: '🎯 Successful Hits', value: `${successfulAttacks}`, inline: true },
                 { name: '📈 Success Rate', value: `${successRate}%`, inline: true },
                 { name: '🛡️ Perfect Blocks', value: `${attacksBlocked}`, inline: true },
-                { name: '
+                { name: '🔄 Resisted Attacks', value: `${attacksResisted}`, inline: true },
+                { name: '💥 Total Damage', value: `${totalDamage}`, inline: true },
+                { name: '💖 Defender HP', value: `${currentDefenderHP}/${defenderMaxHP} (${Math.floor((currentDefenderHP/defenderMaxHP)*100)}%)`, inline: false }
+            ],
+            color: currentDefenderHP > 0 ? 0x1E90FF : 0x8B0000,
+            timestamp: new Date().toISOString()
+        };
+
+        await interaction.editReply({ embeds: [summaryEmbed] });
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        return {
+            finalHP: currentDefenderHP,
+            totalDamage,
+            attacksBlocked,
+            attacksResisted,
+            successfulAttacks,
+            successRate
+        };
+    }
+
+    // (Your NPC and PvP battle methods go here, unchanged!)
+
+}
+
+module.exports = new CombatSystem();
