@@ -16,10 +16,100 @@ module.exports = {
 
         try {
             if (target) {
-                return await interaction.reply({
-                    content: '⚔️ **PvP Coming Soon!**\nFor now, use `/raid` without a target to fight the test NPC!',
-                    ephemeral: true
-                });
+                // Basic PvP implementation
+                const attackerId = user.id;
+                const targetId = target.id;
+
+                // Basic validation
+                if (attackerId === targetId) {
+                    return await interaction.reply({
+                        content: '❌ You cannot raid yourself! Use `/raid` without a target to fight the test NPC.',
+                        ephemeral: true
+                    });
+                }
+
+                if (target.bot) {
+                    return await interaction.reply({
+                        content: '❌ You cannot raid bots! Use `/raid` without a target to fight the test NPC.',
+                        ephemeral: true
+                    });
+                }
+
+                // Get both players' stats
+                let attackerStats = { totalCP: 100, totalFruits: 1 };
+                let targetStats = { totalCP: 100, totalFruits: 1 };
+
+                try {
+                    const CombatSystem = require('../systems/combat');
+                    attackerStats = await CombatSystem.getUserStats(attackerId);
+                    targetStats = await CombatSystem.getUserStats(targetId);
+                } catch (error) {
+                    console.warn('Combat system not available for PvP, using defaults');
+                }
+
+                // Basic validation
+                if (attackerStats.totalCP === 0) {
+                    return await interaction.reply({
+                        content: '❌ **No Combat Power**\nYou need Devil Fruits to raid other players!\n💡 Use `/pull` to get Devil Fruits first.',
+                        ephemeral: true
+                    });
+                }
+
+                if (targetStats.totalCP === 0) {
+                    return await interaction.reply({
+                        content: '❌ **Invalid Target**\nTarget has no Devil Fruits to raid!\n💡 Try fighting the test NPC instead.',
+                        ephemeral: true
+                    });
+                }
+
+                // Calculate battle prediction
+                const cpDifference = attackerStats.totalCP - targetStats.totalCP;
+                const baseChance = 50;
+                const cpBonus = Math.floor(cpDifference / 100) * 5;
+                const winChance = Math.max(10, Math.min(90, baseChance + cpBonus));
+
+                let outcome;
+                if (winChance >= 70) {
+                    outcome = 'Highly Favored';
+                } else if (winChance >= 55) {
+                    outcome = 'Favored';
+                } else if (winChance >= 45) {
+                    outcome = 'Even Match';
+                } else if (winChance >= 30) {
+                    outcome = 'Underdog';
+                } else {
+                    outcome = 'Heavy Underdog';
+                }
+
+                // Execute battle
+                const battleRoll = Math.floor(Math.random() * 100) + 1;
+                const victory = battleRoll <= winChance;
+
+                // Create result embed
+                const embed = new EmbedBuilder()
+                    .setTitle('⚔️ PvP Raid Complete!')
+                    .setDescription(`**${user.username}** vs **${target.username}**`)
+                    .addFields(
+                        { name: '👤 Your Stats', value: `⚔️ ${attackerStats.totalCP} CP\n🍈 ${attackerStats.totalFruits} fruits`, inline: true },
+                        { name: '🎯 Target Stats', value: `⚔️ ${targetStats.totalCP} CP\n🍈 ${targetStats.totalFruits} fruits`, inline: true },
+                        { name: '📊 Prediction', value: `${winChance}% chance\n${outcome}`, inline: true },
+                        { name: '🏆 Result', value: victory ? '**VICTORY!** 🎉' : '**DEFEAT!** 💀', inline: true },
+                        { name: '🎲 Battle Roll', value: `${battleRoll}/100`, inline: true },
+                        { name: '⚔️ Outcome', value: victory ? 'You won the raid!' : 'Better luck next time!', inline: true }
+                    )
+                    .setColor(victory ? 0x00FF00 : 0xFF0000)
+                    .setTimestamp();
+
+                if (victory) {
+                    const berryReward = Math.floor(Math.random() * 500) + 200;
+                    embed.addFields({ 
+                        name: '💰 Loot', 
+                        value: `🫐 **${berryReward} berries** stolen!\n🍈 No fruits stolen this time`, 
+                        inline: false 
+                    });
+                }
+
+                return await interaction.reply({ embeds: [embed] });
             }
 
             // Try to use the real combat system, fallback to simple if not available
