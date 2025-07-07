@@ -16,7 +16,7 @@ module.exports = {
 
         try {
             if (target) {
-                // Basic PvP implementation
+                // Enhanced PvP with detailed turn-based combat
                 const attackerId = user.id;
                 const targetId = target.id;
 
@@ -35,7 +35,7 @@ module.exports = {
                     });
                 }
 
-                // Get both players' stats
+                // Get both players' stats using the combat system
                 let attackerStats = { totalCP: 100, totalFruits: 1 };
                 let targetStats = { totalCP: 100, totalFruits: 1 };
 
@@ -62,54 +62,86 @@ module.exports = {
                     });
                 }
 
-                // Calculate battle prediction
-                const cpDifference = attackerStats.totalCP - targetStats.totalCP;
-                const baseChance = 50;
-                const cpBonus = Math.floor(cpDifference / 100) * 5;
-                const winChance = Math.max(10, Math.min(90, baseChance + cpBonus));
+                // Start PvP with animated combat
+                await interaction.deferReply();
 
-                let outcome;
-                if (winChance >= 70) {
-                    outcome = 'Highly Favored';
-                } else if (winChance >= 55) {
-                    outcome = 'Favored';
-                } else if (winChance >= 45) {
-                    outcome = 'Even Match';
-                } else if (winChance >= 30) {
-                    outcome = 'Underdog';
-                } else {
-                    outcome = 'Heavy Underdog';
-                }
+                try {
+                    // Execute detailed PvP combat
+                    const CombatSystem = require('../systems/combat');
+                    const pvpResult = await CombatSystem.startPvPCombat(attackerId, targetId, user.username, target.username);
 
-                // Execute battle
-                const battleRoll = Math.floor(Math.random() * 100) + 1;
-                const victory = battleRoll <= winChance;
+                    if (!pvpResult.success) {
+                        return await interaction.editReply({
+                            content: `❌ **PvP Combat Error**\n${pvpResult.error}`
+                        });
+                    }
 
-                // Create result embed
-                const embed = new EmbedBuilder()
-                    .setTitle('⚔️ PvP Raid Complete!')
-                    .setDescription(`**${user.username}** vs **${target.username}**`)
-                    .addFields(
-                        { name: '👤 Your Stats', value: `⚔️ ${attackerStats.totalCP} CP\n🍈 ${attackerStats.totalFruits} fruits`, inline: true },
-                        { name: '🎯 Target Stats', value: `⚔️ ${targetStats.totalCP} CP\n🍈 ${targetStats.totalFruits} fruits`, inline: true },
-                        { name: '📊 Prediction', value: `${winChance}% chance\n${outcome}`, inline: true },
-                        { name: '🏆 Result', value: victory ? '**VICTORY!** 🎉' : '**DEFEAT!** 💀', inline: true },
-                        { name: '🎲 Battle Roll', value: `${battleRoll}/100`, inline: true },
-                        { name: '⚔️ Outcome', value: victory ? 'You won the raid!' : 'Better luck next time!', inline: true }
-                    )
-                    .setColor(victory ? 0x00FF00 : 0xFF0000)
-                    .setTimestamp();
+                    // Create animated result with detailed combat log
+                    const embed = new EmbedBuilder()
+                        .setTitle('⚔️ PvP Battle Complete!')
+                        .setDescription(`**${user.username}** vs **${target.username}**`)
+                        .addFields(
+                            { name: '👤 Your Stats', value: `⚔️ ${attackerStats.totalCP} CP\n🍈 ${attackerStats.totalFruits} fruits`, inline: true },
+                            { name: '🎯 Target Stats', value: `⚔️ ${targetStats.totalCP} CP\n🍈 ${targetStats.totalFruits} fruits`, inline: true },
+                            { name: '🏆 Result', value: pvpResult.result === 'victory' ? '**VICTORY!** 🎉' : '**DEFEAT!** 💀', inline: true },
+                            { name: '💖 Your HP', value: `${pvpResult.attackerHP}/100`, inline: true },
+                            { name: '💖 Target HP', value: `${pvpResult.defenderHP}/100`, inline: true },
+                            { name: '⚔️ Battle Type', value: '3-Turn Combat', inline: true }
+                        )
+                        .setColor(pvpResult.result === 'victory' ? 0x00FF00 : 0xFF0000)
+                        .setTimestamp();
 
-                if (victory) {
-                    const berryReward = Math.floor(Math.random() * 500) + 200;
-                    embed.addFields({ 
-                        name: '💰 Loot', 
-                        value: `🫐 **${berryReward} berries** stolen!\n🍈 No fruits stolen this time`, 
-                        inline: false 
+                    // Add detailed combat log - split into chunks if too long
+                    if (pvpResult.combatLog && pvpResult.combatLog.length > 0) {
+                        const fullLog = pvpResult.combatLog.join('\n');
+                        
+                        if (fullLog.length <= 1024) {
+                            embed.addFields({ name: '⚔️ Detailed PvP Battle Log', value: fullLog, inline: false });
+                        } else {
+                            // Split into multiple fields
+                            const logChunks = [];
+                            let currentChunk = '';
+                            
+                            for (const line of pvpResult.combatLog) {
+                                if ((currentChunk + line + '\n').length > 1024) {
+                                    if (currentChunk) logChunks.push(currentChunk);
+                                    currentChunk = line + '\n';
+                                } else {
+                                    currentChunk += line + '\n';
+                                }
+                            }
+                            if (currentChunk) logChunks.push(currentChunk);
+                            
+                            // Add up to 3 log chunks
+                            for (let i = 0; i < Math.min(logChunks.length, 3); i++) {
+                                const fieldName = i === 0 ? '⚔️ Detailed PvP Battle Log' : `⚔️ PvP Battle Log (Part ${i + 1})`;
+                                embed.addFields({ name: fieldName, value: logChunks[i], inline: false });
+                            }
+                        }
+                    }
+
+                    // Add rewards if victory
+                    if (pvpResult.result === 'victory' && pvpResult.rewards) {
+                        let rewardText = '';
+                        if (pvpResult.rewards.berries > 0) {
+                            rewardText += `🫐 **${pvpResult.rewards.berries.toLocaleString()} berries** stolen!\n`;
+                        }
+                        if (pvpResult.rewards.fruits && pvpResult.rewards.fruits.length > 0) {
+                            rewardText += `🍈 **${pvpResult.rewards.fruits.length} fruit(s)** stolen!`;
+                        }
+                        if (rewardText) {
+                            embed.addFields({ name: '💰 Loot', value: rewardText, inline: false });
+                        }
+                    }
+
+                    return await interaction.editReply({ embeds: [embed] });
+
+                } catch (error) {
+                    console.error('PvP combat error:', error);
+                    return await interaction.editReply({
+                        content: '❌ **PvP System Error**\nDetailed PvP combat is not available. Please try again later.'
                     });
                 }
-
-                return await interaction.reply({ embeds: [embed] });
             }
 
             // Try to use the real combat system, fallback to simple if not available
