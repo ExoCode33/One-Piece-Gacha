@@ -1,5 +1,5 @@
 const { SlashCommandBuilder } = require('discord.js');
-const CombatSystem = require('../systems/combat');
+const CombatSystem = require('../config/combat'); // Fixed: was ../systems/combat
 
 module.exports = {
     data: new SlashCommandBuilder()
