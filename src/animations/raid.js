@@ -1,7 +1,7 @@
-// src/animations/raid.js - YOUR EXACT Ship Design Fixed
+// src/animations/raid.js - SHIP ANIMATION WITH MONOSPACE EMBED FIX
 class RaidAnimation {
     constructor() {
-        // YOUR EXACT ship design as provided - unchanged
+        // Your exact ship design as provided - unchanged
         this.shipDesign = [
             '⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⠀⠤⠴⠶⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀',
             '⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣶⣾⣿⡟⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀',
@@ -18,14 +18,14 @@ class RaidAnimation {
             '⠀⠀⠀⠀⠀⠀⠀⠀⠘⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠟⠛⠉⠀⠀⠀⠀',
             '⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠉⠉⠉⠉⠉⠉⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀'
         ];
-        
+
         this.frameWidth = 70;
     }
 
     // Position the ship at a specific horizontal offset
     positionShip(offset) {
         const positioned = [];
-        
+
         for (let line of this.shipDesign) {
             if (offset >= 0) {
                 // Use regular spaces for padding to avoid character mixing
@@ -37,53 +37,53 @@ class RaidAnimation {
                 positioned.push(clippedLine);
             }
         }
-        
+
         return positioned.join('\n');
     }
 
     // Generate complete animation frames - WITHOUT code blocks
     getAnimationFrames() {
         const frames = [];
-        
+
         frames.push({
             title: '🌊 **Ship Approaching from the Horizon...**',
             content: this.positionShip(40) // NO code block wrapper
         });
-        
+
         frames.push({
             title: '🚢 **Battle Ship Entering Combat Zone...**',
             content: this.positionShip(30)
         });
-        
+
         frames.push({
             title: '⚔️ **Ship Sailing Into Position...**',
             content: this.positionShip(20)
         });
-        
+
         frames.push({
             title: '🏴‍☠️ **Ship Ready for Battle!**',
             content: this.positionShip(10)
         });
-        
+
         frames.push({
             title: '💨 **Ship Continuing Across Battlefield...**',
             content: this.positionShip(0)
         });
-        
+
         frames.push({
             title: '🌪️ **Ship Exiting Combat Zone!**',
             content: this.positionShip(-10)
         });
-        
+
         return frames;
     }
 
-    // Quick 3-frame animation for combat - FIXED: No code blocks
+    // Quick 3-frame animation for combat - with code blocks for monospace
     async playQuickAnimation(interaction, animationType = 'combat') {
         const quickFrames = [
             {
                 title: '🌊 **Ship Approaching...**',
-                content: this.positionShip(25) // Raw text, no ```
+                content: this.positionShip(25)
             },
             {
                 title: '⚔️ **Ship Ready for Battle!**',
@@ -94,22 +94,22 @@ class RaidAnimation {
                 content: this.positionShip(0)
             }
         ];
-        
+
         for (let i = 0; i < quickFrames.length; i++) {
             const frame = quickFrames[i];
-            
+
             const embed = {
                 title: frame.title,
-                description: frame.content, // Direct text, no code block
+                description: `\`\`\`\n${frame.content}\n\`\`\``, // WRAP IN CODE BLOCK!
                 color: this.getAnimationColor(animationType),
                 footer: {
                     text: `⚔️ Combat Animation • Frame ${i + 1}/${quickFrames.length}`
                 },
                 timestamp: new Date().toISOString()
             };
-            
+
             await interaction.editReply({ embeds: [embed] });
-            
+
             // Don't delay after the last frame
             if (i < quickFrames.length - 1) {
                 await new Promise(resolve => setTimeout(resolve, 800));
@@ -117,23 +117,23 @@ class RaidAnimation {
         }
     }
 
-    // Play the complete animation - FIXED: No code blocks
+    // Play the complete animation - with code blocks for monospace
     async playAnimation(interaction, animationType = 'combat') {
         const frames = this.getAnimationFrames();
-        
+
         for (let i = 0; i < frames.length; i++) {
             const frame = frames[i];
-            
+
             const embed = {
                 title: frame.title,
-                description: frame.content, // Direct text, no code block
+                description: `\`\`\`\n${frame.content}\n\`\`\``, // WRAP IN CODE BLOCK!
                 color: this.getAnimationColor(animationType),
                 footer: {
                     text: `Animation Frame ${i + 1}/${frames.length}`
                 },
                 timestamp: new Date().toISOString()
             };
-            
+
             await interaction.editReply({ embeds: [embed] });
             await new Promise(resolve => setTimeout(resolve, 1200));
         }
@@ -150,7 +150,7 @@ class RaidAnimation {
         return colors[type] || colors.combat;
     }
 
-    // Victory animation - FIXED: No code blocks
+    // Victory animation - with code blocks for monospace
     async playVictoryAnimation(interaction) {
         const victoryFrames = [
             {
@@ -166,22 +166,22 @@ class RaidAnimation {
                 content: this.positionShip(-30)
             }
         ];
-        
+
         for (let i = 0; i < victoryFrames.length; i++) {
             const frame = victoryFrames[i];
-            
+
             const embed = {
                 title: frame.title,
-                description: frame.content, // Direct text, no code block
+                description: `\`\`\`\n${frame.content}\n\`\`\``, // WRAP IN CODE BLOCK!
                 color: 0x00FF00,
                 footer: {
                     text: `Victory Animation • Frame ${i + 1}/${victoryFrames.length}`
                 },
                 timestamp: new Date().toISOString()
             };
-            
+
             await interaction.editReply({ embeds: [embed] });
-            
+
             if (i < victoryFrames.length - 1) {
                 await new Promise(resolve => setTimeout(resolve, 1000));
             }
