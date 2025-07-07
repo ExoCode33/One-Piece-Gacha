@@ -125,7 +125,40 @@ class CombatSystem {
         }
     }
 
-    async performDetailedCombat(userId, username, userStats, userFruits) {
+    // Animated version for NPC combat
+    async startNPCCombatWithAnimation(userId, username, interaction) {
+        try {
+            console.log(`🤖 Starting ANIMATED NPC combat for ${username}`);
+            
+            // Get user's stats and fruits
+            const userStats = await this.getUserStats(userId);
+            if (userStats.totalCP === 0) {
+                return {
+                    success: false,
+                    error: 'You need Devil Fruits to fight! Use `/pull` to get some first.'
+                };
+            }
+
+            const userFruits = await this.getUserFruits(userId);
+            if (!userFruits || userFruits.length === 0) {
+                console.warn('No fruits found, using default fruit for combat');
+                const defaultFruits = [
+                    { fruit_name: 'Gomu Gomu no Mi', rarity: 'common', duplicate_count: 1 }
+                ];
+                return await this.performDetailedCombat(userId, username, userStats, defaultFruits, interaction);
+            }
+
+            return await this.performDetailedCombat(userId, username, userStats, userFruits, interaction);
+        } catch (error) {
+            console.error('Detailed NPC combat error:', error);
+            return {
+                success: false,
+                error: 'Combat system error. Please try again.'
+            };
+        }
+    }
+
+    async performDetailedCombat(userId, username, userStats, userFruits, interaction = null) {
         try {
             // NPC data with detailed fruits
             const npcFruits = [
@@ -145,8 +178,30 @@ class CombatSystem {
             combatLog.push(`👤 **${username}** (${userStats.totalCP} CP) vs 🤖 **Monkey D. Tester** (${npcCP} CP)`);
             combatLog.push(`💖 Both fighters start at 100/100 HP\n`);
             
-            // 3 detailed turns of combat
+            // 3 detailed turns of combat with animation
             for (let turn = 1; turn <= 3 && playerHP > 0 && npcHP > 0; turn++) {
+                // Show current turn animation if interaction provided
+                if (interaction) {
+                    const turnEmbed = {
+                        title: `⚔️ Turn ${turn} - Battle in Progress!`,
+                        description: `**${username}** vs **Monkey D. Tester**`,
+                        fields: [
+                            { name: '💖 Your HP', value: `${playerHP}/100`, inline: true },
+                            { name: '💖 NPC HP', value: `${npcHP}/100`, inline: true },
+                            { name: '🎮 Status', value: `Executing Turn ${turn}...`, inline: true }
+                        ],
+                        color: 0xFFFF00,
+                        timestamp: new Date().toISOString()
+                    };
+                    
+                    try {
+                        await interaction.editReply({ embeds: [turnEmbed] });
+                        await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second turn delay
+                    } catch (error) {
+                        console.warn('Animation update failed:', error.message);
+                    }
+                }
+                
                 combatLog.push(`═══════════════════════════════════════`);
                 combatLog.push(`🗡️ **TURN ${turn}**`);
                 combatLog.push(`═══════════════════════════════════════`);
