@@ -35,8 +35,8 @@ class CombatSystem {
         console.log(`🤖 Starting NPC combat for ${username}`);
         
         try {
-            // Use the raid animation
-            await RaidAnimation.playQuickAnimation(interaction, 'combat');
+            // Use the raid animation with slower timing
+            await this.playSlowShipAnimation(interaction, 'combat');
             
             // Simple battle logic
             const victory = Math.random() > 0.4; // 60% win chance
@@ -59,7 +59,7 @@ class CombatSystem {
             // Victory animation
             if (victory) {
                 await new Promise(resolve => setTimeout(resolve, 1000));
-                await RaidAnimation.playVictoryAnimation(interaction);
+                await this.playVictoryAnimation(interaction);
             }
 
             return {
@@ -82,8 +82,8 @@ class CombatSystem {
         console.log(`⚔️ Starting PvP: ${attackerName} vs ${defenderName}`);
         
         try {
-            // Use the raid animation
-            await RaidAnimation.playQuickAnimation(interaction, 'pvp');
+            // Use the raid animation with slower timing
+            await this.playSlowShipAnimation(interaction, 'pvp');
             
             // Simple PvP logic
             const attackerVictory = Math.random() > 0.5; // 50/50 chance
@@ -103,11 +103,155 @@ class CombatSystem {
 
             await interaction.editReply({ embeds: [resultEmbed] });
 
-            // Victory animation for winner
-            if (attackerVictory) {
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                await RaidAnimation.playVictoryAnimation(interaction);
+            // Improved slower ship animation
+    async playSlowShipAnimation(interaction, animationType = 'combat') {
+        const ship = [
+            "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⠀⠤⠴⠶⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣶⣾⣿⡟⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠀⠀⠂⠉⡇⠀⠀⠀⢰⣿⣿⣿⣿⣧⠀⠀⢀⣄⣀⠀⠀⠀⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠀⢠⣶⣶⣷⠀⠀⠀⠸⠟⠁⠀⡇⠀⠀⠀⠀⠀⢹⠀⠀⠀⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠀⠘⠟⢹⣋⣀⡀⢀⣤⣶⣿⣿⣿⣿⣿⡿⠛⣠⣼⣿⡟⠀⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⣴⣾⣿⣿⣿⣿⢁⣾⣿⣿⣿⣿⣿⣿⡿⢁⣾⣿⣿⣿⠁⠀⠀⠀⠀",
+            "⠀⠀⠀⠀⠸⣿⣿⣿⣿⣿⣿⢸⣿⣿⣿⣿⣿⣿⣿⡇⢸⣿⣿⣿⠿⠇⠀⠀⠀⠀",
+            "⠀⠀⠀⠳⣤⣙⠟⠛⢻⠿⣿⠸⣿⣿⣿⣿⣿⣿⣿⣇⠘⠉⠀⢸⠀⢀⣠⠀⠀⠀",
+            "⠀⠀⠀⠀⠈⠻⣷⣦⣼⠀⠀⠀⢻⣿⣿⠿⢿⡿⠿⣿⡄⠀⠀⣼⣷⣿⣿⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠀⠈⣿⣿⣿⣶⣄⡈⠉⠀⠀⢸⡇⠀⠀⠉⠂⠀⣿⣿⣿⣧⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠀⠀⠘⣿⣿⣿⣿⣿⣷⣤⣀⣸⣧⣠⣤⣴⣶⣾⣿⣿⣿⡿⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠇⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠀⠀⠀⠘⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠟⠛⠉⠀⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠉⠉⠉⠉⠉⠉⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"
+        ];
+
+        // Create smoother animation frames with proper positioning
+        const frames = [
+            {
+                title: '🌊 **A ship appears on the distant horizon...**',
+                ship: this.positionShip(ship, 40), // Far right
+                delay: 2000
+            },
+            {
+                title: '🚢 **The battle ship sails closer...**',
+                ship: this.positionShip(ship, 25), // Moving in
+                delay: 1800
+            },
+            {
+                title: '⚔️ **Ship entering combat position...**',
+                ship: this.positionShip(ship, 15), // Getting closer
+                delay: 1600
+            },
+            {
+                title: '🏴‍☠️ **Battle ship ready for combat!**',
+                ship: this.positionShip(ship, 5), // Final position
+                delay: 1500
             }
+        ];
+
+        // Play each frame with proper timing
+        for (let i = 0; i < frames.length; i++) {
+            const frame = frames[i];
+            
+            const embed = {
+                title: frame.title,
+                description: `\`\`\`\n${frame.ship}\n\`\`\``,
+                color: this.getAnimationColor(animationType),
+                footer: {
+                    text: `Combat Animation • Frame ${i + 1}/${frames.length}`
+                },
+                timestamp: new Date().toISOString()
+            };
+            
+            await interaction.editReply({ embeds: [embed] });
+            
+            // Don't delay after the last frame
+            if (i < frames.length - 1) {
+                await new Promise(resolve => setTimeout(resolve, frame.delay));
+            }
+        }
+    }
+
+    // Position ship with proper padding and width control
+    positionShip(shipLines, offset) {
+        const maxWidth = 60; // Reduced width for better display
+        const padding = '⠀'; // Use the same braille space character
+        
+        return shipLines.map(line => {
+            if (offset > 0) {
+                // Add padding to the left
+                const paddedLine = padding.repeat(Math.min(offset, 30)) + line;
+                // Ensure line doesn't exceed maxWidth
+                return paddedLine.length > maxWidth ? paddedLine.substring(0, maxWidth) : paddedLine;
+            } else {
+                // For negative offset, clip from the left
+                return line.substring(Math.abs(offset));
+            }
+        }).join('\n');
+    }
+
+    // Get color based on animation type
+    getAnimationColor(type) {
+        const colors = {
+            combat: 0x1E90FF,    // Blue for combat
+            pvp: 0xFF1493,       // Pink for PvP
+            victory: 0x00FF00,   // Green for victory
+            defeat: 0xFF0000     // Red for defeat
+        };
+        return colors[type] || colors.combat;
+    }
+
+    // Victory animation - ship sailing away slowly
+    async playVictoryAnimation(interaction) {
+        const ship = [
+            "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⠀⠤⠴⠶⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣶⣾⣿⡟⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠀⠀⠂⠉⡇⠀⠀⠀⢰⣿⣿⣿⣿⣧⠀⠀⢀⣄⣀⠀⠀⠀⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠀⢠⣶⣶⣷⠀⠀⠀⠸⠟⠁⠀⡇⠀⠀⠀⠀⠀⢹⠀⠀⠀⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠀⠘⠟⢹⣋⣀⡀⢀⣤⣶⣿⣿⣿⣿⣿⡿⠛⣠⣼⣿⡟⠀⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⣴⣾⣿⣿⣿⣿⢁⣾⣿⣿⣿⣿⣿⣿⡿⢁⣾⣿⣿⣿⠁⠀⠀⠀⠀",
+            "⠀⠀⠀⠀⠸⣿⣿⣿⣿⣿⣿⢸⣿⣿⣿⣿⣿⣿⣿⡇⢸⣿⣿⣿⠿⠇⠀⠀⠀⠀",
+            "⠀⠀⠀⠳⣤⣙⠟⠛⢻⠿⣿⠸⣿⣿⣿⣿⣿⣿⣿⣇⠘⠉⠀⢸⠀⢀⣠⠀⠀⠀",
+            "⠀⠀⠀⠀⠈⠻⣷⣦⣼⠀⠀⠀⢻⣿⣿⠿⢿⡿⠿⣿⡄⠀⠀⣼⣷⣿⣿⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠀⠈⣿⣿⣿⣶⣄⡈⠉⠀⠀⢸⡇⠀⠀⠉⠂⠀⣿⣿⣿⣧⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠀⠀⠘⣿⣿⣿⣿⣿⣷⣤⣀⣸⣧⣠⣤⣴⣶⣾⣿⣿⣿⡿⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠇⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠀⠀⠀⠘⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠟⠛⠉⠀⠀⠀⠀",
+            "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠉⠉⠉⠉⠉⠉⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"
+        ];
+
+        const victoryFrames = [
+            {
+                title: '🏆 **VICTORY! Ship beginning departure...**',
+                ship: this.positionShip(ship, 5),
+                delay: 2000
+            },
+            {
+                title: '⛵ **Sailing towards the sunset...**',
+                ship: this.positionShip(ship, -10),
+                delay: 2000
+            },
+            {
+                title: '🌅 **Until the next adventure!**',
+                ship: this.positionShip(ship, -25),
+                delay: 1500
+            }
+        ];
+        
+        for (let i = 0; i < victoryFrames.length; i++) {
+            const frame = victoryFrames[i];
+            
+            const embed = {
+                title: frame.title,
+                description: `\`\`\`\n${frame.ship}\n\`\`\``,
+                color: 0x00FF00, // Victory green
+                timestamp: new Date().toISOString()
+            };
+            
+            await interaction.editReply({ embeds: [embed] });
+            
+            if (i < victoryFrames.length - 1) {
+                await new Promise(resolve => setTimeout(resolve, frame.delay));
+            }
+        }
+    }
 
             return {
                 success: true,
