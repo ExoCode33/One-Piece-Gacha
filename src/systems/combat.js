@@ -131,7 +131,6 @@ class CombatSystem {
         return Math.max(damage, 5);
     }
 
-    // LEFT-TO-RIGHT SHIP SAILING ANIMATION, NO DESIGN BREAK
     getShipAnimationFrames() {
         const ship = [
 "      ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣶⣾⣿⡟⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
@@ -324,52 +323,3 @@ class CombatSystem {
                     description: `**${defenderName}** has been defeated by **${attackerName}**'s overwhelming assault!`,
                     fields: [
                         { name: '⚰️ Final Blow', value: `${attackerFruit.fruit_name} (${attackerElement.toUpperCase()})`, inline: true },
-                        { name: '🎯 Attack Number', value: `${i + 1}/${totalFruits}`, inline: true },
-                        { name: '💥 Final Damage', value: `${finalDamage}`, inline: true }
-                    ],
-                    color: 0x8B0000,
-                    timestamp: new Date().toISOString()
-                };
-
-                await interaction.editReply({ embeds: [koEmbed] });
-                await new Promise(resolve => setTimeout(resolve, 2500));
-                break;
-            }
-        }
-
-        // Show turn summary with detailed statistics
-        const successRate = Math.floor((successfulAttacks / totalFruits) * 100);
-        const summaryEmbed = {
-            title: `📊 **TURN ${turn} SUMMARY**`,
-            description: `**${attackerName}**'s multi-fruit assault complete!`,
-            fields: [
-                { name: '⚔️ Total Attacks', value: `${totalFruits}`, inline: true },
-                { name: '🎯 Successful Hits', value: `${successfulAttacks}`, inline: true },
-                { name: '📈 Success Rate', value: `${successRate}%`, inline: true },
-                { name: '🛡️ Perfect Blocks', value: `${attacksBlocked}`, inline: true },
-                { name: '🔄 Resisted Attacks', value: `${attacksResisted}`, inline: true },
-                { name: '💥 Total Damage', value: `${totalDamage}`, inline: true },
-                { name: '💖 Defender HP', value: `${currentDefenderHP}/${defenderMaxHP} (${Math.floor((currentDefenderHP/defenderMaxHP)*100)}%)`, inline: false }
-            ],
-            color: currentDefenderHP > 0 ? 0x1E90FF : 0x8B0000,
-            timestamp: new Date().toISOString()
-        };
-
-        await interaction.editReply({ embeds: [summaryEmbed] });
-        await new Promise(resolve => setTimeout(resolve, 2000));
-
-        return {
-            finalHP: currentDefenderHP,
-            totalDamage,
-            attacksBlocked,
-            attacksResisted,
-            successfulAttacks,
-            successRate
-        };
-    }
-
-    // (Your NPC and PvP battle methods go here, unchanged!)
-
-}
-
-module.exports = new CombatSystem();
