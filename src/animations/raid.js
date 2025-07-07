@@ -1,7 +1,5 @@
-// src/animations/raid.js - FIXED: Ship art is now sent as message content, NOT embed description!
 class RaidAnimation {
     constructor() {
-        // Your exact ship design as provided - unchanged
         this.shipDesign = [
             '⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⠀⠤⠴⠶⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀',
             '⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣶⣾⣿⡟⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀',
@@ -19,131 +17,67 @@ class RaidAnimation {
             '⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠉⠉⠉⠉⠉⠉⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀'
         ];
 
-        this.frameWidth = 70;
+        this.canvasWidth = 70; // How wide the message is (Discord is ~80 safe)
     }
 
-    // Position the ship at a specific horizontal offset
-    positionShip(offset) {
-        const positioned = [];
+    // Ship position at frame: slides from right to left across the "canvas"
+    positionShipAcross(frame, totalFrames) {
+        // Compute the left offset for this frame
+        const shipWidth = this.shipDesign[0].length;
+        const startOffset = this.canvasWidth;
+        const endOffset = -shipWidth;
+        const range = startOffset - endOffset;
+        const offset = Math.round(startOffset - (frame / (totalFrames - 1)) * range);
 
-        for (let line of this.shipDesign) {
+        // Draw each line at this offset
+        return this.shipDesign.map(line => {
             if (offset >= 0) {
-                // Use regular spaces for padding to avoid character mixing
-                const padding = ' '.repeat(Math.max(0, offset));
-                positioned.push(padding + line);
+                // Add left padding (off-screen to the right)
+                return ' '.repeat(offset) + line.slice(0, this.canvasWidth - offset);
             } else {
-                // For negative offset, clip the left side
-                const clippedLine = line.substring(Math.abs(offset));
-                positioned.push(clippedLine);
+                // Clip left side as ship leaves screen to the left
+                const abs = Math.abs(offset);
+                return line.slice(abs, abs + this.canvasWidth);
             }
-        }
-
-        return positioned.join('\n');
+        }).join('\n');
     }
 
-    // Generate complete animation frames
-    getAnimationFrames() {
-        const frames = [];
-
-        frames.push({
-            title: '🌊 **Ship Approaching from the Horizon...**',
-            content: this.positionShip(40)
-        });
-
-        frames.push({
-            title: '🚢 **Battle Ship Entering Combat Zone...**',
-            content: this.positionShip(30)
-        });
-
-        frames.push({
-            title: '⚔️ **Ship Sailing Into Position...**',
-            content: this.positionShip(20)
-        });
-
-        frames.push({
-            title: '🏴‍☠️ **Ship Ready for Battle!**',
-            content: this.positionShip(10)
-        });
-
-        frames.push({
-            title: '💨 **Ship Continuing Across Battlefield...**',
-            content: this.positionShip(0)
-        });
-
-        frames.push({
-            title: '🌪️ **Ship Exiting Combat Zone!**',
-            content: this.positionShip(-10)
-        });
-
-        return frames;
-    }
-
-    // Quick 3-frame animation for combat - ship art as message content!
-    async playQuickAnimation(interaction, animationType = 'combat') {
-        const quickFrames = [
-            {
-                title: '🌊 **Ship Approaching...**',
-                content: this.positionShip(25)
-            },
-            {
-                title: '⚔️ **Ship Ready for Battle!**',
-                content: this.positionShip(10)
-            },
-            {
-                title: '🏴‍☠️ **Battle Begins!**',
-                content: this.positionShip(0)
-            }
-        ];
-
-        for (let i = 0; i < quickFrames.length; i++) {
-            const frame = quickFrames[i];
-
+    // Main "sailing across" animation
+    async playFullSailAnimation(interaction, animationType = 'combat') {
+        const totalFrames = this.canvasWidth + this.shipDesign[0].length + 2; // enough for full pass
+        for (let i = 0; i < totalFrames; i++) {
+            const content = this.positionShipAcross(i, totalFrames);
             const embed = {
-                title: frame.title,
+                title: i === 0
+                    ? "🌊 **Ship Appears on the Horizon...**"
+                    : (i === totalFrames - 1
+                        ? "🌅 **Ship Disappears on the Left!**"
+                        : "🏴‍☠️ **Ship Sailing Across!**"),
                 color: this.getAnimationColor(animationType),
-                footer: {
-                    text: `⚔️ Combat Animation • Frame ${i + 1}/${quickFrames.length}`
-                },
+                footer: { text: `Frame ${i + 1}/${totalFrames}` },
                 timestamp: new Date().toISOString()
             };
 
             await interaction.editReply({
-                content: `\`\`\`\n${frame.content}\n\`\`\``,
+                content: `\`\`\`\n${content}\n\`\`\``,
                 embeds: [embed]
             });
+            await new Promise(res => setTimeout(res, 80)); // 80ms/frame = smooth, adjust as needed
+        }
+    }
 
-            // Don't delay after the last frame
-            if (i < quickFrames.length - 1) {
-                await new Promise(resolve => setTimeout(resolve, 800));
+    // Still works for any "single position" ship (for static or victory frames)
+    positionShip(offset) {
+        return this.shipDesign.map(line => {
+            if (offset >= 0) {
+                return ' '.repeat(offset) + line.slice(0, this.canvasWidth - offset);
+            } else {
+                const abs = Math.abs(offset);
+                return line.slice(abs, abs + this.canvasWidth);
             }
-        }
+        }).join('\n');
     }
 
-    // Play the complete animation - ship art as message content!
-    async playAnimation(interaction, animationType = 'combat') {
-        const frames = this.getAnimationFrames();
-
-        for (let i = 0; i < frames.length; i++) {
-            const frame = frames[i];
-
-            const embed = {
-                title: frame.title,
-                color: this.getAnimationColor(animationType),
-                footer: {
-                    text: `Animation Frame ${i + 1}/${frames.length}`
-                },
-                timestamp: new Date().toISOString()
-            };
-
-            await interaction.editReply({
-                content: `\`\`\`\n${frame.content}\n\`\`\``,
-                embeds: [embed]
-            });
-            await new Promise(resolve => setTimeout(resolve, 1200));
-        }
-    }
-
-    // Get color based on animation type
     getAnimationColor(type) {
         const colors = {
             combat: 0x1E90FF,
@@ -154,54 +88,13 @@ class RaidAnimation {
         return colors[type] || colors.combat;
     }
 
-    // Victory animation - ship art as message content!
-    async playVictoryAnimation(interaction) {
-        const victoryFrames = [
-            {
-                title: '🏆 **Victory! Ship Departing...**',
-                content: this.positionShip(0)
-            },
-            {
-                title: '⛵ **Sailing Into the Sunset...**',
-                content: this.positionShip(-15)
-            },
-            {
-                title: '🌅 **Until Next Adventure!**',
-                content: this.positionShip(-30)
-            }
-        ];
-
-        for (let i = 0; i < victoryFrames.length; i++) {
-            const frame = victoryFrames[i];
-
-            const embed = {
-                title: frame.title,
-                color: 0x00FF00,
-                footer: {
-                    text: `Victory Animation • Frame ${i + 1}/${victoryFrames.length}`
-                },
-                timestamp: new Date().toISOString()
-            };
-
-            await interaction.editReply({
-                content: `\`\`\`\n${frame.content}\n\`\`\``,
-                embeds: [embed]
-            });
-
-            if (i < victoryFrames.length - 1) {
-                await new Promise(resolve => setTimeout(resolve, 1000));
-            }
-        }
-    }
-
-    // Static ship position for battle setup
+    // You can keep the static ship if you want
     getBattleReadyShip() {
         return {
             title: '🏟️ **Battle Ship Deployed!**',
-            content: this.positionShip(5)
+            content: this.positionShip(Math.floor(this.canvasWidth / 2 - this.shipDesign[0].length / 2))
         };
     }
 }
 
-// Export as singleton instance
 module.exports = new RaidAnimation();
