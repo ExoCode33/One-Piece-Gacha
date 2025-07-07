@@ -1,4 +1,4 @@
-// src/animations/raid.js - SHIP ANIMATION WITH MONOSPACE EMBED FIX
+// src/animations/raid.js - FIXED: Ship art is now sent as message content, NOT embed description!
 class RaidAnimation {
     constructor() {
         // Your exact ship design as provided - unchanged
@@ -41,13 +41,13 @@ class RaidAnimation {
         return positioned.join('\n');
     }
 
-    // Generate complete animation frames - WITHOUT code blocks
+    // Generate complete animation frames
     getAnimationFrames() {
         const frames = [];
 
         frames.push({
             title: '🌊 **Ship Approaching from the Horizon...**',
-            content: this.positionShip(40) // NO code block wrapper
+            content: this.positionShip(40)
         });
 
         frames.push({
@@ -78,7 +78,7 @@ class RaidAnimation {
         return frames;
     }
 
-    // Quick 3-frame animation for combat - with code blocks for monospace
+    // Quick 3-frame animation for combat - ship art as message content!
     async playQuickAnimation(interaction, animationType = 'combat') {
         const quickFrames = [
             {
@@ -100,7 +100,6 @@ class RaidAnimation {
 
             const embed = {
                 title: frame.title,
-                description: `\`\`\`\n${frame.content}\n\`\`\``, // WRAP IN CODE BLOCK!
                 color: this.getAnimationColor(animationType),
                 footer: {
                     text: `⚔️ Combat Animation • Frame ${i + 1}/${quickFrames.length}`
@@ -108,7 +107,10 @@ class RaidAnimation {
                 timestamp: new Date().toISOString()
             };
 
-            await interaction.editReply({ embeds: [embed] });
+            await interaction.editReply({
+                content: `\`\`\`\n${frame.content}\n\`\`\``,
+                embeds: [embed]
+            });
 
             // Don't delay after the last frame
             if (i < quickFrames.length - 1) {
@@ -117,7 +119,7 @@ class RaidAnimation {
         }
     }
 
-    // Play the complete animation - with code blocks for monospace
+    // Play the complete animation - ship art as message content!
     async playAnimation(interaction, animationType = 'combat') {
         const frames = this.getAnimationFrames();
 
@@ -126,7 +128,6 @@ class RaidAnimation {
 
             const embed = {
                 title: frame.title,
-                description: `\`\`\`\n${frame.content}\n\`\`\``, // WRAP IN CODE BLOCK!
                 color: this.getAnimationColor(animationType),
                 footer: {
                     text: `Animation Frame ${i + 1}/${frames.length}`
@@ -134,7 +135,10 @@ class RaidAnimation {
                 timestamp: new Date().toISOString()
             };
 
-            await interaction.editReply({ embeds: [embed] });
+            await interaction.editReply({
+                content: `\`\`\`\n${frame.content}\n\`\`\``,
+                embeds: [embed]
+            });
             await new Promise(resolve => setTimeout(resolve, 1200));
         }
     }
@@ -150,7 +154,7 @@ class RaidAnimation {
         return colors[type] || colors.combat;
     }
 
-    // Victory animation - with code blocks for monospace
+    // Victory animation - ship art as message content!
     async playVictoryAnimation(interaction) {
         const victoryFrames = [
             {
@@ -172,7 +176,6 @@ class RaidAnimation {
 
             const embed = {
                 title: frame.title,
-                description: `\`\`\`\n${frame.content}\n\`\`\``, // WRAP IN CODE BLOCK!
                 color: 0x00FF00,
                 footer: {
                     text: `Victory Animation • Frame ${i + 1}/${victoryFrames.length}`
@@ -180,7 +183,10 @@ class RaidAnimation {
                 timestamp: new Date().toISOString()
             };
 
-            await interaction.editReply({ embeds: [embed] });
+            await interaction.editReply({
+                content: `\`\`\`\n${frame.content}\n\`\`\``,
+                embeds: [embed]
+            });
 
             if (i < victoryFrames.length - 1) {
                 await new Promise(resolve => setTimeout(resolve, 1000));
