@@ -1,5 +1,5 @@
-// ENHANCED COMBAT SYSTEM WITH FULL DETAILS
-// All fruits attack, detailed defense system, ASCII ship animation
+// ENHANCED COMBAT SYSTEM WITH FULL SHIP ANIMATION
+// Complete left-to-right ship animation, all fruits attack, detailed defense system
 
 const DatabaseManager = require('../database/manager');
 
@@ -103,10 +103,10 @@ class CombatSystem {
             'hana hana no mi': 'plant',
             'zushi zushi no mi': 'gravity',
             'goro goro no mi': 'lightning',
-            'suna suna no mi': 'earth',
+            'uo uo no mi': 'water',
             'pika pika no mi': 'light',
             'yami yami no mi': 'darkness',
-            'uo uo no mi': 'water',
+            'suna suna no mi': 'earth',
             'gomu gomu no mi': 'neutral',
             'buku buku no mi': 'neutral',
             'nagi nagi no mi': 'neutral',
@@ -117,147 +117,195 @@ class CombatSystem {
         return elementMap[lowerName] || 'neutral';
     }
 
-    getCritChance(rarity) {
-        const critChances = {
-            common: 0.05,
-            uncommon: 0.08,
-            rare: 0.12,
-            epic: 0.16,
-            legendary: 0.20,
-            mythical: 0.25,
-            omnipotent: 0.30
-        };
-        return critChances[rarity?.toLowerCase()] || 0.05;
-    }
-
-    calculateDamage(attackerCP, attackerFruit, defenderFruit, defenderMaxHP, defenseInfo) {
+    calculateDamage(attackerCP, attackerFruit, defenderFruit, defenderMaxHP, isBlocked = false, isResisted = false) {
+        if (isBlocked) return 0;
+        
         const baseDamage = Math.floor(attackerCP * 0.04);
         const variation = 0.8 + Math.random() * 0.4;
         let damage = Math.floor(baseDamage * variation);
         
-        // Apply elemental advantages/disadvantages
-        const attackerElement = this.getFruitElement(attackerFruit.fruit_name);
-        const defenderElement = this.getFruitElement(defenderFruit.fruit_name);
-        
-        let elementalMultiplier = 1.0;
-        if (this.elementalAdvantages[attackerElement]?.includes(defenderElement)) {
-            elementalMultiplier = 1.5; // 50% bonus for advantage
-            damage = Math.floor(damage * elementalMultiplier);
-        } else if (this.elementalAdvantages[defenderElement]?.includes(attackerElement)) {
-            elementalMultiplier = 0.7; // 30% reduction for disadvantage
-            damage = Math.floor(damage * elementalMultiplier);
-        }
-        
-        // Critical hit chance
-        const critChance = this.getCritChance(attackerFruit.rarity);
-        const isCritical = Math.random() < critChance;
-        if (isCritical) {
-            damage = Math.floor(damage * 1.3);
-        }
-        
-        // Apply blocking/resistance
-        if (defenseInfo.isBlocked) {
-            damage = 0; // Complete block
-        } else if (defenseInfo.isResisted) {
-            damage = Math.floor(damage * 0.5); // 50% damage reduction
+        // Apply resistance reduction
+        if (isResisted) {
+            damage = Math.floor(damage * 0.5);
         }
         
         const maxDamage = Math.floor(defenderMaxHP * 0.15);
         damage = Math.min(damage, maxDamage);
         
-        return {
-            damage: Math.max(damage, defenseInfo.isBlocked ? 0 : 1),
-            elementalMultiplier,
-            isCritical,
-            attackerElement,
-            defenderElement
-        };
+        return Math.max(damage, 5);
     }
 
-    // Your exact ASCII ship animation
-    getShipFrames() {
+    // Complete left-to-right ship animation with enter/cross/exit
+    getShipAnimationFrames() {
         return [
-            `🌊 **⚓ Battle Ship Setting Sail!**\n\`\`\`\n⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⠀⠤⠴⠶⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀\n⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣶⣾⣿⡟⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀\n⠀⠀⠀⠀⠀⠀⠀⠂⠉⡇⠀⠀⠀⢰⣿⣿⣿⣿⣧⠀⠀⢀⣄⣀⠀⠀⠀⠀⠀⠀\n⠀⠀⠀⠀⠀⠀⢠⣶⣶⣷⠀⠀⠀⠸⠟⠁⠀⡇⠀⠀⠀⠀⠀⢹⠀⠀⠀⠀⠀⠀\n⠀⠀⠀⠀⠀⠀⠘⠟⢹⣋⣀⡀⢀⣤⣶⣿⣿⣿⣿⣿⡿⠛⣠⣼⣿⡟⠀⠀⠀⠀\n⠀⠀⠀⠀⠀⣴⣾⣿⣿⣿⣿⢁⣾⣿⣿⣿⣿⣿⣿⡿⢁⣾⣿⣿⣿⠁⠀⠀⠀⠀\n⠀⠀⠀⠀⠸⣿⣿⣿⣿⣿⣿⢸⣿⣿⣿⣿⣿⣿⣿⡇⢸⣿⣿⣿⠿⠇⠀⠀⠀⠀\n⠀⠀⠀⠳⣤⣙⠟⠛⢻⠿⣿⠸⣿⣿⣿⣿⣿⣿⣿⣇⠘⠉⠀⢸⠀⢀⣠⠀⠀⠀\n⠀⠀⠀⠀⠈⠻⣷⣦⣼⠀⠀⠀⢻⣿⣿⠿⢿⡿⠿⣿⡄⠀⠀⣼⣷⣿⣿⠀⠀⠀\n⠀⠀⠀⠀⠀⠀⠈⣿⣿⣿⣶⣄⡈⠉⠀⠀⢸⡇⠀⠀⠉⠂⠀⣿⣿⣿⣧⠀⠀⠀\n⠀⠀⠀⠀⠀⠀⠀⠘⣿⣿⣿⣿⣿⣷⣤⣀⣸⣧⣠⣤⣴⣶⣾⣿⣿⣿⡿⠀⠀⠀\n⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠇⠀⠀⠀\n⠀⠀⠀⠀⠀⠀⠀⠀⠘⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠟⠛⠉⠀⠀⠀⠀\n⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠉⠉⠉⠉⠉⠉⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀\n\`\`\``,
-            `🌊 **🚢 Ship Sailing to Combat Zone!**\n\`\`\`\n⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⠀⠤⠴⠶⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀\n⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣶⣾⣿⡟⠀⠀⠀⠀⠀⠀⠀⠀⠀\n⠀⠀⠀⠀⠀⠀⠀⠀⠂⠉⡇⠀⠀⠀⢰⣿⣿⣿⣿⣧⠀⠀⢀⣄⣀⠀⠀⠀⠀⠀\n⠀⠀⠀⠀⠀⠀⠀⢠⣶⣶⣷⠀⠀⠀⠸⠟⠁⠀⡇⠀⠀⠀⠀⠀⢹⠀⠀⠀⠀⠀\n⠀⠀⠀⠀⠀⠀⠀⠘⠟⢹⣋⣀⡀⢀⣤⣶⣿⣿⣿⣿⣿⡿⠛⣠⣼⣿⡟⠀⠀⠀\n⠀⠀⠀⠀⠀⠀⣴⣾⣿⣿⣿⣿⢁⣾⣿⣿⣿⣿⣿⣿⡿⢁⣾⣿⣿⣿⠁⠀⠀⠀\n⠀⠀⠀⠀⠀⠸⣿⣿⣿⣿⣿⣿⢸⣿⣿⣿⣿⣿⣿⣿⡇⢸⣿⣿⣿⠿⠇⠀⠀⠀\n⠀⠀⠀⠀⠳⣤⣙⠟⠛⢻⠿⣿⠸⣿⣿⣿⣿⣿⣿⣿⣇⠘⠉⠀⢸⠀⢀⣠⠀⠀\n⠀⠀⠀⠀⠀⠈⠻⣷⣦⣼⠀⠀⠀⢻⣿⣿⠿⢿⡿⠿⣿⡄⠀⠀⣼⣷⣿⣿⠀⠀\n⠀⠀⠀⠀⠀⠀⠀⠈⣿⣿⣿⣶⣄⡈⠉⠀⠀⢸⡇⠀⠀⠉⠂⠀⣿⣿⣿⣧⠀⠀\n⠀⠀⠀⠀⠀⠀⠀⠀⠘⣿⣿⣿⣿⣿⣷⣤⣀⣸⣧⣠⣤⣴⣶⣾⣿⣿⣿⡿⠀⠀\n⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠇⠀⠀⠀\n⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠟⠛⠉⠀⠀⠀⠀\n⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠉⠉⠉⠉⠉⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀\n\`\`\``,
-            `🌊 **⚔️ Ship Entering Battle Zone!**\n\`\`\`\n⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⠀⠤⠴⠶⡇⠀⠀⠀⠀⠀⠀⠀⠀\n⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣶⣾⣿⡟⠀⠀⠀⠀⠀⠀⠀\n⠀⠀⠀⠀⠀⠀⠀⠀⠀⠂⠉⡇⠀⠀⠀⢰⣿⣿⣿⣿⣧⠀⠀⢀⣄⣀⠀⠀⠀⠀\n⠀⠀⠀⠀⠀⠀⠀⠀⢠⣶⣶⣷⠀⠀⠀⠸⠟⠁⠀⡇⠀⠀⠀⠀⠀⢹⠀⠀⠀⠀\n⠀⠀⠀⠀⠀⠀⠀⠀⠘⠟⢹⣋⣀⡀⢀⣤⣶⣿⣿⣿⣿⣿⡿⠛⣠⣼⣿⡟⠀⠀\n⠀⠀⠀⠀⠀⠀⠀⣴⣾⣿⣿⣿⣿⢁⣾⣿⣿⣿⣿⣿⣿⡿⢁⣾⣿⣿⣿⠁⠀⠀\n⠀⠀⠀⠀⠀⠀⠸⣿⣿⣿⣿⣿⣿⢸⣿⣿⣿⣿⣿⣿⣿⡇⢸⣿⣿⣿⠿⠇⠀⠀\n⠀⠀⠀⠀⠀⠳⣤⣙⠟⠛⢻⠿⣿⠸⣿⣿⣿⣿⣿⣿⣿⣇⠘⠉⠀⢸⠀⢀⣠⠀\n⠀⠀⠀⠀⠀⠀⠈⠻⣷⣦⣼⠀⠀⠀⢻⣿⣿⠿⢿⡿⠿⣿⡄⠀⠀⣼⣷⣿⣿⠀\n⠀⠀⠀⠀⠀⠀⠀⠀⠈⣿⣿⣿⣶⣄⡈⠉⠀⠀⢸⡇⠀⠀⠉⠂⠀⣿⣿⣿⣧⠀\n⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⣿⣿⣿⣿⣿⣷⣤⣀⣸⣧⣠⣤⣴⣶⣾⣿⣿⣿⡿⠀\n⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠇⠀⠀\n⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠟⠛⠉⠀⠀⠀\n⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠉⠉⠉⠉⠉⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀\n\`\`\``,
-            `🌊 **🏴‍☠️ Battle Ship Ready for War!**\n\`\`\`\n⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⠀⠤⠴⠶⡇⠀⠀⠀⠀⠀⠀\n⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣶⣾⣿⡟⠀⠀⠀⠀⠀\n⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠂⠉⡇⠀⠀⠀⢰⣿⣿⣿⣿⣧⠀⠀⢀⣄⣀⠀⠀⠀\n⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⣶⣶⣷⠀⠀⠀⠸⠟⠁⠀⡇⠀⠀⠀⠀⠀⢹⠀⠀⠀\n⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⠟⢹⣋⣀⡀⢀⣤⣶⣿⣿⣿⣿⣿⡿⠛⣠⣼⣿⡟⠀\n⠀⠀⠀⠀⠀⠀⠀⠀⣴⣾⣿⣿⣿⣿⢁⣾⣿⣿⣿⣿⣿⣿⡿⢁⣾⣿⣿⣿⠁⠀\n⠀⠀⠀⠀⠀⠀⠀⠸⣿⣿⣿⣿⣿⣿⢸⣿⣿⣿⣿⣿⣿⣿⡇⢸⣿⣿⣿⠿⠇⠀\n⠀⠀⠀⠀⠀⠀⠳⣤⣙⠟⠛⢻⠿⣿⠸⣿⣿⣿⣿⣿⣿⣿⣇⠘⠉⠀⢸⠀⢀⣠\n⠀⠀⠀⠀⠀⠀⠀⠈⠻⣷⣦⣼⠀⠀⠀⢻⣿⣿⠿⢿⡿⠿⣿⡄⠀⠀⣼⣷⣿⣿\n⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⣿⣿⣿⣶⣄⡈⠉⠀⠀⢸⡇⠀⠀⠉⠂⠀⣿⣿⣿⣧\n⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⣿⣿⣿⣿⣿⣷⣤⣀⣸⣧⣠⣤⣴⣶⣾⣿⣿⣿⡿\n⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠇⠀\n⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠟⠛⠉⠀⠀\n⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠉⠉⠉⠉⠉⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀\n\`\`\``
+            {
+                title: '🌊 **Ship Approaching from the Horizon...**',
+                content: `\`\`\`
+🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⚓
+\`\`\``
+            },
+            {
+                title: '🚢 **Battle Ship Entering Combat Zone...**',
+                content: `\`\`\`
+🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⠀⠤⠴⠶⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣶⣾⣿⡟⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠂⠉⡇⠀⠀⠀⢰⣿⣿⣿⣿⣧⠀⠀⢀⣄⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⣶⣶⣷⠀⠀⠀⠸⠟⠁⠀⡇⠀⠀⠀⠀⠀⢹⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⠟⢹⣋⣀⡀⢀⣤⣶⣿⣿⣿⣿⣿⡿⠛⣠⣼⣿⡟⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⣴⣾⣿⣿⣿⣿⣿⢁⣾⣿⣿⣿⣿⣿⣿⡿⢁⣾⣿⣿⣿⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠸⣿⣿⣿⣿⣿⣿⣿⢸⣿⣿⣿⣿⣿⣿⣿⡇⢸⣿⣿⣿⠿⠇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠳⣤⣙⠟⠛⢻⠿⣿⠸⣿⣿⣿⣿⣿⣿⣿⣇⠘⠉⠀⢸⠀⢀⣠⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠈⠻⣷⣦⣼⠀⠀⠀⢻⣿⣿⠿⢿⡿⠿⣿⡄⠀⠀⣼⣷⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠈⣿⣿⣿⣶⣄⡈⠉⠀⠀⢸⡇⠀⠀⠉⠂⠀⣿⣿⣿⣧⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠘⣿⣿⣿⣿⣿⣷⣤⣀⣸⣧⣠⣤⣴⣶⣾⣿⣿⣿⡿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠟⠛⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠉⠉⠉⠉⠉⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+\`\`\``
+            },
+            {
+                title: '⚔️ **Ship Sailing Across the Battlefield...**',
+                content: `\`\`\`
+🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⠀⠤⠴⠶⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣶⣾⣿⡟⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠂⠉⡇⠀⠀⠀⢰⣿⣿⣿⣿⣧⠀⠀⢀⣄⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⣶⣶⣷⠀⠀⠀⠸⠟⠁⠀⡇⠀⠀⠀⠀⠀⢹⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⠟⢹⣋⣀⡀⢀⣤⣶⣿⣿⣿⣿⣿⡿⠛⣠⣼⣿⡟⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣴⣾⣿⣿⣿⣿⣿⢁⣾⣿⣿⣿⣿⣿⣿⡿⢁⣾⣿⣿⣿⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠸⣿⣿⣿⣿⣿⣿⣿⢸⣿⣿⣿⣿⣿⣿⣿⡇⢸⣿⣿⣿⠿⠇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠳⣤⣙⠟⠛⢻⠿⣿⠸⣿⣿⣿⣿⣿⣿⣿⣇⠘⠉⠀⢸⠀⢀⣠⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠻⣷⣦⣼⠀⠀⠀⢻⣿⣿⠿⢿⡿⠿⣿⡄⠀⠀⣼⣷⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⣿⣿⣿⣶⣄⡈⠉⠀⠀⢸⡇⠀⠀⠉⠂⠀⣿⣿⣿⣧⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⣿⣿⣿⣿⣿⣷⣤⣀⣸⣧⣠⣤⣴⣶⣾⣿⣿⣿⡿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠟⠛⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠉⠉⠉⠉⠉⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+\`\`\``
+            },
+            {
+                title: '🏴‍☠️ **Ship Positioning for Final Battle!**',
+                content: `\`\`\`
+🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⠀⠤⠴⠶⡇⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣶⣾⣿⡟⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠂⠉⡇⠀⠀⠀⢰⣿⣿⣿⣿⣧⠀⠀⢀⣄⣀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⣶⣶⣷⠀⠀⠀⠸⠟⠁⠀⡇⠀⠀⠀⠀⠀⢹⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⠟⢹⣋⣀⡀⢀⣤⣶⣿⣿⣿⣿⣿⡿⠛⣠⣼⣿⡟⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣴⣾⣿⣿⣿⣿⣿⢁⣾⣿⣿⣿⣿⣿⣿⡿⢁⣾⣿⣿⣿⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠸⣿⣿⣿⣿⣿⣿⣿⢸⣿⣿⣿⣿⣿⣿⣿⡇⢸⣿⣿⣿⠿⠇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠳⣤⣙⠟⠛⢻⠿⣿⠸⣿⣿⣿⣿⣿⣿⣿⣇⠘⠉⠀⢸⠀⢀⣠⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠻⣷⣦⣼⠀⠀⠀⢻⣿⣿⠿⢿⡿⠿⣿⡄⠀⠀⣼⣷⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⣿⣿⣿⣶⣄⡈⠉⠀⠀⢸⡇⠀⠀⠉⠂⠀⣿⣿⣿⣧⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⣿⣿⣿⣿⣿⣷⣤⣀⣸⣧⣠⣤⣴⣶⣾⣿⣿⣿⡿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠟⠛⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠉⠉⠉⠉⠉⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+\`\`\``
+            },
+            {
+                title: '💨 **Ship Continuing Across the Sea...**',
+                content: `\`\`\`
+🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⠀⠤⠴⠶⡇
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣶⣾⣿⡟
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠂⠉⡇⠀⠀⠀⢰⣿⣿⣿⣿⣧⠀⠀⢀⣄⣀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⣶⣶⣷⠀⠀⠀⠸⠟⠁⠀⡇⠀⠀⠀⠀⠀⢹
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⠟⢹⣋⣀⡀⢀⣤⣶⣿⣿⣿⣿⣿⡿⠛⣠⣼⣿⡟
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣴⣾⣿⣿⣿⣿⣿⢁⣾⣿⣿⣿⣿⣿⣿⡿⢁⣾⣿⣿⣿⠁
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠸⣿⣿⣿⣿⣿⣿⣿⢸⣿⣿⣿⣿⣿⣿⣿⡇⢸⣿⣿⣿⠿⠇
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠳⣤⣙⠟⠛⢻⠿⣿⠸⣿⣿⣿⣿⣿⣿⣿⣇⠘⠉⠀⢸⠀⢀⣠
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠻⣷⣦⣼⠀⠀⠀⢻⣿⣿⠿⢿⡿⠿⣿⡄⠀⠀⣼⣷⣿⣿
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⣿⣿⣿⣶⣄⡈⠉⠀⠀⢸⡇⠀⠀⠉⠂⠀⣿⣿⣿⣧
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⣿⣿⣿⣿⣿⣷⣤⣀⣸⣧⣠⣤⣴⣶⣾⣿⣿⣿⡿
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠇
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠟⠛⠉
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠉⠉⠉⠉⠉⠉⠉
+\`\`\``
+            },
+            {
+                title: '🌪️ **Ship Exiting the Battle Zone!**',
+                content: `\`\`\`
+🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊🌊
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⚓
+\`\`\``
+            }
         ];
     }
 
-    // Analyze defense for detailed blocking/resistance information
-    analyzeDefense(attackerFruit, defenderFruits) {
-        const attackerElement = this.getFruitElement(attackerFruit.fruit_name);
-        let bestDefense = { isBlocked: false, isResisted: false, defendingFruit: null, defenseType: 'none' };
+    // Show detailed defense analysis when attacks are blocked or resisted
+    getDefenseDetails(attackerElement, defenderFruit, blocked, resisted, originalDamage, finalDamage) {
+        const defenderElement = this.getFruitElement(defenderFruit.fruit_name);
         
-        for (const defenderFruit of defenderFruits) {
-            const defenderElement = this.getFruitElement(defenderFruit.fruit_name);
-            const resistances = this.elementalResistances[defenderElement] || [];
-            
-            // Check for complete block (perfect resistance)
-            if (resistances.includes(attackerElement)) {
-                bestDefense = {
-                    isBlocked: true,
-                    isResisted: false,
-                    defendingFruit: defenderFruit,
-                    defenseType: 'perfect_block',
-                    defenderElement
-                };
-                break; // Perfect block takes priority
-            }
-            
-            // Check for partial resistance (elemental disadvantage)
-            if (this.elementalAdvantages[defenderElement]?.includes(attackerElement)) {
-                bestDefense = {
-                    isBlocked: false,
-                    isResisted: true,
-                    defendingFruit: defenderFruit,
-                    defenseType: 'resistance',
-                    defenderElement
-                };
-            }
-        }
-        
-        return bestDefense;
-    }
-
-    // Show detailed defense information
-    getDefenseDescription(defenseInfo, attackerElement) {
-        if (defenseInfo.isBlocked) {
+        if (blocked) {
             return {
-                title: '🛡️ **PERFECT DEFENSE!**',
-                description: `**${defenseInfo.defendingFruit.fruit_name}** (${defenseInfo.defenderElement.toUpperCase()}) completely blocks the ${attackerElement.toUpperCase()} attack!`,
-                effectiveness: 'COMPLETE BLOCK',
-                damageReduction: '100%',
+                type: 'PERFECT BLOCK',
+                description: `${defenderFruit.fruit_name} (${defenderElement.toUpperCase()}) completely blocks the ${attackerElement.toUpperCase()} attack!`,
+                effectiveness: 'Perfect Defense - 100% damage negation',
+                icon: '🛡️',
                 color: 0x87CEEB
             };
-        } else if (defenseInfo.isResisted) {
+        } else if (resisted) {
             return {
-                title: '🛡️ **ELEMENTAL RESISTANCE!**',
-                description: `**${defenseInfo.defendingFruit.fruit_name}** (${defenseInfo.defenderElement.toUpperCase()}) resists the ${attackerElement.toUpperCase()} attack!`,
-                effectiveness: 'DAMAGE REDUCED',
-                damageReduction: '50%',
-                color: 0xFFD700
+                type: 'ELEMENTAL RESISTANCE',
+                description: `${defenderFruit.fruit_name} (${defenderElement.toUpperCase()}) resists the ${attackerElement.toUpperCase()} attack!`,
+                effectiveness: `Damage Reduced: ${originalDamage} → ${finalDamage} (50% reduction)`,
+                icon: '🔄',
+                color: 0xFFA500
             };
         } else {
             return {
-                title: '💥 **NO DEFENSE!**',
-                description: `No fruits can defend against this ${attackerElement.toUpperCase()} attack!`,
-                effectiveness: 'FULL DAMAGE',
-                damageReduction: '0%',
+                type: 'DIRECT HIT',
+                description: `No defense against ${attackerElement.toUpperCase()} attack!`,
+                effectiveness: `Full damage dealt: ${finalDamage}`,
+                icon: '💥',
                 color: 0xFF6B35
             };
         }
     }
 
-    // Enhanced combat with ALL fruits attacking and detailed defense
-    async performAllFruitsCombat(attackerFruits, defenderFruits, attackerCP, defenderHP, defenderMaxHP, attackerName, defenderName, interaction, turn) {
-        const totalFruits = attackerFruits.length; // Use ALL fruits, not just 3
+    // Create visual HP bar
+    createHPBar(currentHP, maxHP) {
+        const percentage = (currentHP / maxHP) * 100;
+        const barLength = 20;
+        const filledBars = Math.floor((currentHP / maxHP) * barLength);
+        const emptyBars = barLength - filledBars;
+        
+        let bar = '';
+        let color = '';
+        
+        if (percentage > 75) {
+            bar = '🟢'.repeat(filledBars) + '⬜'.repeat(emptyBars);
+            color = 'Excellent';
+        } else if (percentage > 50) {
+            bar = '🟡'.repeat(filledBars) + '⬜'.repeat(emptyBars);
+            color = 'Good';
+        } else if (percentage > 25) {
+            bar = '🟠'.repeat(filledBars) + '⬜'.repeat(emptyBars);
+            color = 'Damaged';
+        } else {
+            bar = '🔴'.repeat(filledBars) + '⬜'.repeat(emptyBars);
+            color = 'Critical';
+        }
+        
+        return {
+            bar,
+            percentage: Math.floor(percentage),
+            status: color,
+            text: `${currentHP}/${maxHP} HP (${Math.floor(percentage)}%)`
+        };
+    }
+
+    async performAdvancedCombat(attackerFruits, defenderFruits, attackerCP, defenderHP, defenderMaxHP, attackerName, defenderName, interaction, turn) {
+        const totalFruits = attackerFruits.length;
         let currentDefenderHP = defenderHP;
         let totalDamage = 0;
-        let totalBlocked = 0;
-        let totalResisted = 0;
+        let attacksBlocked = 0;
+        let attacksResisted = 0;
+        let successfulAttacks = 0;
 
-        // Show preparation with ALL fruits
         // Show preparation with ALL fruits
         const prepEmbed = {
             title: `⚔️ **TURN ${turn} - ALL DEVIL FRUITS UNLEASHED!**`,
@@ -265,12 +313,12 @@ class CombatSystem {
             fields: [
                 { 
                     name: '🍈 Attacking Fruits', 
-                    value: attackerFruits.slice(0, 8).map(f => f.fruit_name).join('\n') + (totalFruits > 8 ? `\n...and ${totalFruits - 8} more!` : ''), 
+                    value: attackerFruits.slice(0, 5).map(f => f.fruit_name).join('\n') + (totalFruits > 5 ? `\n+${totalFruits - 5} more...` : ''), 
                     inline: true 
                 },
                 { 
                     name: '🛡️ Defending Fruits', 
-                    value: defenderFruits.slice(0, 8).map(f => f.fruit_name).join('\n'), 
+                    value: defenderFruits.slice(0, 5).map(f => f.fruit_name).join('\n') + (defenderFruits.length > 5 ? `\n+${defenderFruits.length - 5} more...` : ''), 
                     inline: true 
                 },
                 { 
@@ -284,165 +332,146 @@ class CombatSystem {
         };
         
         await interaction.editReply({ embeds: [prepEmbed] });
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        await new Promise(resolve => setTimeout(resolve, 2500));
 
         // Execute ALL fruit attacks
         for (let i = 0; i < totalFruits && currentDefenderHP > 0; i++) {
             const attackerFruit = attackerFruits[i];
             const attackerElement = this.getFruitElement(attackerFruit.fruit_name);
             
-            // Analyze defense in detail
-            const defenseInfo = this.analyzeDefense(attackerFruit, defenderFruits);
+            // Check for blocking and resistance
+            let blocked = false;
+            let resisted = false;
+            let blockingFruit = null;
             
-            // Calculate damage with defense applied
-            const damageResult = this.calculateDamage(attackerCP, attackerFruit, defenseInfo.defendingFruit || defenderFruits[0], defenderMaxHP, defenseInfo);
-            
-            const beforeHP = currentDefenderHP;
-            currentDefenderHP = Math.max(0, currentDefenderHP - damageResult.damage);
-
-            // Track statistics
-            if (defenseInfo.isBlocked) {
-                totalBlocked++;
-            } else if (defenseInfo.isResisted) {
-                totalResisted++;
-            } else {
-                totalDamage += damageResult.damage;
+            for (const defenderFruit of defenderFruits) {
+                const defenderElement = this.getFruitElement(defenderFruit.fruit_name);
+                const resistances = this.elementalResistances[defenderElement] || [];
+                
+                if (resistances.includes(attackerElement)) {
+                    if (Math.random() < 0.3) { // 30% chance for perfect block
+                        blocked = true;
+                        blockingFruit = defenderFruit;
+                        break;
+                    } else { // Otherwise just resistance
+                        resisted = true;
+                        blockingFruit = defenderFruit;
+                        break;
+                    }
+                }
             }
 
-            // Get detailed defense description
-            const defenseDesc = this.getDefenseDescription(defenseInfo, attackerElement);
+            const originalDamage = this.calculateDamage(attackerCP, attackerFruit, defenderFruits[0], defenderMaxHP, false, false);
+            const finalDamage = this.calculateDamage(attackerCP, attackerFruit, defenderFruits[0], defenderMaxHP, blocked, resisted);
+            const beforeHP = currentDefenderHP;
+            currentDefenderHP = Math.max(0, currentDefenderHP - finalDamage);
+
+            // Track statistics
+            if (blocked) {
+                attacksBlocked++;
+            } else if (resisted) {
+                attacksResisted++;
+                totalDamage += finalDamage;
+                successfulAttacks++;
+            } else {
+                totalDamage += finalDamage;
+                successfulAttacks++;
+            }
+
+            // Get defense details
+            const defenseInfo = this.getDefenseDetails(attackerElement, blockingFruit || defenderFruits[0], blocked, resisted, originalDamage, finalDamage);
+            const hpBar = this.createHPBar(currentDefenderHP, defenderMaxHP);
 
             // Show detailed attack animation
             const attackEmbed = {
-                title: `⚔️ **ATTACK ${i + 1}/${totalFruits}** - ${defenseDesc.title}`,
-                description: `**${attackerFruit.fruit_name}** (${attackerElement.toUpperCase()}) attacks!\n\n${defenseDesc.description}`,
+                title: `${defenseInfo.icon} **ATTACK ${i + 1}/${totalFruits} - ${defenseInfo.type}!**`,
+                description: defenseInfo.description,
                 fields: [
-                    { name: '🍈 Attacking Fruit', value: `${attackerFruit.fruit_name}\nElement: ${attackerElement.toUpperCase()}\nRarity: ${attackerFruit.rarity.toUpperCase()}`, inline: true },
+                    { 
+                        name: '🍈 Attacking Fruit', 
+                        value: `${attackerFruit.fruit_name}\nElement: ${attackerElement.toUpperCase()}\nRarity: ${attackerFruit.rarity.toUpperCase()}`, 
+                        inline: true 
+                    },
                     { 
                         name: '🛡️ Defense Analysis', 
-                        value: defenseInfo.defendingFruit ? 
-                            `${defenseInfo.defendingFruit.fruit_name}\nElement: ${defenseInfo.defenderElement.toUpperCase()}\nType: ${defenseInfo.defenseType.replace('_', ' ').toUpperCase()}` :
-                            'No defensive fruit\nType: NONE\nResult: DIRECT HIT', 
+                        value: blockingFruit ? 
+                            `${blockingFruit.fruit_name}\nElement: ${this.getFruitElement(blockingFruit.fruit_name).toUpperCase()}\nType: ${defenseInfo.type}` :
+                            `No Defense\nElement: NONE\nType: VULNERABLE`, 
                         inline: true 
                     },
                     { 
                         name: '💥 Damage Report', 
-                        value: `Original: ${Math.floor(attackerCP * 0.04 * (0.8 + Math.random() * 0.4))}\nFinal: **${damageResult.damage}**\nReduction: ${defenseDesc.damageReduction}`, 
+                        value: blocked ? 
+                            `Original: ${originalDamage}\nFinal: 0\nReduction: 100%` :
+                            `Original: ${originalDamage}\nFinal: ${finalDamage}\nReduction: ${Math.floor(((originalDamage - finalDamage) / originalDamage) * 100)}%`, 
                         inline: true 
+                    },
+                    { 
+                        name: '💖 Health Status', 
+                        value: `${hpBar.bar}\n${hpBar.text}\nStatus: ${hpBar.status}`, 
+                        inline: false 
                     }
                 ],
-                color: defenseDesc.color,
+                color: defenseInfo.color,
                 timestamp: new Date().toISOString()
             };
 
-            // Add HP bar visualization
-            if (damageResult.damage > 0) {
-                const hpPercentage = Math.round((currentDefenderHP / defenderMaxHP) * 100);
-                const hpBarLength = 20;
-                const filledBars = Math.round((currentDefenderHP / defenderMaxHP) * hpBarLength);
-                const emptyBars = hpBarLength - filledBars;
-                
-                let hpBarColor = '🟢';
-                if (hpPercentage <= 25) hpBarColor = '🔴';
-                else if (hpPercentage <= 50) hpBarColor = '🟡';
-                else if (hpPercentage <= 75) hpBarColor = '🟠';
-
-                const hpBar = hpBarColor.repeat(filledBars) + '⬜'.repeat(emptyBars);
-                
-                attackEmbed.fields.push({
-                    name: `💖 ${defenderName}'s Health`,
-                    value: `${hpBar}\n**${beforeHP}** → **${currentDefenderHP}** / **${defenderMaxHP}** HP\n**${hpPercentage}%** remaining`,
-                    inline: false
-                });
-            }
-
-            // Add critical hit indicator
-            if (damageResult.isCritical && damageResult.damage > 0) {
-                attackEmbed.fields.push({
-                    name: '⭐ Special Effect',
-                    value: '**CRITICAL HIT!** +30% damage from rarity bonus!',
-                    inline: false
-                });
-            }
-
-            // Add elemental effectiveness
-            if (damageResult.elementalMultiplier !== 1.0) {
-                const effectType = damageResult.elementalMultiplier > 1.0 ? 'SUPER EFFECTIVE' : 'NOT VERY EFFECTIVE';
-                const effectEmoji = damageResult.elementalMultiplier > 1.0 ? '🔥' : '💧';
-                attackEmbed.fields.push({
-                    name: `${effectEmoji} Elemental Effect`,
-                    value: `**${effectType}**\n${attackerElement.toUpperCase()} vs ${damageResult.defenderElement.toUpperCase()}\nMultiplier: ${Math.round(damageResult.elementalMultiplier * 100)}%`,
-                    inline: false
-                });
-            }
-
             await interaction.editReply({ embeds: [attackEmbed] });
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            await new Promise(resolve => setTimeout(resolve, 1800));
 
             if (currentDefenderHP <= 0) {
-                // Epic knockout animation
                 const koEmbed = {
-                    title: `💀 **ULTIMATE KNOCKOUT!**`,
-                    description: `**${defenderName}** has been completely overwhelmed by **${attackerName}'s** devastating ${totalFruits}-fruit assault!`,
+                    title: `💀 **KNOCKOUT!**`,
+                    description: `**${defenderName}** has been defeated by **${attackerName}**'s overwhelming assault!`,
                     fields: [
-                        { name: '🏆 Victor', value: attackerName, inline: true },
-                        { name: '💥 Finishing Blow', value: `${attackerFruit.fruit_name}\n(Attack ${i + 1}/${totalFruits})`, inline: true },
-                        { name: '⚡ Final Element', value: attackerElement.toUpperCase(), inline: true },
-                        { 
-                            name: '📊 Battle Statistics', 
-                            value: `Total Attacks: ${i + 1}/${totalFruits}\nDamage Dealt: ${totalDamage + damageResult.damage}\nBlocked: ${totalBlocked}\nResisted: ${totalResisted}`, 
-                            inline: false 
-                        }
+                        { name: '⚰️ Final Blow', value: `${attackerFruit.fruit_name} (${attackerElement.toUpperCase()})`, inline: true },
+                        { name: '🎯 Attack Number', value: `${i + 1}/${totalFruits}`, inline: true },
+                        { name: '💥 Final Damage', value: `${finalDamage}`, inline: true }
                     ],
                     color: 0x8B0000,
                     timestamp: new Date().toISOString()
                 };
                 
                 await interaction.editReply({ embeds: [koEmbed] });
-                await new Promise(resolve => setTimeout(resolve, 4000));
+                await new Promise(resolve => setTimeout(resolve, 2500));
                 break;
             }
         }
 
-        // Turn summary if battle continues
-        if (currentDefenderHP > 0) {
-            const summaryEmbed = {
-                title: `📊 **TURN ${turn} COMPLETE - DEVASTATING BARRAGE!**`,
-                description: `**${attackerName}** unleashed **${totalFruits} Devil Fruit attacks**!`,
-                fields: [
-                    { name: '🍈 Total Fruits Used', value: `${totalFruits}`, inline: true },
-                    { name: '💥 Total Damage', value: `${totalDamage}`, inline: true },
-                    { name: '🛡️ Perfect Blocks', value: `${totalBlocked}`, inline: true },
-                    { name: '🔄 Resisted Attacks', value: `${totalResisted}`, inline: true },
-                    { name: '✅ Successful Hits', value: `${totalFruits - totalBlocked - totalResisted}`, inline: true },
-                    { name: '📈 Success Rate', value: `${Math.round(((totalFruits - totalBlocked - totalResisted) / totalFruits) * 100)}%`, inline: true },
-                    { 
-                        name: `💖 ${defenderName}'s Status`, 
-                        value: `${currentDefenderHP}/${defenderMaxHP} HP (${Math.round((currentDefenderHP/defenderMaxHP)*100)}% remaining)`, 
-                        inline: false 
-                    }
-                ],
-                color: 0x4169E1,
-                timestamp: new Date().toISOString()
-            };
+        // Show turn summary with detailed statistics
+        const successRate = Math.floor((successfulAttacks / totalFruits) * 100);
+        const summaryEmbed = {
+            title: `📊 **TURN ${turn} SUMMARY**`,
+            description: `**${attackerName}**'s multi-fruit assault complete!`,
+            fields: [
+                { name: '⚔️ Total Attacks', value: `${totalFruits}`, inline: true },
+                { name: '🎯 Successful Hits', value: `${successfulAttacks}`, inline: true },
+                { name: '📈 Success Rate', value: `${successRate}%`, inline: true },
+                { name: '🛡️ Perfect Blocks', value: `${attacksBlocked}`, inline: true },
+                { name: '🔄 Resisted Attacks', value: `${attacksResisted}`, inline: true },
+                { name: '💥 Total Damage', value: `${totalDamage}`, inline: true },
+                { name: '💖 Defender HP', value: `${currentDefenderHP}/${defenderMaxHP} (${Math.floor((currentDefenderHP/defenderMaxHP)*100)}%)`, inline: false }
+            ],
+            color: currentDefenderHP > 0 ? 0x1E90FF : 0x8B0000,
+            timestamp: new Date().toISOString()
+        };
 
-            await interaction.editReply({ embeds: [summaryEmbed] });
-            await new Promise(resolve => setTimeout(resolve, 3500));
-        }
+        await interaction.editReply({ embeds: [summaryEmbed] });
+        await new Promise(resolve => setTimeout(resolve, 2000));
 
         return {
             finalHP: currentDefenderHP,
             totalDamage,
-            totalBlocked,
-            totalResisted,
-            attacksUsed: totalFruits
+            attacksBlocked,
+            attacksResisted,
+            successfulAttacks,
+            successRate
         };
     }
 
-    // Enhanced NPC combat with ALL fruits and detailed defense
     async startNPCCombatWithAnimation(userId, username, interaction) {
         try {
-            console.log(`🤖 Starting ENHANCED ALL-FRUITS NPC combat for ${username}`);
+            console.log(`🤖 Starting ULTIMATE NPC combat for ${username}`);
             
             const userFruits = await this.getUserFruits(userId);
             const userStats = await this.getUserStats(userId);
@@ -460,42 +489,34 @@ class CombatSystem {
                 { fruit_name: 'Hana Hana no Mi', rarity: 'uncommon' },
                 { fruit_name: 'Goro Goro no Mi', rarity: 'legendary' }
             ];
-            const npcCP = 2500; // Stronger NPC for balance
+            const npcCP = 2500;
 
             const playerMaxHP = this.calculateTotalHP(userStats.totalCP);
             const npcMaxHP = this.calculateTotalHP(npcCP);
             let playerHP = playerMaxHP;
             let npcHP = npcMaxHP;
 
-            console.log(`💖 Enhanced HP: Player ${playerMaxHP}HP (${userStats.totalCP} CP, ${userFruits.length} fruits) vs NPC ${npcMaxHP}HP (${npcCP} CP)`);
-
-            // Epic ASCII ship animation
-            const shipFrames = this.getShipFrames();
+            // Complete ship animation sequence
+            const shipFrames = this.getShipAnimationFrames();
             for (let i = 0; i < shipFrames.length; i++) {
-                await interaction.editReply({ content: shipFrames[i] });
+                await interaction.editReply({ 
+                    content: shipFrames[i].title,
+                    embeds: [{ 
+                        description: shipFrames[i].content,
+                        color: 0x1E90FF
+                    }]
+                });
                 await new Promise(resolve => setTimeout(resolve, 1500));
             }
 
-            // Enhanced battle arena setup
+            // Battle arena setup
             const arenaEmbed = {
-                title: `🏟️ **ULTIMATE BATTLE ARENA**`,
-                description: `**${username}** vs **Monkey D. Tester**\n\n🔥 **ALL DEVIL FRUITS UNLEASHED!**`,
+                title: `🏟️ **EPIC BATTLE ARENA - ALL FRUITS UNLEASHED**`,
+                description: `**${username}** vs **Monkey D. Tester**\n\n*All Devil Fruits will participate in this legendary battle!*`,
                 fields: [
-                    { 
-                        name: '👤 Your Arsenal', 
-                        value: `**${userStats.totalCP} CP**\n💖 ${playerHP}/${playerMaxHP} HP\n🍈 **${userFruits.length} Devil Fruits**\n⚡ ALL FRUITS ATTACK!`, 
-                        inline: true 
-                    },
-                    { 
-                        name: '🤖 NPC Arsenal', 
-                        value: `**${npcCP} CP**\n💖 ${npcHP}/${npcMaxHP} HP\n🍈 **${npcFruits.length} Devil Fruits**\n🛡️ Advanced Defense`, 
-                        inline: true 
-                    },
-                    { 
-                        name: '🎮 Battle System', 
-                        value: `**3 EPIC TURNS**\nAll-Fruit Combat\nDetailed Defense Analysis\nResistance System`, 
-                        inline: true 
-                    }
+                    { name: '👤 Your Power', value: `💪 ${userStats.totalCP} CP\n💖 ${playerHP}/${playerMaxHP} HP\n🍈 ${userFruits.length} Devil Fruits`, inline: true },
+                    { name: '🤖 NPC Power', value: `💪 ${npcCP} CP\n💖 ${npcHP}/${npcMaxHP} HP\n🍈 ${npcFruits.length} Devil Fruits`, inline: true },
+                    { name: '🎮 Battle Format', value: `⚔️ 3 Epic Turns\n🍈 All-Fruit Combat\n🛡️ Defense Analysis\n📊 Detailed Statistics`, inline: true }
                 ],
                 color: 0x1E90FF,
                 timestamp: new Date().toISOString()
@@ -506,10 +527,10 @@ class CombatSystem {
 
             let turn = 1;
 
-            // 3 epic turns with ALL fruits
+            // Epic 3-turn combat with ALL fruits
             while (turn <= 3 && playerHP > 0 && npcHP > 0) {
-                // Player's ALL-FRUITS turn
-                const playerResult = await this.performAllFruitsCombat(
+                // Player's turn - ALL fruits attack
+                const playerResult = await this.performAdvancedCombat(
                     userFruits, npcFruits, userStats.totalCP, npcHP, npcMaxHP,
                     username, "Monkey D. Tester", interaction, turn
                 );
@@ -517,8 +538,10 @@ class CombatSystem {
                 npcHP = playerResult.finalHP;
                 if (npcHP <= 0) break;
 
-                // NPC's ALL-FRUITS turn  
-                const npcResult = await this.performAllFruitsCombat(
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                // NPC's turn - ALL fruits attack
+                const npcResult = await this.performAdvancedCombat(
                     npcFruits, userFruits, npcCP, playerHP, playerMaxHP,
                     "Monkey D. Tester", username, interaction, turn
                 );
@@ -527,6 +550,7 @@ class CombatSystem {
                 if (playerHP <= 0) break;
 
                 turn++;
+                await new Promise(resolve => setTimeout(resolve, 2000));
             }
 
             // Epic battle conclusion
@@ -534,24 +558,27 @@ class CombatSystem {
             let berryReward = 0;
 
             if (victory) {
-                berryReward = Math.floor(1000 + Math.random() * 1500); // Better rewards for harder battle
+                berryReward = Math.floor(1000 + Math.random() * 1500);
                 try {
                     const BerryEconomySystem = require('./economy');
-                    await BerryEconomySystem.addBerries(userId, berryReward, `Epic All-Fruits NPC victory`);
+                    await BerryEconomySystem.addBerries(userId, berryReward, `Ultimate NPC victory - ${userFruits.length} fruits used`);
                 } catch (error) {
                     console.log('Berry system not available');
                 }
             }
 
+            const finalPlayerHPBar = this.createHPBar(playerHP, playerMaxHP);
+            const finalNPCHPBar = this.createHPBar(npcHP, npcMaxHP);
+
             const resultEmbed = {
-                title: victory ? `🏆 **LEGENDARY ALL-FRUITS VICTORY!** 🏆` : `💀 **EPIC ALL-FRUITS DEFEAT!** 💀`,
+                title: victory ? `🏆 **LEGENDARY VICTORY!** 🏆` : `💀 **HEROIC DEFEAT!** 💀`,
                 description: victory ? 
-                    `**${username}** emerges victorious using **${userFruits.length} Devil Fruits** in an ULTIMATE battle!\n\n🎉 What an incredible display of multi-fruit mastery!` :
-                    `**${username}** fought valiantly with **${userFruits.length} Devil Fruits** but **Monkey D. Tester** proves too powerful!\n\n⚔️ An epic battle worthy of legends!`,
+                    `**${username}** emerges victorious with the power of **${userFruits.length} Devil Fruits**!` :
+                    `**Monkey D. Tester** proves too powerful even against **${userFruits.length} Devil Fruits**!`,
                 fields: [
-                    { name: '👤 Your Final Status', value: `${playerHP}/${playerMaxHP} HP\n${Math.round((playerHP/playerMaxHP)*100)}% remaining\n${userFruits.length} fruits used`, inline: true },
-                    { name: '🤖 NPC Final Status', value: `${npcHP}/${npcMaxHP} HP\n${Math.round((npcHP/npcMaxHP)*100)}% remaining\n${npcFruits.length} fruits used`, inline: true },
-                    { name: '🎯 Battle Stats', value: `${turn} epic turns\nAll-fruits combat\nAdvanced defense\nResistance analysis`, inline: true }
+                    { name: '👤 Your Final Status', value: `${finalPlayerHPBar.bar}\n${finalPlayerHPBar.text}\nStatus: ${finalPlayerHPBar.status}`, inline: true },
+                    { name: '🤖 NPC Final Status', value: `${finalNPCHPBar.bar}\n${finalNPCHPBar.text}\nStatus: ${finalNPCHPBar.status}`, inline: true },
+                    { name: '📊 Battle Stats', value: `🎯 Turns Completed: ${turn}\n🍈 Fruits Used: ${userFruits.length}\n⚔️ Epic Combat Mode`, inline: true }
                 ],
                 color: victory ? 0x00FF00 : 0xFF0000,
                 timestamp: new Date().toISOString()
@@ -559,8 +586,8 @@ class CombatSystem {
 
             if (victory && berryReward > 0) {
                 resultEmbed.fields.push({ 
-                    name: '💰 Ultimate Reward', 
-                    value: `**+${berryReward} berries**\nFor your legendary all-fruits victory!`, 
+                    name: '💰 Epic Reward', 
+                    value: `+${berryReward} berries\n*Bonus for using ${userFruits.length} fruits!*`, 
                     inline: false 
                 });
             }
@@ -574,11 +601,12 @@ class CombatSystem {
                 npcHP,
                 playerMaxHP,
                 npcMaxHP,
-                berryReward
+                berryReward,
+                fruitsUsed: userFruits.length
             };
 
         } catch (error) {
-            console.error('Enhanced NPC combat error:', error);
+            console.error('Ultimate NPC combat error:', error);
             return {
                 success: false,
                 message: "❌ Combat system error occurred."
@@ -586,10 +614,9 @@ class CombatSystem {
         }
     }
 
-    // Enhanced PvP combat with ALL fruits and detailed defense
     async startPvPCombatWithAnimation(attackerId, defenderId, attackerName, defenderName, interaction) {
         try {
-            console.log(`⚔️ Starting ENHANCED ALL-FRUITS PvP: ${attackerName} vs ${defenderName}`);
+            console.log(`⚔️ Starting ULTIMATE PvP: ${attackerName} vs ${defenderName}`);
             
             const attackerFruits = await this.getUserFruits(attackerId);
             const defenderFruits = await this.getUserFruits(defenderId);
@@ -608,35 +635,27 @@ class CombatSystem {
             let attackerHP = attackerMaxHP;
             let defenderHP = defenderMaxHP;
 
-            console.log(`💖 PvP All-Fruits: ${attackerName} ${attackerMaxHP}HP (${attackerFruits.length} fruits) vs ${defenderName} ${defenderMaxHP}HP (${defenderFruits.length} fruits)`);
-
-            // Epic ASCII ship animation
-            const shipFrames = this.getShipFrames();
+            // Complete ship animation sequence
+            const shipFrames = this.getShipAnimationFrames();
             for (let i = 0; i < shipFrames.length; i++) {
-                await interaction.editReply({ content: shipFrames[i] });
+                await interaction.editReply({ 
+                    content: shipFrames[i].title,
+                    embeds: [{ 
+                        description: shipFrames[i].content,
+                        color: 0xFF1493
+                    }]
+                });
                 await new Promise(resolve => setTimeout(resolve, 1500));
             }
 
-            // Enhanced PvP arena setup
+            // PvP arena setup
             const arenaEmbed = {
-                title: `🏟️ **ULTIMATE PvP ALL-FRUITS ARENA**`,
-                description: `**${attackerName}** vs **${defenderName}**\n\n🔥 **EVERY DEVIL FRUIT UNLEASHED!**`,
+                title: `🏟️ **ULTIMATE PvP ARENA - ALL FRUITS CLASH**`,
+                description: `**${attackerName}** vs **${defenderName}**\n\n*Every Devil Fruit will participate in this epic duel!*`,
                 fields: [
-                    { 
-                        name: '👤 Attacker Arsenal', 
-                        value: `**${attackerStats.totalCP} CP**\n💖 ${attackerHP}/${attackerMaxHP} HP\n🍈 **${attackerFruits.length} Fruits**\n⚔️ ALL ATTACK!`, 
-                        inline: true 
-                    },
-                    { 
-                        name: '👥 Defender Arsenal', 
-                        value: `**${defenderStats.totalCP} CP**\n💖 ${defenderHP}/${defenderMaxHP} HP\n🍈 **${defenderFruits.length} Fruits**\n🛡️ FULL DEFENSE!`, 
-                        inline: true 
-                    },
-                    { 
-                        name: '🎮 PvP System', 
-                        value: `**3 EPIC TURNS**\nPlayer vs Player\nAll-Fruits Combat\nFull Defense Analysis`, 
-                        inline: true 
-                    }
+                    { name: '👤 Attacker', value: `💪 ${attackerStats.totalCP} CP\n💖 ${attackerHP}/${attackerMaxHP} HP\n🍈 ${attackerFruits.length} Devil Fruits`, inline: true },
+                    { name: '👥 Defender', value: `💪 ${defenderStats.totalCP} CP\n💖 ${defenderHP}/${defenderMaxHP} HP\n🍈 ${defenderFruits.length} Devil Fruits`, inline: true },
+                    { name: '🎮 PvP Format', value: `⚔️ Ultimate Combat\n🍈 All-Fruit Battle\n🛡️ Advanced Defense\n📊 Real-time Stats`, inline: true }
                 ],
                 color: 0xFF1493,
                 timestamp: new Date().toISOString()
@@ -647,10 +666,10 @@ class CombatSystem {
 
             let turn = 1;
 
-            // 3 epic turns of all-fruits PvP
+            // Epic 3-turn PvP combat with ALL fruits
             while (turn <= 3 && attackerHP > 0 && defenderHP > 0) {
-                // Attacker's ALL-FRUITS turn
-                const attackerResult = await this.performAllFruitsCombat(
+                // Attacker's turn - ALL fruits attack
+                const attackerResult = await this.performAdvancedCombat(
                     attackerFruits, defenderFruits, attackerStats.totalCP, defenderHP, defenderMaxHP,
                     attackerName, defenderName, interaction, turn
                 );
@@ -658,8 +677,10 @@ class CombatSystem {
                 defenderHP = attackerResult.finalHP;
                 if (defenderHP <= 0) break;
 
-                // Defender's ALL-FRUITS counter-attack
-                const defenderResult = await this.performAllFruitsCombat(
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                // Defender's turn - ALL fruits attack
+                const defenderResult = await this.performAdvancedCombat(
                     defenderFruits, attackerFruits, defenderStats.totalCP, attackerHP, attackerMaxHP,
                     defenderName, attackerName, interaction, turn
                 );
@@ -668,6 +689,7 @@ class CombatSystem {
                 if (attackerHP <= 0) break;
 
                 turn++;
+                await new Promise(resolve => setTimeout(resolve, 2000));
             }
 
             // Epic PvP conclusion
@@ -678,21 +700,24 @@ class CombatSystem {
                 berryReward = Math.floor(500 + Math.random() * 1000);
                 try {
                     const BerryEconomySystem = require('./economy');
-                    await BerryEconomySystem.addBerries(attackerId, berryReward, `Epic All-Fruits PvP victory`);
+                    await BerryEconomySystem.addBerries(attackerId, berryReward, `Ultimate PvP victory - ${attackerFruits.length} vs ${defenderFruits.length} fruits`);
                 } catch (error) {
                     console.log('Berry system not available');
                 }
             }
 
+            const finalAttackerHPBar = this.createHPBar(attackerHP, attackerMaxHP);
+            const finalDefenderHPBar = this.createHPBar(defenderHP, defenderMaxHP);
+
             const resultEmbed = {
-                title: attackerVictory ? `🏆 **${attackerName.toUpperCase()} ULTIMATE VICTORY!** 🏆` : `🏆 **${defenderName.toUpperCase()} ULTIMATE VICTORY!** 🏆`,
+                title: attackerVictory ? `🏆 **${attackerName.toUpperCase()} DOMINATES!** 🏆` : `🏆 **${defenderName.toUpperCase()} TRIUMPHS!** 🏆`,
                 description: attackerVictory ? 
-                    `**${attackerName}** defeats **${defenderName}** using **${attackerFruits.length} Devil Fruits** in an ULTIMATE PvP battle!\n\n🎉 Incredible all-fruits mastery displayed!` :
-                    `**${defenderName}** successfully defends against **${attackerName}** using **${defenderFruits.length} Devil Fruits**!\n\n⚔️ What a legendary all-fruits defensive performance!`,
+                    `**${attackerName}** overwhelms **${defenderName}** with **${attackerFruits.length} Devil Fruits**!` :
+                    `**${defenderName}** withstands the assault and defeats **${attackerName}**!`,
                 fields: [
-                    { name: '👤 Attacker Final', value: `${attackerHP}/${attackerMaxHP} HP\n${Math.round((attackerHP/attackerMaxHP)*100)}%\n${attackerFruits.length} fruits`, inline: true },
-                    { name: '👥 Defender Final', value: `${defenderHP}/${defenderMaxHP} HP\n${Math.round((defenderHP/defenderMaxHP)*100)}%\n${defenderFruits.length} fruits`, inline: true },
-                    { name: '🎯 Battle Stats', value: `${turn} epic turns\nAll-fruits PvP\nFull defense analysis\nUltimate combat`, inline: true }
+                    { name: '👤 Attacker Final Status', value: `${finalAttackerHPBar.bar}\n${finalAttackerHPBar.text}\nStatus: ${finalAttackerHPBar.status}`, inline: true },
+                    { name: '👥 Defender Final Status', value: `${finalDefenderHPBar.bar}\n${finalDefenderHPBar.text}\nStatus: ${finalDefenderHPBar.status}`, inline: true },
+                    { name: '📊 PvP Battle Stats', value: `🎯 Turns: ${turn}\n⚔️ ${attackerFruits.length} vs ${defenderFruits.length} Fruits\n🏆 Ultimate PvP Mode`, inline: true }
                 ],
                 color: attackerVictory ? 0x00FF00 : 0xFF6B35,
                 timestamp: new Date().toISOString()
@@ -700,8 +725,8 @@ class CombatSystem {
 
             if (attackerVictory && berryReward > 0) {
                 resultEmbed.fields.push({ 
-                    name: '💰 Ultimate PvP Reward', 
-                    value: `**+${berryReward} berries** for ${attackerName}'s all-fruits victory!`, 
+                    name: '💰 Victory Reward', 
+                    value: `+${berryReward} berries for ${attackerName}\n*Epic PvP Victory Bonus!*`, 
                     inline: false 
                 });
             }
@@ -716,11 +741,13 @@ class CombatSystem {
                 attackerMaxHP,
                 defenderMaxHP,
                 berryReward,
-                winner: attackerVictory ? attackerName : defenderName
+                winner: attackerVictory ? attackerName : defenderName,
+                attackerFruits: attackerFruits.length,
+                defenderFruits: defenderFruits.length
             };
 
         } catch (error) {
-            console.error('Enhanced PvP combat error:', error);
+            console.error('Ultimate PvP combat error:', error);
             return {
                 success: false,
                 message: "❌ PvP combat system error occurred."
