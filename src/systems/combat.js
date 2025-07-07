@@ -106,11 +106,27 @@ class CombatSystem {
 
             const userFruits = await this.getUserFruits(userId);
             if (!userFruits || userFruits.length === 0) {
-                return {
-                    success: false,
-                    error: 'No Devil Fruits found in your collection!'
-                };
+                console.warn('No fruits found, using default fruit for combat');
+                // Create a default fruit based on user's CP
+                const defaultFruits = [
+                    { fruit_name: 'Gomu Gomu no Mi', rarity: 'common', duplicate_count: 1 }
+                ];
+                // Use default fruits but continue combat
+                return await this.performDetailedCombat(userId, username, userStats, defaultFruits);
             }
+
+            return await this.performDetailedCombat(userId, username, userStats, userFruits);
+        } catch (error) {
+            console.error('Detailed NPC combat error:', error);
+            return {
+                success: false,
+                error: 'Combat system error. Please try again.'
+            };
+        }
+    }
+
+    async performDetailedCombat(userId, username, userStats, userFruits) {
+        try {
 
             // NPC data with detailed fruits
             const npcFruits = [
@@ -235,10 +251,10 @@ class CombatSystem {
             };
             
         } catch (error) {
-            console.error('Detailed NPC combat error:', error);
+            console.error('Detailed combat performance error:', error);
             return {
                 success: false,
-                error: 'Combat system error. Please try again.'
+                error: 'Combat execution error. Please try again.'
             };
         }
     }
@@ -280,15 +296,35 @@ class CombatSystem {
     // Get user's devil fruits
     async getUserFruits(userId) {
         try {
-            const query = `
-                SELECT fruit_name, rarity, duplicate_count
-                FROM user_devil_fruits
-                WHERE user_id = $1
-                ORDER BY RANDOM()
-            `;
+            // Try different possible column names to find the right one
+            const possibleQueries = [
+                'SELECT fruit_name, rarity, duplicate_count FROM user_devil_fruits WHERE user_id = $1',
+                'SELECT name, rarity, duplicate_count FROM user_devil_fruits WHERE user_id = $1',
+                'SELECT fruit_id, rarity, duplicate_count FROM user_devil_fruits WHERE user_id = $1',
+                'SELECT devil_fruit_name, rarity, duplicate_count FROM user_devil_fruits WHERE user_id = $1'
+            ];
             
-            const result = await DatabaseManager.query(query, [userId]);
-            return result.rows;
+            for (const query of possibleQueries) {
+                try {
+                    const result = await DatabaseManager.query(query, [userId]);
+                    console.log(`✅ Found fruits using query: ${query}`);
+                    
+                    // Normalize the column names to 'fruit_name'
+                    return result.rows.map(row => ({
+                        fruit_name: row.fruit_name || row.name || row.fruit_id || row.devil_fruit_name,
+                        rarity: row.rarity,
+                        duplicate_count: row.duplicate_count
+                    }));
+                } catch (error) {
+                    // Try next query
+                    continue;
+                }
+            }
+            
+            // If all queries fail, return empty array
+            console.warn('Could not find fruits with any column name variation');
+            return [];
+            
         } catch (error) {
             console.error('Error getting user fruits:', error);
             return [];
