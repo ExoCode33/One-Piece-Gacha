@@ -1,5 +1,3 @@
-// src/animations/raid.js - FULL SAIL-ACROSS ANIMATION, with legacy methods restored!
-
 class RaidAnimation {
     constructor() {
         this.shipDesign = [
@@ -18,31 +16,25 @@ class RaidAnimation {
             '⠀⠀⠀⠀⠀⠀⠀⠀⠘⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠟⠛⠉⠀⠀⠀⠀',
             '⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠉⠉⠉⠉⠉⠉⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀'
         ];
-
-        this.canvasWidth = 70; // How wide the Discord message box is (80 or less for safety)
+        this.canvasWidth = 70;
     }
 
-    // Ship position for a given frame, as it "sails" from right to left
     positionShipAcross(frame, totalFrames) {
         const shipWidth = this.shipDesign[0].length;
         const startOffset = this.canvasWidth;
         const endOffset = -shipWidth;
         const range = startOffset - endOffset;
         const offset = Math.round(startOffset - (frame / (totalFrames - 1)) * range);
-
         return this.shipDesign.map(line => {
             if (offset >= 0) {
-                // Ship is entering or within view, pad left
                 return ' '.repeat(offset) + line.slice(0, this.canvasWidth - offset);
             } else {
-                // Ship is leaving left, clip left side
                 const abs = Math.abs(offset);
                 return line.slice(abs, abs + this.canvasWidth);
             }
         }).join('\n');
     }
 
-    // The classic full sail animation (from right to left)
     async playFullSailAnimation(interaction, animationType = 'combat') {
         const totalFrames = this.canvasWidth + this.shipDesign[0].length + 2;
         for (let i = 0; i < totalFrames; i++) {
@@ -57,16 +49,14 @@ class RaidAnimation {
                 footer: { text: `Frame ${i + 1}/${totalFrames}` },
                 timestamp: new Date().toISOString()
             };
-
             await interaction.editReply({
                 content: `\`\`\`\n${content}\n\`\`\``,
                 embeds: [embed]
             });
-            await new Promise(res => setTimeout(res, 80)); // Adjust for speed!
+            await new Promise(res => setTimeout(res, 80));
         }
     }
 
-    // For static ship display (centered or at any offset)
     positionShip(offset) {
         return this.shipDesign.map(line => {
             if (offset >= 0) {
@@ -78,39 +68,43 @@ class RaidAnimation {
         }).join('\n');
     }
 
-    // Classic quick animation: 3 frames only, like your old bot
+    // CORRECTED QUICK ANIMATION: Offscreen right, center, offscreen left
     async playQuickAnimation(interaction, animationType = 'combat') {
         const totalFrames = 3;
+        const shipWidth = this.shipDesign[0].length;
+        const canvasWidth = this.canvasWidth;
+        const frames = [
+            // Ship completely offscreen right (invisible)
+            this.positionShipAcross(0, totalFrames + 1), 
+            // Ship perfectly centered
+            this.positionShip(Math.floor((canvasWidth - shipWidth) / 2)),
+            // Ship completely offscreen left (invisible)
+            this.positionShipAcross(totalFrames + 1, totalFrames + 1)
+        ];
+        const titles = [
+            "🌊 **Ship Approaching...**",
+            "⚔️ **Ship Ready for Battle!**",
+            "🏴‍☠️ **Battle Begins!**"
+        ];
         for (let i = 0; i < totalFrames; i++) {
-            const content = this.positionShipAcross(
-                // Space the 3 frames across the full animation for effect
-                Math.floor((i / (totalFrames - 1)) * (this.canvasWidth + this.shipDesign[0].length)),
-                this.canvasWidth + this.shipDesign[0].length + 2
-            );
             const embed = {
-                title: i === 0
-                    ? "🌊 **Ship Approaching...**"
-                    : (i === totalFrames - 1
-                        ? "🏴‍☠️ **Battle Begins!**"
-                        : "⚔️ **Ship Ready for Battle!**"),
+                title: titles[i],
                 color: this.getAnimationColor(animationType),
                 footer: { text: `⚔️ Combat Animation • Frame ${i + 1}/${totalFrames}` },
                 timestamp: new Date().toISOString()
             };
             await interaction.editReply({
-                content: `\`\`\`\n${content}\n\`\`\``,
+                content: `\`\`\`\n${frames[i]}\n\`\`\``,
                 embeds: [embed]
             });
             if (i < totalFrames - 1) await new Promise(res => setTimeout(res, 800));
         }
     }
 
-    // Classic full animation (legacy): just call the new full sail method
     async playAnimation(interaction, animationType = 'combat') {
         await this.playFullSailAnimation(interaction, animationType);
     }
 
-    // Colors for different animation types
     getAnimationColor(type) {
         const colors = {
             combat: 0x1E90FF,
@@ -121,7 +115,6 @@ class RaidAnimation {
         return colors[type] || colors.combat;
     }
 
-    // For static "ready" display
     getBattleReadyShip() {
         return {
             title: '🏟️ **Battle Ship Deployed!**',
