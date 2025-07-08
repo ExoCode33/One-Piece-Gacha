@@ -1,4 +1,4 @@
-// FIXED STRATEGIC COMBAT SYSTEM - No Interaction Timeouts
+// FIXED STRATEGIC COMBAT SYSTEM - Public Battles, Private Selection + Working Economy
 class StrategicCombatSystem {
     constructor() {
         console.log('🔧 Enhanced Strategic Combat System initialized');
@@ -6,12 +6,11 @@ class StrategicCombatSystem {
         this.berryStealRange = { min: 0.15, max: 0.35 };
     }
 
-    // FIXED: No animation first, direct to fruit selection
+    // Start NPC combat
     async startNPCCombatWithAnimation(userId, username, interaction) {
         console.log(`🤖 Starting strategic NPC combat for ${username}`);
         
         try {
-            // Get user's Devil Fruits first to validate
             const userFruits = await this.getUserFruitsWithElements(userId);
             
             if (userFruits.length === 0) {
@@ -21,8 +20,8 @@ class StrategicCombatSystem {
                 };
             }
 
-            // SKIP animation to avoid timeout - go straight to fruit selection
-            await this.showCleanFruitSelectionMenu(interaction, userFruits, 'npc', username);
+            // PRIVATE fruit selection (ephemeral: true)
+            await this.showPrivateFruitSelectionMenu(interaction, userFruits, 'npc', username);
             
             return { success: true, message: "Fruit selection phase initiated" };
 
@@ -35,7 +34,7 @@ class StrategicCombatSystem {
         }
     }
 
-    // FIXED: No animation first for PvP either
+    // Start PvP combat
     async startPvPCombatWithAnimation(attackerId, defenderId, attackerName, defenderName, interaction) {
         console.log(`⚔️ Starting strategic PvP: ${attackerName} vs ${defenderName}`);
         
@@ -57,7 +56,6 @@ class StrategicCombatSystem {
                 };
             }
 
-            // Store battle data
             const battleId = `${attackerId}_vs_${defenderId}_${Date.now()}`;
             this.activeBattles.set(battleId, {
                 attackerId,
@@ -72,8 +70,8 @@ class StrategicCombatSystem {
                 createdAt: Date.now()
             });
 
-            // SKIP animation - go straight to fruit selection
-            await this.showCleanFruitSelectionMenu(interaction, attackerFruits, 'pvp_attacker', attackerName, battleId);
+            // PRIVATE fruit selection for PvP too
+            await this.showPrivateFruitSelectionMenu(interaction, attackerFruits, 'pvp_attacker', attackerName, battleId);
             
             return { success: true, message: "PvP fruit selection phase initiated" };
 
@@ -86,8 +84,8 @@ class StrategicCombatSystem {
         }
     }
 
-    // CLEAN: Fruit selection menu
-    async showCleanFruitSelectionMenu(interaction, fruits, battleType, playerName, battleId = null) {
+    // PRIVATE: Fruit selection menu (only visible to command user)
+    async showPrivateFruitSelectionMenu(interaction, fruits, battleType, playerName, battleId = null) {
         const { ActionRowBuilder, EmbedBuilder, StringSelectMenuBuilder } = require('discord.js');
         
         const sortedFruits = fruits.sort((a, b) => b.totalPower - a.totalPower);
@@ -119,11 +117,13 @@ class StrategicCombatSystem {
 
         const selectionEmbed = new EmbedBuilder()
             .setColor(0xF39C12)
-            .setTitle(`Strategic Battle Formation - ${playerName}`)
+            .setTitle(`🔒 Private Battle Formation - ${playerName}`)
             .setDescription([
                 `Select up to 3 Devil Fruits for ${battleType === 'npc' ? 'NPC combat' : 'PvP battle'}`,
                 ``,
-                `Collection: ${totalFruits} fruits | Average: ${avgPower} CP`
+                `Collection: ${totalFruits} fruits | Average: ${avgPower} CP`,
+                ``,
+                `⚠️ **This selection is private** - only you can see this menu`
             ].join('\n'))
             .addFields([
                 {
@@ -137,17 +137,19 @@ class StrategicCombatSystem {
                         '• Higher rarity = more base power',
                         '• Duplicates give +1% CP bonus each',
                         '• Type advantages grant 50% damage bonus',
-                        '• Combat Power affects damage scaling'
+                        '• Combat will be visible to everyone after selection'
                     ].join('\n'),
                     inline: false
                 }
             ])
-            .setFooter({ text: 'Select your battle formation from the dropdown below' })
+            .setFooter({ text: 'Private fruit selection - Battle will be public' })
             .setTimestamp();
 
-        await interaction.editReply({
+        // EPHEMERAL: Only visible to command user
+        await interaction.reply({
             embeds: [selectionEmbed],
-            components: [actionRow]
+            components: [actionRow],
+            ephemeral: true
         });
 
         // Store fruit data
@@ -167,7 +169,6 @@ class StrategicCombatSystem {
         }
     }
 
-    // CLEAN: Type advantages (one per line)
     getCleanTypeAdvantages() {
         return [
             'FIRE > Ice, Gas, Plant',
@@ -190,7 +191,7 @@ class StrategicCombatSystem {
     // FIXED: Process fruit selection with proper error handling
     async processFruitSelection(interaction, selectedValues, battleType, battleId) {
         try {
-            // Always acknowledge the interaction first
+            // Acknowledge the selection interaction (still private)
             if (!interaction.deferred && !interaction.replied) {
                 await interaction.deferReply({ ephemeral: true });
             }
@@ -198,9 +199,7 @@ class StrategicCombatSystem {
             if (battleType === 'npc') {
                 const battleData = this.activeBattles.get(`npc_${interaction.user.id}`);
                 if (!battleData) {
-                    if (!interaction.replied) {
-                        await interaction.editReply({ content: 'Battle session expired!' });
-                    }
+                    await interaction.editReply({ content: 'Battle session expired!' });
                     return;
                 }
 
@@ -209,18 +208,21 @@ class StrategicCombatSystem {
                     return battleData.selectableFruits[index];
                 }).filter(fruit => fruit);
 
-                // Show animation AFTER fruit selection to avoid timeout
-                await this.playPostSelectionAnimation(interaction);
+                // Confirm selection privately
+                await interaction.editReply({ 
+                    content: `✅ Selected ${selectedFruits.length} fruits! Starting public battle...`,
+                    embeds: [],
+                    components: []
+                });
                 
-                await this.executeNPCBattle(interaction, selectedFruits, battleData);
+                // Start PUBLIC battle in the channel
+                await this.startPublicNPCBattle(interaction, selectedFruits, battleData);
                 this.activeBattles.delete(`npc_${interaction.user.id}`);
 
             } else if (battleType === 'pvp_attacker') {
                 const battle = this.activeBattles.get(battleId);
                 if (!battle) {
-                    if (!interaction.replied) {
-                        await interaction.editReply({ content: 'Battle session expired!' });
-                    }
+                    await interaction.editReply({ content: 'Battle session expired!' });
                     return;
                 }
 
@@ -233,7 +235,13 @@ class StrategicCombatSystem {
                 battle.phase = 'defender_selection';
                 this.activeBattles.set(battleId, battle);
 
-                await this.notifyDefenderSelection(interaction, battle);
+                await interaction.editReply({ 
+                    content: `✅ Attacker fruits selected! Auto-selecting defender...`,
+                    embeds: [],
+                    components: []
+                });
+
+                await this.startPublicPvPBattle(interaction, battle);
             }
         } catch (error) {
             console.error('Error processing fruit selection:', error);
@@ -247,31 +255,69 @@ class StrategicCombatSystem {
         }
     }
 
-    // NEW: Play animation AFTER fruit selection
-    async playPostSelectionAnimation(interaction) {
+    // PUBLIC: Start NPC battle visible to everyone
+    async startPublicNPCBattle(interaction, selectedFruits, battleData) {
         try {
-            const animationEmbed = {
-                title: 'Battle Commencing',
-                description: 'Preparing for strategic combat...',
-                color: 0x3498db,
-                footer: { text: 'Combat starting...' }
-            };
+            const npcFruits = this.generateNPCFruits(selectedFruits);
+            const playerCP = selectedFruits.reduce((total, fruit) => total + fruit.totalPower, 0);
+            const npcCP = npcFruits.reduce((total, fruit) => total + fruit.totalPower, 0);
             
-            await interaction.editReply({ 
-                embeds: [animationEmbed], 
-                components: []
+            // PUBLIC battle announcement
+            const battleStartEmbed = new EmbedBuilder()
+                .setColor(0xFF6B35)
+                .setTitle('⚔️ PUBLIC STRATEGIC COMBAT')
+                .setDescription([
+                    `**${battleData.playerName}** challenges an NPC opponent!`,
+                    ``,
+                    `🎯 **Battle commencing...**`
+                ].join('\n'))
+                .addFields([
+                    { 
+                        name: `👤 ${battleData.playerName}`, 
+                        value: `CP: ${playerCP.toLocaleString()}`, 
+                        inline: true 
+                    },
+                    { 
+                        name: `🤖 NPC Opponent`, 
+                        value: `CP: ${npcCP.toLocaleString()}`, 
+                        inline: true 
+                    }
+                ])
+                .setFooter({ text: 'Strategic Combat - Visible to all' })
+                .setTimestamp();
+
+            // Send PUBLIC message in the channel
+            const publicMessage = await interaction.followUp({
+                embeds: [battleStartEmbed],
+                ephemeral: false
             });
-            
-            // Quick animation (no ship to avoid timeout)
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
+
+            // Execute combat with PUBLIC updates
+            const combatResult = await this.executePublicTurnBasedCombat(
+                publicMessage,
+                selectedFruits,
+                npcFruits,
+                battleData.playerName,
+                'NPC Opponent',
+                playerCP,
+                npcCP,
+                'npc'
+            );
+
+            // Award berries and show results
+            if (combatResult.victory) {
+                await this.awardBerries(interaction.user.id, combatResult.stolenBerries);
+            }
+
+            await this.showPublicBattleResults(publicMessage, combatResult, 'npc');
+
         } catch (error) {
-            console.error('Animation error:', error);
+            console.error('Error in public NPC battle:', error);
         }
     }
 
-    // FIXED: Combat with battleType parameter
-    async executeTurnBasedCombat(interaction, attackerFruits, defenderFruits, attackerName, defenderName, attackerCP, defenderCP, battleType = 'npc') {
+    // PUBLIC: Turn-based combat visible to everyone
+    async executePublicTurnBasedCombat(message, attackerFruits, defenderFruits, attackerName, defenderName, attackerCP, defenderCP, battleType = 'npc') {
         const { EmbedBuilder } = require('discord.js');
         
         let attackerHP = 100;
@@ -280,32 +326,6 @@ class StrategicCombatSystem {
         
         const attackerLog = [];
         const defenderLog = [];
-
-        // Combat introduction
-        const combatEmbed = new EmbedBuilder()
-            .setColor(0xFF6B35)
-            .setTitle('STRATEGIC COMBAT INITIATED')
-            .setDescription([
-                `**${attackerName}** vs **${defenderName}**`,
-                `Turn-based combat with type advantages`,
-                `First to 0 HP loses`
-            ].join('\n'))
-            .addFields([
-                { 
-                    name: `${attackerName} (Attacker)`, 
-                    value: `CP: ${attackerCP.toLocaleString()} | HP: ${attackerHP}/100`, 
-                    inline: true 
-                },
-                { 
-                    name: `${defenderName} (Defender)`, 
-                    value: `CP: ${defenderCP.toLocaleString()} | HP: ${defenderHP}/100`, 
-                    inline: true 
-                }
-            ])
-            .setTimestamp();
-
-        await interaction.editReply({ embeds: [combatEmbed], components: [] });
-        await new Promise(resolve => setTimeout(resolve, 2000));
 
         // Combat loop
         while (attackerHP > 0 && defenderHP > 0 && turn <= 6) {
@@ -344,11 +364,11 @@ class StrategicCombatSystem {
                 if (defenderLog.length > 8) defenderLog.splice(0, 2);
             }
 
-            // Show turn results
+            // PUBLIC turn results update
             const turnEmbed = new EmbedBuilder()
                 .setColor(0xE74C3C)
-                .setTitle(`Turn ${turn} Results`)
-                .setDescription(`Combat continues...`)
+                .setTitle(`⚔️ Turn ${turn} Results`)
+                .setDescription(`Public strategic combat in progress...`)
                 .addFields([
                     { 
                         name: `${attackerName} Actions`, 
@@ -366,22 +386,22 @@ class StrategicCombatSystem {
                         inline: false
                     }
                 ])
+                .setFooter({ text: `Public Combat - Turn ${turn}` })
                 .setTimestamp();
 
-            await interaction.editReply({ embeds: [turnEmbed] });
+            await message.edit({ embeds: [turnEmbed] });
             await new Promise(resolve => setTimeout(resolve, 3000));
 
             turn++;
         }
 
-        // Determine winner and handle rewards
+        // Determine winner and rewards
         const winner = attackerHP > defenderHP ? attackerName : defenderName;
         const victory = attackerHP > defenderHP;
         
         let stolenBerries = 0;
         if (victory && battleType === 'npc') {
             stolenBerries = Math.floor(Math.random() * 5000) + 1000;
-            await this.awardBerries(interaction.user.id, stolenBerries);
         }
 
         return {
@@ -396,24 +416,146 @@ class StrategicCombatSystem {
         };
     }
 
-    // Execute NPC battle
-    async executeNPCBattle(interaction, selectedFruits, battleData) {
-        const npcFruits = this.generateNPCFruits(selectedFruits);
-        const playerCP = selectedFruits.reduce((total, fruit) => total + fruit.totalPower, 0);
-        const npcCP = npcFruits.reduce((total, fruit) => total + fruit.totalPower, 0);
+    // PUBLIC: Show battle results to everyone
+    async showPublicBattleResults(message, combatResult, battleType) {
+        const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
         
-        const combatResult = await this.executeTurnBasedCombat(
-            interaction,
-            selectedFruits,
-            npcFruits,
-            battleData.playerName,
-            'NPC Opponent',
-            playerCP,
-            npcCP,
-            'npc' // battleType parameter
-        );
+        const isVictory = combatResult.victory;
+        
+        const resultFields = [
+            { 
+                name: 'Final Health', 
+                value: `${combatResult.finalAttackerHP} vs ${combatResult.finalDefenderHP} HP`, 
+                inline: true 
+            },
+            {
+                name: 'Battle Duration',
+                value: `${combatResult.totalTurns} turns`,
+                inline: true
+            }
+        ];
 
-        await this.showBattleResults(interaction, combatResult, 'npc');
+        if (combatResult.stolenBerries > 0) {
+            resultFields.push({
+                name: '💰 Berry Reward',
+                value: `+${combatResult.stolenBerries.toLocaleString()} berries`,
+                inline: true
+            });
+        }
+
+        resultFields.push({
+            name: 'Complete Battle Log',
+            value: [
+                `**${combatResult.winner} Actions:**`,
+                combatResult.attackerLog.join('\n'),
+                ``,
+                `**Defender Actions:**`,
+                combatResult.defenderLog.join('\n')
+            ].join('\n'),
+            inline: false
+        });
+        
+        const resultEmbed = new EmbedBuilder()
+            .setColor(isVictory ? 0x00FF00 : 0xFF0000)
+            .setTitle(isVictory ? '🏆 PUBLIC VICTORY!' : '💀 PUBLIC DEFEAT!')
+            .setDescription(`**${combatResult.winner}** wins after ${combatResult.totalTurns} turns of strategic combat!`)
+            .addFields(resultFields)
+            .setFooter({ text: 'Public Strategic Combat Results' })
+            .setTimestamp();
+
+        await message.edit({ embeds: [resultEmbed], components: [] });
+    }
+
+    // ENHANCED: Berry economy with proper initialization
+    async awardBerries(userId, amount) {
+        try {
+            console.log(`💰 Attempting to award ${amount} berries to user ${userId}`);
+            
+            // Ensure user exists first
+            const DatabaseManager = require('../database/manager');
+            await DatabaseManager.ensureUser(userId, 'Combat Winner');
+            
+            // Get economy system
+            const BerryEconomySystem = require('../systems/economy');
+            
+            // Initialize tables if needed
+            await BerryEconomySystem.initializeBerryTable();
+            
+            // Award berries
+            const newBalance = await BerryEconomySystem.addBerries(userId, amount, 'Combat Victory');
+            
+            console.log(`✅ Successfully awarded ${amount.toLocaleString()} berries to user ${userId}`);
+            console.log(`💳 New balance: ${newBalance.toLocaleString()} berries`);
+            
+            return newBalance;
+        } catch (error) {
+            console.error('❌ Error awarding berries:', error);
+            return 0;
+        }
+    }
+
+    // PvP methods
+    async startPublicPvPBattle(interaction, battle) {
+        try {
+            // Auto-select defender fruits
+            const defenderFruits = battle.defenderFruits.slice(0, 3);
+            battle.defenderSelection = defenderFruits;
+            
+            const attackerCP = battle.attackerSelection.reduce((total, fruit) => total + (fruit.totalPower || 500), 0);
+            const defenderCP = battle.defenderSelection.reduce((total, fruit) => total + (fruit.totalPower || 500), 0);
+            
+            // PUBLIC PvP battle announcement
+            const pvpStartEmbed = new EmbedBuilder()
+                .setColor(0xFF1493)
+                .setTitle('⚔️ PUBLIC PVP COMBAT')
+                .setDescription([
+                    `**${battle.attackerName}** challenges **${battle.defenderName}**!`,
+                    ``,
+                    `🎯 **PvP battle commencing...**`
+                ].join('\n'))
+                .addFields([
+                    { 
+                        name: `⚔️ ${battle.attackerName}`, 
+                        value: `CP: ${attackerCP.toLocaleString()}`, 
+                        inline: true 
+                    },
+                    { 
+                        name: `🛡️ ${battle.defenderName}`, 
+                        value: `CP: ${defenderCP.toLocaleString()}`, 
+                        inline: true 
+                    }
+                ])
+                .setFooter({ text: 'PvP Strategic Combat - Visible to all' })
+                .setTimestamp();
+
+            const publicMessage = await interaction.followUp({
+                embeds: [pvpStartEmbed],
+                ephemeral: false
+            });
+
+            const combatResult = await this.executePublicTurnBasedCombat(
+                publicMessage,
+                battle.attackerSelection,
+                battle.defenderSelection,
+                battle.attackerName,
+                battle.defenderName,
+                attackerCP,
+                defenderCP,
+                'pvp'
+            );
+
+            if (combatResult.victory) {
+                const stolenAmount = Math.floor(Math.random() * 2000) + 500;
+                combatResult.stolenBerries = stolenAmount;
+                await this.awardBerries(battle.attackerId, stolenAmount);
+            }
+
+            await this.showPublicBattleResults(publicMessage, combatResult, 'pvp');
+            this.activeBattles.delete(battleId);
+
+        } catch (error) {
+            console.error('Error in public PvP battle:', error);
+        }
     }
 
     // Other methods remain the same...
@@ -462,79 +604,6 @@ class StrategicCombatSystem {
         return `${'█'.repeat(filledBars)}${'░'.repeat(emptyBars)} ${hp}/100 HP (${color})`;
     }
 
-    async awardBerries(userId, amount) {
-        try {
-            const BerryEconomySystem = require('../systems/economy');
-            const newBalance = await BerryEconomySystem.addBerries(userId, amount, 'Combat Victory');
-            console.log(`💰 Awarded ${amount.toLocaleString()} berries to user ${userId} - New balance: ${newBalance.toLocaleString()}`);
-            return newBalance;
-        } catch (error) {
-            console.error('Error awarding berries:', error);
-            return 0;
-        }
-    }
-
-    async showBattleResults(interaction, combatResult, battleType) {
-        const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-        
-        const isVictory = combatResult.victory;
-        
-        const resultFields = [
-            { 
-                name: 'Final Health', 
-                value: `${combatResult.finalAttackerHP} vs ${combatResult.finalDefenderHP} HP`, 
-                inline: true 
-            },
-            {
-                name: 'Battle Duration',
-                value: `${combatResult.totalTurns} turns`,
-                inline: true
-            }
-        ];
-
-        if (combatResult.stolenBerries > 0) {
-            resultFields.push({
-                name: 'Berry Reward',
-                value: `+${combatResult.stolenBerries.toLocaleString()} berries`,
-                inline: true
-            });
-        }
-
-        resultFields.push({
-            name: 'Complete Battle Log',
-            value: [
-                `**${combatResult.winner} Actions:**`,
-                combatResult.attackerLog.join('\n'),
-                ``,
-                `**Defender Actions:**`,
-                combatResult.defenderLog.join('\n')
-            ].join('\n'),
-            inline: false
-        });
-        
-        const resultEmbed = new EmbedBuilder()
-            .setColor(isVictory ? 0x00FF00 : 0xFF0000)
-            .setTitle(isVictory ? 'VICTORY!' : 'DEFEAT!')
-            .setDescription(`**${combatResult.winner}** wins after ${combatResult.totalTurns} turns of strategic combat!`)
-            .addFields(resultFields)
-            .setTimestamp();
-
-        const actionRow = new ActionRowBuilder()
-            .addComponents(
-                new ButtonBuilder()
-                    .setCustomId('battle_again')
-                    .setLabel('Fight Again')
-                    .setStyle(ButtonStyle.Primary),
-                new ButtonBuilder()
-                    .setCustomId('view_power')
-                    .setLabel('View Stats')
-                    .setStyle(ButtonStyle.Secondary)
-            );
-
-        await interaction.editReply({ embeds: [resultEmbed], components: [actionRow] });
-    }
-
-    // FIXED: Get user fruits with proper duplicate grouping
     async getUserFruitsWithElements(userId) {
         try {
             const DatabaseManager = require('../database/manager');
@@ -553,7 +622,6 @@ class StrategicCombatSystem {
                 };
             });
 
-            // FIXED: Group by fruit_id (the Devil Fruit ID, not database row id)
             const fruitMap = {};
             processedFruits.forEach(fruit => {
                 const fruitId = fruit.fruit_id;
@@ -634,59 +702,6 @@ class StrategicCombatSystem {
             winRate: 0,
             totalCP: await this.getUserCombatPower(userId)
         };
-    }
-
-    // PvP methods (simplified for now)
-    async notifyDefenderSelection(interaction, battle) {
-        const { EmbedBuilder } = require('discord.js');
-        
-        const embed = new EmbedBuilder()
-            .setColor(0xFFA500)
-            .setTitle('PvP Challenge - Auto-Selecting Defender')
-            .setDescription([
-                `**${battle.attackerName}** has selected their fruits!`,
-                `Auto-selecting defender fruits for **${battle.defenderName}**...`
-            ].join('\n'))
-            .setTimestamp();
-
-        await interaction.editReply({ embeds: [embed], components: [] });
-
-        // Auto-select defender fruits and start combat
-        setTimeout(async () => {
-            try {
-                const defenderFruits = battle.defenderFruits.slice(0, 3);
-                battle.defenderSelection = defenderFruits;
-                
-                await this.executePvPBattle(interaction, battle);
-                this.activeBattles.delete(battle.battleId);
-            } catch (error) {
-                console.error('Error in auto PvP defender selection:', error);
-            }
-        }, 2000);
-    }
-
-    async executePvPBattle(interaction, battle) {
-        const attackerCP = battle.attackerSelection.reduce((total, fruit) => total + (fruit.totalPower || 500), 0);
-        const defenderCP = battle.defenderSelection.reduce((total, fruit) => total + (fruit.totalPower || 500), 0);
-        
-        const combatResult = await this.executeTurnBasedCombat(
-            interaction,
-            battle.attackerSelection,
-            battle.defenderSelection,
-            battle.attackerName,
-            battle.defenderName,
-            attackerCP,
-            defenderCP,
-            'pvp'
-        );
-
-        if (combatResult.victory) {
-            const stolenAmount = Math.floor(Math.random() * 2000) + 500;
-            combatResult.stolenBerries = stolenAmount;
-            await this.awardBerries(battle.attackerId, stolenAmount);
-        }
-
-        await this.showBattleResults(interaction, combatResult, 'pvp');
     }
 }
 
