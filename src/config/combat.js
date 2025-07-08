@@ -355,26 +355,12 @@ class StrategicCombatSystem {
     async awardBerries(userId, amount) {
         try {
             const BerryEconomySystem = require('../systems/economy');
-            await BerryEconomySystem.addBerries(userId, amount, 'Combat Victory');
-            console.log(`💰 Awarded ${amount} berries to user ${userId}`);
-            
-            // Log to channel
-            const ActivityLogger = require('../systems/logger');
-            const DatabaseManager = require('../database/manager');
-            const user = await DatabaseManager.getUser(userId);
-            const totalBerries = await BerryEconomySystem.getBerries(userId);
-            
-            await ActivityLogger.logBerryCollection(
-                userId, 
-                user?.username || 'Unknown', 
-                amount, 
-                totalBerries, 
-                0, // No hourly income
-                0  // No CP calculation needed
-            );
-            
+            const newBalance = await BerryEconomySystem.addBerries(userId, amount, 'Combat Victory');
+            console.log(`💰 Awarded ${amount.toLocaleString()} berries to user ${userId} - New balance: ${newBalance.toLocaleString()}`);
+            return newBalance;
         } catch (error) {
             console.error('Error awarding berries:', error);
+            return 0;
         }
     }
 
