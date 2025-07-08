@@ -1,8 +1,95 @@
-// ENHANCED STRATEGIC COMBAT SYSTEM - Fixed for 164+ Fruits
+// src/config/combat.js - Fixed Strategic Combat System
+console.log('🔧 Loading strategic combat system...');
+
+const RaidAnimation = require('../animations/raid');
+const { ELEMENT_TYPES, DEVIL_FRUIT_ELEMENTS, CombatSystem: ElementalCombat } = require('../data/counter-system');
+
 class StrategicCombatSystem {
     constructor() {
-        console.log('🔧 Enhanced Strategic Combat System initialized');
+        console.log('🔧 Strategic Combat System initialized');
         this.activeBattles = new Map();
+    }
+
+    // Start NPC combat with fruit selection
+    async startNPCCombatWithAnimation(userId, username, interaction) {
+        console.log(`🤖 Starting strategic NPC combat for ${username}`);
+        
+        try {
+            // Get user's Devil Fruits for selection FIRST
+            const userFruits = await this.getUserFruitsWithElements(userId);
+            
+            if (userFruits.length === 0) {
+                return {
+                    success: false,
+                    message: "❌ You need at least 1 Devil Fruit to enter combat! Use `/pull` to hunt for fruits first."
+                };
+            }
+
+            // Show fruit selection menu IMMEDIATELY
+            await this.showFruitSelectionMenu(interaction, userFruits, 'npc', username);
+            
+            return { success: true, message: "Fruit selection phase initiated" };
+
+        } catch (error) {
+            console.error('NPC combat initialization error:', error);
+            return {
+                success: false,
+                message: "❌ Failed to initialize combat system."
+            };
+        }
+    }
+
+    // Start PvP combat with fruit selection
+    async startPvPCombatWithAnimation(attackerId, defenderId, attackerName, defenderName, interaction) {
+        console.log(`⚔️ Starting strategic PvP: ${attackerName} vs ${defenderName}`);
+        
+        try {
+            // Get attacker's Devil Fruits for selection FIRST
+            const attackerFruits = await this.getUserFruitsWithElements(attackerId);
+            
+            if (attackerFruits.length === 0) {
+                return {
+                    success: false,
+                    message: "❌ You need at least 1 Devil Fruit to challenge others! Use `/pull` to hunt for fruits first."
+                };
+            }
+
+            // Check if defender has fruits
+            const defenderFruits = await this.getUserFruitsWithElements(defenderId);
+            if (defenderFruits.length === 0) {
+                return {
+                    success: false,
+                    message: `❌ ${defenderName} has no Devil Fruits to defend with!`
+                };
+            }
+
+            // Store battle data
+            const battleId = `${attackerId}_vs_${defenderId}_${Date.now()}`;
+            this.activeBattles.set(battleId, {
+                attackerId,
+                defenderId,
+                attackerName,
+                defenderName,
+                attackerFruits,
+                defenderFruits,
+                phase: 'attacker_selection',
+                attackerSelection: [],
+                defenderSelection: [],
+                createdAt: Date.now()
+            });
+
+            // Show attacker's fruit selection menu IMMEDIATELY
+            await this.showFruitSelectionMenu(interaction, attackerFruits, 'pvp_attacker', attackerName, battleId);
+            
+            return { success: true, message: "PvP fruit selection phase initiated" };
+
+        } catch (error) {
+            console.error('PvP combat initialization error:', error);
+            return {
+                success: false,
+                message: "❌ Failed to initialize PvP combat system."
+            };
+        }
     }
 
     // IMPROVED: Compact fruit selection for large collections
@@ -150,7 +237,176 @@ class StrategicCombatSystem {
         ].join('\n');
     }
 
-    // ENHANCED: Detailed turn-based combat with better descriptions
+    // Process fruit selection
+    async processFruitSelection(interaction, selectedValues, battleType, battleId) {
+        try {
+            if (battleType === 'npc') {
+                // Handle NPC battle
+                const battleData = this.activeBattles.get(`npc_${interaction.user.id}`);
+                if (!battleData) {
+                    return await interaction.reply({ content: '❌ Battle session expired!', ephemeral: true });
+                }
+
+                const selectedFruits = selectedValues.map(value => {
+                    const index = parseInt(value.replace('fruit_', ''));
+                    return battleData.selectableFruits[index];
+                }).filter(fruit => fruit);
+
+                // NOW play the animation BEFORE combat
+                await this.playPreCombatAnimation(interaction, 'combat');
+                
+                await this.executeNPCBattle(interaction, selectedFruits, battleData);
+                this.activeBattles.delete(`npc_${interaction.user.id}`);
+
+            } else if (battleType === 'pvp_attacker') {
+                // Handle PvP attacker selection
+                const battle = this.activeBattles.get(battleId);
+                if (!battle) {
+                    return await interaction.reply({ content: '❌ Battle session expired!', ephemeral: true });
+                }
+
+                const selectedFruits = selectedValues.map(value => {
+                    const index = parseInt(value.replace('fruit_', ''));
+                    return battle.selectableFruits[index];
+                }).filter(fruit => fruit);
+
+                battle.attackerSelection = selectedFruits;
+                battle.phase = 'defender_selection';
+                this.activeBattles.set(battleId, battle);
+
+                // Show defender selection
+                await this.notifyDefenderSelection(interaction, battle);
+
+            } else if (battleType === 'pvp_defender') {
+                // Handle PvP defender selection
+                const battle = this.activeBattles.get(battleId);
+                if (!battle) {
+                    return await interaction.reply({ content: '❌ Battle session expired!', ephemeral: true });
+                }
+
+                const selectedFruits = selectedValues.map(value => {
+                    const index = parseInt(value.replace('fruit_', ''));
+                    return battle.selectableFruits[index];
+                }).filter(fruit => fruit);
+
+                battle.defenderSelection = selectedFruits;
+                battle.phase = 'combat';
+                this.activeBattles.set(battleId, battle);
+
+                // NOW play animation BEFORE PvP combat
+                await this.playPreCombatAnimation(interaction, 'pvp');
+                
+                // Execute PvP battle
+                await this.executePvPBattle(interaction, battle);
+                this.activeBattles.delete(battleId);
+            }
+
+        } catch (error) {
+            console.error('Error processing fruit selection:', error);
+            await interaction.reply({ content: '❌ Error processing fruit selection!', ephemeral: true });
+        }
+    }
+
+    // Get user fruits with elemental information
+    async getUserFruitsWithElements(userId) {
+        try {
+            const DatabaseManager = require('../database/manager');
+            const userFruits = await DatabaseManager.getUserFruits(userId);
+            
+            // Process fruits and add elemental information
+            const processedFruits = userFruits.map(fruit => {
+                const element = DEVIL_FRUIT_ELEMENTS[fruit.fruit_id] || 'neutral';
+                const elementName = this.getElementDisplayName(element);
+                
+                return {
+                    ...fruit,
+                    element: element,
+                    elementName: elementName,
+                    displayName: `${fruit.name}`,
+                    combatPower: fruit.combat_power || this.getRarityBasePower(fruit.rarity)
+                };
+            });
+
+            // Group by fruit ID to show duplicates
+            const fruitMap = {};
+            processedFruits.forEach(fruit => {
+                if (!fruitMap[fruit.fruit_id]) {
+                    fruitMap[fruit.fruit_id] = {
+                        ...fruit,
+                        duplicateCount: 0,
+                        totalPower: 0
+                    };
+                }
+                fruitMap[fruit.fruit_id].duplicateCount++;
+                
+                // Calculate power with duplicate bonus
+                const duplicateBonus = 1 + ((fruitMap[fruit.fruit_id].duplicateCount - 1) * 0.01);
+                fruitMap[fruit.fruit_id].totalPower = Math.floor(fruit.combatPower * duplicateBonus);
+            });
+
+            return Object.values(fruitMap);
+
+        } catch (error) {
+            console.error('Error getting user fruits with elements:', error);
+            return [];
+        }
+    }
+
+    // Play pre-combat animation (ship arriving) - FIXED
+    async playPreCombatAnimation(interaction, animationType) {
+        console.log(`🎬 Playing pre-combat animation: ${animationType}`);
+        
+        try {
+            const preAnimationEmbed = {
+                title: '🌊 **Battle Preparation**',
+                description: 'A battle ship approaches the combat zone...',
+                color: 0x3498db,
+                footer: { text: 'Preparing for strategic combat...' },
+                timestamp: new Date().toISOString()
+            };
+            
+            await interaction.editReply({ 
+                embeds: [preAnimationEmbed], 
+                components: [] // Remove dropdown during animation
+            });
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Play the ship animation
+            await RaidAnimation.playQuickAnimation(interaction, animationType);
+            
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+        } catch (error) {
+            console.error('Pre-combat animation error:', error);
+            // Continue anyway if animation fails
+        }
+    }
+
+    // Execute NPC battle with selected fruits
+    async executeNPCBattle(interaction, selectedFruits, battleData) {
+        // Generate NPC fruits (balanced against player)
+        const npcFruits = this.generateNPCFruits(selectedFruits);
+        
+        // Calculate total combat power
+        const playerCP = selectedFruits.reduce((total, fruit) => total + fruit.totalPower, 0);
+        const npcCP = npcFruits.reduce((total, fruit) => total + fruit.totalPower, 0);
+        
+        // Execute turn-based combat
+        const combatResult = await this.executeTurnBasedCombat(
+            interaction,
+            selectedFruits,
+            npcFruits,
+            battleData.playerName,
+            'Monkey D. Tester',
+            playerCP,
+            npcCP
+        );
+
+        // Show final results
+        await this.showBattleResults(interaction, combatResult, 'npc');
+    }
+
+    // Enhanced turn-based combat
     async executeTurnBasedCombat(interaction, attackerFruits, defenderFruits, attackerName, defenderName, attackerCP, defenderCP) {
         const { EmbedBuilder } = require('discord.js');
         
@@ -190,16 +446,6 @@ class StrategicCombatSystem {
                         `🍈 Active Fruits: ${defenderFruits.length}`
                     ].join('\n'), 
                     inline: true 
-                },
-                {
-                    name: '🎲 **Combat Mechanics**',
-                    value: [
-                        '• Random fruit selection each turn',
-                        '• Type advantages multiply damage',
-                        '• CP difference affects base damage',
-                        '• RNG adds 90-110% variance'
-                    ].join('\n'),
-                    inline: false
                 }
             ])
             .setTimestamp();
@@ -207,79 +453,49 @@ class StrategicCombatSystem {
         await interaction.editReply({ embeds: [combatEmbed], components: [] });
         await new Promise(resolve => setTimeout(resolve, 3000));
 
-        // Enhanced combat loop with detailed logging
+        // Combat loop
         while (attackerHP > 0 && defenderHP > 0 && turn <= 6) {
-            const turnResults = [];
-            
             // Attacker's turn
             if (attackerHP > 0) {
-                const attackerFruit = attackerFruits[Math.floor(Math.random() * attackerFruits.length)];
-                const defenderFruit = defenderFruits[Math.floor(Math.random() * defenderFruits.length)];
-                
-                const attackResult = this.calculateEnhancedTurnDamage(
-                    attackerFruit, defenderFruit, attackerCP, defenderCP, attackerName, defenderName
+                const attackResult = this.calculateTurnDamage(
+                    attackerFruits[Math.floor(Math.random() * attackerFruits.length)],
+                    defenderFruits[Math.floor(Math.random() * defenderFruits.length)],
+                    attackerCP,
+                    defenderCP
                 );
                 
                 defenderHP = Math.max(0, defenderHP - attackResult.damage);
-                turnResults.push({
-                    attacker: attackerName,
-                    result: attackResult,
-                    newHP: defenderHP,
-                    isAttacker: true
-                });
-                
-                combatLog.push(attackResult.detailedLog);
+                combatLog.push(`**Turn ${turn}A:** ${attackerName}'s ${attackResult.attackerFruit.name} ${attackResult.effectiveness} vs ${attackResult.defenderFruit.name} - **${attackResult.damage} damage**`);
             }
 
             if (defenderHP <= 0) break;
 
             // Defender's turn
             if (defenderHP > 0) {
-                const defenderFruit = defenderFruits[Math.floor(Math.random() * defenderFruits.length)];
-                const attackerFruit = attackerFruits[Math.floor(Math.random() * attackerFruits.length)];
-                
-                const defenseResult = this.calculateEnhancedTurnDamage(
-                    defenderFruit, attackerFruit, defenderCP, attackerCP, defenderName, attackerName
+                const defenseResult = this.calculateTurnDamage(
+                    defenderFruits[Math.floor(Math.random() * defenderFruits.length)],
+                    attackerFruits[Math.floor(Math.random() * attackerFruits.length)],
+                    defenderCP,
+                    attackerCP
                 );
                 
                 attackerHP = Math.max(0, attackerHP - defenseResult.damage);
-                turnResults.push({
-                    attacker: defenderName,
-                    result: defenseResult,
-                    newHP: attackerHP,
-                    isAttacker: false
-                });
-                
-                combatLog.push(defenseResult.detailedLog);
+                combatLog.push(`**Turn ${turn}B:** ${defenderName}'s ${defenseResult.attackerFruit.name} ${defenseResult.effectiveness} vs ${defenseResult.defenderFruit.name} - **${defenseResult.damage} damage**`);
             }
 
-            // Show detailed turn results
+            // Show turn results
             const turnEmbed = new EmbedBuilder()
-                .setColor(turn % 2 === 1 ? 0xE74C3C : 0x3498DB)
-                .setTitle(`⚔️ **Turn ${turn} - Combat Results**`)
-                .setDescription(this.formatTurnResults(turnResults))
+                .setColor(0xE74C3C)
+                .setTitle(`⚔️ Turn ${turn} Results`)
+                .setDescription(combatLog.slice(-2).join('\n\n'))
                 .addFields([
-                    { 
-                        name: `⚔️ ${attackerName}`, 
-                        value: this.createDetailedHPBar(attackerHP), 
-                        inline: true 
-                    },
-                    { 
-                        name: `🛡️ ${defenderName}`, 
-                        value: this.createDetailedHPBar(defenderHP), 
-                        inline: true 
-                    },
-                    {
-                        name: '🎯 **Turn Summary**',
-                        value: `Turn ${turn} completed • ${turnResults.length} attack(s) executed`,
-                        inline: false
-                    }
+                    { name: `⚔️ ${attackerName}`, value: this.createHPBar(attackerHP), inline: true },
+                    { name: `🛡️ ${defenderName}`, value: this.createHPBar(defenderHP), inline: true }
                 ])
-                .setFooter({ text: `Strategic Combat • Turn ${turn}/6` })
                 .setTimestamp();
 
             await interaction.editReply({ embeds: [turnEmbed] });
-            await new Promise(resolve => setTimeout(resolve, 4000));
+            await new Promise(resolve => setTimeout(resolve, 3000));
 
             turn++;
         }
@@ -294,190 +510,170 @@ class StrategicCombatSystem {
             finalAttackerHP: attackerHP,
             finalDefenderHP: defenderHP,
             combatLog,
-            totalTurns: turn - 1,
-            battleStats: {
-                totalDamageDealt: combatLog.length,
-                averageDamage: combatLog.reduce((sum, log) => sum + (log.damage || 0), 0) / combatLog.length,
-                typeAdvantagesUsed: combatLog.filter(log => log.multiplier > 1).length
-            }
+            totalTurns: turn - 1
         };
     }
 
-    // ENHANCED: Detailed damage calculation with full logging
-    calculateEnhancedTurnDamage(attackerFruit, defenderFruit, attackerCP, defenderCP, attackerName, defenderName) {
-        const { CombatSystem: ElementalCombat } = require('../data/counter-system');
-        
-        // Base damage calculation
-        const cpRatio = attackerCP / Math.max(defenderCP, 1);
-        let baseDamage = 15 + (cpRatio - 1) * 5;
+    // Calculate turn damage with elemental advantages
+    calculateTurnDamage(attackerFruit, defenderFruit, attackerCP, defenderCP) {
+        // Base damage from CP difference
+        const cpRatio = attackerCP / (defenderCP || 1);
+        let baseDamage = 15 + (cpRatio - 1) * 5; // Base 15 damage, modified by CP ratio
         
         // Get elemental effectiveness
-        const elementalResult = ElementalCombat.calculateEffectiveness(
-            attackerFruit.fruit_id, 
-            defenderFruit.fruit_id
-        );
+        const elementalResult = ElementalCombat.calculateEffectiveness(attackerFruit.fruit_id, defenderFruit.fruit_id);
         
         // Apply elemental multiplier
         let finalDamage = Math.floor(baseDamage * elementalResult.effectiveness);
         
-        // Add variance (90-110%)
-        const variance = 0.9 + Math.random() * 0.2;
-        finalDamage = Math.floor(finalDamage * variance);
+        // Add randomness (90-110%)
+        finalDamage = Math.floor(finalDamage * (0.9 + Math.random() * 0.2));
         
-        // Damage bounds
-        finalDamage = Math.max(5, Math.min(45, finalDamage));
-        
-        // Determine attack quality
-        let attackQuality = 'Normal';
-        if (elementalResult.effectiveness > 1.3) attackQuality = 'Super Effective';
-        else if (elementalResult.effectiveness < 0.8) attackQuality = 'Not Very Effective';
-        else if (variance > 1.05) attackQuality = 'Critical Hit';
-        else if (variance < 0.95) attackQuality = 'Glancing Blow';
-
-        // Create detailed log
-        const detailedLog = [
-            `**${attackerName}** attacks with **${attackerFruit.name}**`,
-            `🎯 Target: ${defenderName}'s **${defenderFruit.name}**`,
-            `⚡ Type Matchup: ${elementalResult.description}`,
-            `💥 Attack Quality: ${attackQuality}`,
-            `🩸 **${finalDamage} DAMAGE**`
-        ].join('\n');
+        // Minimum and maximum damage bounds
+        finalDamage = Math.max(5, Math.min(40, finalDamage));
 
         return {
             damage: finalDamage,
             attackerFruit,
             defenderFruit,
             effectiveness: elementalResult.description,
-            multiplier: elementalResult.effectiveness,
-            variance,
-            attackQuality,
-            detailedLog,
-            cpRatio
+            multiplier: elementalResult.effectiveness
         };
     }
 
-    // NEW: Format turn results for display
-    formatTurnResults(turnResults) {
-        return turnResults.map((result, index) => {
-            const arrow = result.isAttacker ? '⚔️' : '🛡️';
-            return [
-                `${arrow} **${result.attacker}** uses **${result.result.attackerFruit.name}**`,
-                `${result.result.effectiveness} • ${result.result.attackQuality}`,
-                `💥 **${result.result.damage} damage** → ${result.newHP} HP remaining`
-            ].join('\n');
-        }).join('\n\n');
-    }
-
-    // ENHANCED: Detailed HP bar with status indicators
-    createDetailedHPBar(hp) {
-        const percentage = hp / 100;
-        const filledBars = Math.floor(percentage * 10);
-        const emptyBars = 10 - filledBars;
+    // Generate balanced NPC fruits
+    generateNPCFruits(playerFruits) {
+        const { getAllFruits } = require('../data/devilfruit');
+        const allFruits = getAllFruits();
         
-        let color = '🟢';
-        let status = 'Healthy';
+        // Generate 3 NPC fruits with similar power level
+        const npcFruits = [];
+        const avgPlayerPower = playerFruits.reduce((total, fruit) => total + fruit.totalPower, 0) / playerFruits.length;
         
-        if (percentage <= 0) {
-            color = '💀';
-            status = 'Defeated';
-        } else if (percentage < 0.25) {
-            color = '🔴';
-            status = 'Critical';
-        } else if (percentage < 0.5) {
-            color = '🟡';
-            status = 'Injured';
-        } else if (percentage < 0.75) {
-            color = '🟠';
-            status = 'Wounded';
+        for (let i = 0; i < 3; i++) {
+            const randomFruit = allFruits[Math.floor(Math.random() * allFruits.length)];
+            const element = DEVIL_FRUIT_ELEMENTS[randomFruit.id] || 'neutral';
+            
+            npcFruits.push({
+                ...randomFruit,
+                element: element,
+                elementName: this.getElementDisplayName(element),
+                totalPower: Math.floor(avgPlayerPower * (0.8 + Math.random() * 0.4)) // 80-120% of player avg
+            });
         }
         
-        const hpBar = color.repeat(filledBars) + '⬜'.repeat(emptyBars);
-        return `${hpBar}\n${hp}/100 HP (${status})`;
+        return npcFruits;
     }
 
-    // Enhanced battle results with detailed statistics
+    // Show battle results
     async showBattleResults(interaction, combatResult, battleType) {
         const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
         
-        const isVictory = combatResult.victory;
-        const stats = combatResult.battleStats;
-        
         const resultEmbed = new EmbedBuilder()
-            .setColor(isVictory ? 0x00FF00 : 0xFF0000)
-            .setTitle(isVictory ? '🏆 **STRATEGIC VICTORY!**' : '💀 **HONORABLE DEFEAT!**')
-            .setDescription([
-                `**${combatResult.winner}** emerges victorious after ${combatResult.totalTurns} turns!`,
-                ``,
-                `🎯 **Battle Statistics:**`,
-                `• Total Attacks: ${stats.totalDamageDealt}`,
-                `• Average Damage: ${Math.round(stats.averageDamage)}`,
-                `• Type Advantages: ${stats.typeAdvantagesUsed}`,
-                `• Battle Duration: ${combatResult.totalTurns} turns`
-            ].join('\n'))
+            .setColor(combatResult.victory ? 0x00FF00 : 0xFF0000)
+            .setTitle(combatResult.victory ? '🏆 **VICTORY!**' : '💀 **DEFEAT!**')
+            .setDescription(`**${combatResult.winner}** emerges victorious after ${combatResult.totalTurns} turns of intense combat!`)
             .addFields([
-                { 
-                    name: '📊 **Final Health**', 
-                    value: `${combatResult.finalAttackerHP} vs ${combatResult.finalDefenderHP} HP`, 
-                    inline: true 
-                },
-                {
-                    name: '⚔️ **Combat Log (Last 3 Actions)**',
-                    value: combatResult.combatLog.slice(-3).map(log => 
-                        typeof log === 'string' ? log : log.detailedLog
-                    ).join('\n\n'),
-                    inline: false
-                }
+                { name: '📊 Final Results', value: `Final HP: ${combatResult.finalAttackerHP} vs ${combatResult.finalDefenderHP}`, inline: false },
+                { name: '⚔️ Combat Log', value: combatResult.combatLog.slice(-3).join('\n'), inline: false }
             ])
-            .setFooter({ text: 'Strategic Combat System • Use type advantages for victory!' })
             .setTimestamp();
 
         const actionRow = new ActionRowBuilder()
             .addComponents(
                 new ButtonBuilder()
                     .setCustomId('battle_again')
-                    .setLabel('⚔️ Fight Again')
+                    .setLabel('⚔️ Battle Again')
                     .setStyle(ButtonStyle.Primary),
                 new ButtonBuilder()
                     .setCustomId('view_power')
-                    .setLabel('💪 View Stats')
-                    .setStyle(ButtonStyle.Secondary),
-                new ButtonBuilder()
-                    .setCustomId('view_collection')
-                    .setLabel('📚 Collection')
+                    .setLabel('💪 View Power')
                     .setStyle(ButtonStyle.Secondary)
             );
 
         await interaction.editReply({ embeds: [resultEmbed], components: [actionRow] });
 
-        // Victory animation for NPC battles
-        if (isVictory && battleType === 'npc') {
-            await new Promise(resolve => setTimeout(resolve, 3000));
-            const RaidAnimation = require('../animations/raid');
+        // Play victory animation if player won
+        if (combatResult.victory && battleType === 'npc') {
+            await new Promise(resolve => setTimeout(resolve, 2000));
             await RaidAnimation.playVictoryAnimation(interaction);
         }
     }
 
-    // Additional helper methods remain the same...
+    // Helper methods
+    createHPBar(hp) {
+        const percentage = hp / 100;
+        const filledBars = Math.floor(percentage * 10);
+        const emptyBars = 10 - filledBars;
+        
+        let color = '🟢';
+        if (percentage < 0.3) color = '🔴';
+        else if (percentage < 0.6) color = '🟡';
+        
+        return `${color.repeat(filledBars)}⬜${'⬜'.repeat(emptyBars)} ${hp}/100 HP`;
+    }
+
     getElementDisplayName(element) {
         const names = {
-            fire: 'Fire 🔥', ice: 'Ice ❄️', lightning: 'Lightning ⚡',
-            light: 'Light ✨', darkness: 'Darkness 🌑', magma: 'Magma 🌋',
-            sand: 'Sand 🏜️', gas: 'Gas 💨', rubber: 'Rubber 🔄',
-            vibration: 'Vibration 📳', spatial: 'Space 🌌', gravity: 'Gravity 🌍',
-            soul: 'Soul 👻', poison: 'Poison ☠️', zoan_beast: 'Beast 🐺',
-            zoan_ancient: 'Ancient 🦕', zoan_mythical: 'Mythical 🐉',
-            metal: 'Metal ⚔️', stone: 'Stone 🗿', neutral: 'Neutral ⚪'
+            fire: 'Fire',
+            ice: 'Ice',
+            lightning: 'Lightning',
+            light: 'Light',
+            darkness: 'Darkness',
+            magma: 'Magma',
+            sand: 'Sand',
+            gas: 'Gas',
+            rubber: 'Rubber',
+            vibration: 'Vibration',
+            spatial: 'Space',
+            gravity: 'Gravity',
+            soul: 'Soul',
+            poison: 'Poison',
+            zoan_beast: 'Beast',
+            zoan_ancient: 'Ancient',
+            zoan_mythical: 'Mythical',
+            metal: 'Metal',
+            stone: 'Stone',
+            neutral: 'Neutral'
         };
-        return names[element] || 'Unknown ❓';
+        return names[element] || 'Unknown';
     }
 
     getRarityBasePower(rarity) {
-        const powers = {
-            'common': 150, 'uncommon': 300, 'rare': 600, 'epic': 1000,
-            'legendary': 1500, 'mythical': 2500, 'omnipotent': 4000
+        const rarityPowers = {
+            'common': 150,
+            'uncommon': 300,
+            'rare': 600,
+            'epic': 1000,
+            'legendary': 1500,
+            'mythical': 2500,
+            'omnipotent': 4000
         };
-        return powers[rarity?.toLowerCase()] || 150;
+        return rarityPowers[rarity?.toLowerCase()] || 150;
+    }
+
+    async getUserCombatPower(userId) {
+        try {
+            const fruits = await this.getUserFruitsWithElements(userId);
+            return fruits.reduce((total, fruit) => total + fruit.totalPower, 0);
+        } catch (error) {
+            return 100;
+        }
+    }
+
+    async getUserBattleStats(userId) {
+        return {
+            totalBattles: 0,
+            victories: 0,
+            defeats: 0,
+            winRate: 0,
+            totalCP: await this.getUserCombatPower(userId)
+        };
     }
 }
 
-module.exports = new StrategicCombatSystem();
+console.log('🔧 Creating strategic combat instance...');
+const strategicCombatInstance = new StrategicCombatSystem();
+console.log('🔧 Strategic Combat instance created successfully');
+
+module.exports = strategicCombatInstance;
