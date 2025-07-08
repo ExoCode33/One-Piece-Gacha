@@ -672,12 +672,15 @@ class StrategicCombatSystem {
         await this.showBattleResults(interaction, combatResult, 'npc');
     }
 
-    // Helper methods remain the same...
+    // FIXED: Get user fruits with proper duplicate grouping
     async getUserFruitsWithElements(userId) {
         try {
             const DatabaseManager = require('../database/manager');
             const userFruits = await DatabaseManager.getUserFruits(userId);
             
+            console.log(`🔍 Processing ${userFruits.length} fruits for user ${userId}`);
+            
+            // Process fruits and add elemental information
             const processedFruits = userFruits.map(fruit => {
                 const { DEVIL_FRUIT_ELEMENTS } = require('../data/counter-system');
                 const element = DEVIL_FRUIT_ELEMENTS[fruit.fruit_id] || 'neutral';
@@ -689,22 +692,39 @@ class StrategicCombatSystem {
                 };
             });
 
+            // FIXED: Group by fruit_id (the Devil Fruit ID, not database row id)
             const fruitMap = {};
             processedFruits.forEach(fruit => {
-                if (!fruitMap[fruit.fruit_id]) {
-                    fruitMap[fruit.fruit_id] = {
+                const fruitId = fruit.fruit_id; // Use the Devil Fruit ID for grouping
+                
+                if (!fruitMap[fruitId]) {
+                    fruitMap[fruitId] = {
                         ...fruit,
                         duplicateCount: 0,
-                        totalPower: 0
+                        totalPower: 0,
+                        instances: [] // Track all instances
                     };
                 }
-                fruitMap[fruit.fruit_id].duplicateCount++;
                 
-                const duplicateBonus = 1 + ((fruitMap[fruit.fruit_id].duplicateCount - 1) * 0.01);
-                fruitMap[fruit.fruit_id].totalPower = Math.floor(fruit.combatPower * duplicateBonus);
+                fruitMap[fruitId].duplicateCount++;
+                fruitMap[fruitId].instances.push(fruit);
+                
+                // Calculate power with duplicate bonus
+                const duplicateBonus = 1 + ((fruitMap[fruitId].duplicateCount - 1) * 0.01);
+                fruitMap[fruitId].totalPower = Math.floor(fruit.combatPower * duplicateBonus);
             });
 
-            return Object.values(fruitMap);
+            const result = Object.values(fruitMap);
+            
+            console.log(`📊 Grouped into ${result.length} unique fruits with duplicates:`);
+            result.forEach(fruit => {
+                if (fruit.duplicateCount > 1) {
+                    console.log(`  - ${fruit.name}: ${fruit.duplicateCount} copies (${fruit.totalPower} CP total)`);
+                }
+            });
+
+            return result;
+
         } catch (error) {
             console.error('Error getting user fruits:', error);
             return [];
