@@ -1,3 +1,4 @@
+// Enhanced Raid Animation - Smooth Right to Left Ship Movement
 class RaidAnimation {
     constructor() {
         this.shipDesign = [
@@ -16,79 +17,195 @@ class RaidAnimation {
             '⠀⠀⠀⠀⠀⠀⠀⠀⠘⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠟⠛⠉⠀⠀⠀⠀',
             '⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠉⠉⠉⠉⠉⠉⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀'
         ];
-        this.canvasWidth = 70;
+        this.canvasWidth = 80; // Increased canvas width for smoother animation
+        this.shipWidth = this.shipDesign[0].length;
     }
 
+    // Position ship at specific offset (positive = move right, negative = move left)
     positionShip(offset) {
         return this.shipDesign.map(line => {
-            if (offset >= 0) {
-                return ' '.repeat(offset) + line.slice(0, this.canvasWidth - offset);
-            } else {
-                const abs = Math.abs(offset);
-                return line.slice(abs, abs + this.canvasWidth);
+            // Create the canvas line with proper padding
+            let canvasLine = ' '.repeat(this.canvasWidth);
+            
+            // Calculate ship position
+            const shipStartPos = Math.max(0, offset);
+            const shipEndPos = Math.min(this.canvasWidth, offset + this.shipWidth);
+            
+            // Only draw visible part of the ship
+            if (shipStartPos < this.canvasWidth && shipEndPos > 0) {
+                const shipStartChar = Math.max(0, -offset);
+                const shipEndChar = Math.min(this.shipWidth, this.canvasWidth - offset);
+                
+                if (shipEndChar > shipStartChar) {
+                    const shipPart = line.slice(shipStartChar, shipEndChar);
+                    canvasLine = canvasLine.substring(0, shipStartPos) + 
+                                shipPart + 
+                                canvasLine.substring(shipStartPos + shipPart.length);
+                }
             }
+            
+            return canvasLine;
         }).join('\n');
     }
 
-    // 15-frame smooth sail animation
+    // Enhanced animation with smooth right-to-left movement
     async playQuickAnimation(interaction, animationType = 'combat') {
-        const framesCount = 15;
-        const shipWidth = this.shipDesign[0].length;
-        const canvasWidth = this.canvasWidth;
-        const startOffset = canvasWidth;
-        const endOffset = -shipWidth;
+        const framesCount = 18; // Increased frames for smoother animation
+        
+        // Start position: Ship completely off-screen to the right
+        const startOffset = this.canvasWidth;
+        // End position: Ship completely off-screen to the left
+        const endOffset = -this.shipWidth;
+        
+        console.log(`🎬 Starting raid animation: ${animationType}`);
+        console.log(`📐 Animation setup: Canvas=${this.canvasWidth}, Ship=${this.shipWidth}`);
+        console.log(`🎯 Movement: ${startOffset} → ${endOffset} over ${framesCount} frames`);
 
         for (let i = 0; i < framesCount; i++) {
-            const offset = Math.round(
-                startOffset + (endOffset - startOffset) * (i / (framesCount - 1))
-            );
+            // Calculate smooth movement across the screen
+            const progress = i / (framesCount - 1);
+            const currentOffset = Math.round(startOffset + (endOffset - startOffset) * progress);
+            
+            // Position the ship at current offset
+            const shipDisplay = this.positionShip(currentOffset);
+            
+            // Determine animation phase and title
+            let title, description;
+            
+            if (i === 0) {
+                title = "🌊 **Ship Spotted on the Horizon!**";
+                description = "A battle ship approaches from the eastern seas...";
+            } else if (i < framesCount / 3) {
+                title = "⚔️ **Battle Ship Approaching!**";
+                description = "The vessel cuts through the waves with determination...";
+            } else if (i < (framesCount * 2) / 3) {
+                title = "🏴‍☠️ **Ship Sailing Past!**";
+                description = "The mighty ship dominates the battlefield...";
+            } else if (i === framesCount - 1) {
+                title = "🌅 **Ship Disappears to the West!**";
+                description = "The battle ship vanishes beyond the horizon...";
+            } else {
+                title = "🏴‍☠️ **Combat Ship in Motion!**";
+                description = "The ship continues its powerful journey across the seas...";
+            }
 
-            const content = this.positionShip(offset);
-
+            // Create embed based on animation type
             const embed = {
-                title:
-                    i === 0
-                        ? "🌊 **Ship Appears on the Horizon...**"
-                        : i === framesCount - 1
-                            ? "🌅 **Ship Disappears on the Left!**"
-                            : "🏴‍☠️ **Ship Sailing Across!**",
+                title: title,
+                description: description,
                 color: this.getAnimationColor(animationType),
-                footer: { text: `⚔️ Combat Animation • Frame ${i + 1}/${framesCount}` },
+                footer: { 
+                    text: `⚔️ ${animationType.charAt(0).toUpperCase() + animationType.slice(1)} Animation • Frame ${i + 1}/${framesCount}` 
+                },
                 timestamp: new Date().toISOString()
             };
 
+            // Update the interaction with ship animation
             await interaction.editReply({
-                content: `\`\`\`\n${content}\n\`\`\``,
-                embeds: [embed]
+                content: `\`\`\`\n${shipDisplay}\n\`\`\``,
+                embeds: [embed],
+                components: [] // Clear any previous components during animation
             });
 
-            if (i < framesCount - 1) await new Promise(res => setTimeout(res, 120));
+            // Add delay between frames (except for the last frame)
+            if (i < framesCount - 1) {
+                await new Promise(resolve => setTimeout(resolve, 150)); // Slightly faster for smoother feel
+            }
         }
+        
+        console.log(`✅ Raid animation completed successfully`);
     }
 
+    // Full animation (same as quick for now, but can be extended)
     async playFullSailAnimation(interaction, animationType = 'combat') {
-        // Optional: you can just call playQuickAnimation with more frames if you wish!
         await this.playQuickAnimation(interaction, animationType);
     }
 
+    // Main animation entry point
     async playAnimation(interaction, animationType = 'combat') {
         await this.playFullSailAnimation(interaction, animationType);
     }
 
+    // Victory animation - ship sailing triumphantly
+    async playVictoryAnimation(interaction) {
+        const victoryEmbed = {
+            title: '🏆 **VICTORY ACHIEVED!**',
+            description: 'Your ship sails triumphantly across the battlefield!',
+            color: 0x00FF00,
+            footer: { text: '🏆 Victory Animation' },
+            timestamp: new Date().toISOString()
+        };
+
+        // Show centered victory ship
+        const centeredOffset = Math.floor((this.canvasWidth - this.shipWidth) / 2);
+        const victoryShip = this.positionShip(centeredOffset);
+
+        await interaction.editReply({
+            content: `\`\`\`\n${victoryShip}\n\`\`\``,
+            embeds: [victoryEmbed],
+            components: []
+        });
+
+        await new Promise(resolve => setTimeout(resolve, 3000));
+    }
+
+    // Get color based on animation type
     getAnimationColor(type) {
         const colors = {
-            combat: 0x1E90FF,
-            pvp: 0xFF1493,
-            victory: 0x00FF00,
-            defeat: 0xFF0000
+            combat: 0x1E90FF,    // Dodger Blue
+            pvp: 0xFF1493,       // Deep Pink
+            victory: 0x00FF00,   // Green
+            defeat: 0xFF0000,    // Red
+            strategic: 0x8A2BE2, // Blue Violet
+            npc: 0x20B2AA        // Light Sea Green
         };
         return colors[type] || colors.combat;
     }
 
+    // Get battle-ready ship for static display
     getBattleReadyShip() {
+        const centeredOffset = Math.floor((this.canvasWidth - this.shipWidth) / 2);
         return {
             title: '🏟️ **Battle Ship Deployed!**',
-            content: this.positionShip(Math.floor(this.canvasWidth / 2 - this.shipDesign[0].length / 2))
+            content: this.positionShip(centeredOffset),
+            embed: {
+                title: '🏟️ **Battle Ship Ready for Combat!**',
+                description: 'Your mighty vessel stands ready for battle!',
+                color: 0x1E90FF,
+                footer: { text: '⚔️ Battle Formation' },
+                timestamp: new Date().toISOString()
+            }
+        };
+    }
+
+    // Test animation for debugging
+    async testAnimation(interaction) {
+        console.log('🧪 Testing raid animation...');
+        
+        const testEmbed = {
+            title: '🧪 **Animation Test**',
+            description: 'Testing ship movement from right to left...',
+            color: 0xFFFF00,
+            footer: { text: '🧪 Test Mode' }
+        };
+
+        await interaction.editReply({
+            embeds: [testEmbed]
+        });
+
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        await this.playQuickAnimation(interaction, 'combat');
+    }
+
+    // Get animation statistics
+    getAnimationInfo() {
+        return {
+            canvasWidth: this.canvasWidth,
+            shipWidth: this.shipWidth,
+            totalFrames: 18,
+            animationDuration: '2.7 seconds',
+            direction: 'Right to Left',
+            frameDelay: '150ms'
         };
     }
 }
