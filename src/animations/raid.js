@@ -51,18 +51,25 @@ class RaidAnimation {
         }).join('\n');
     }
 
-    // FIXED: Enhanced animation with proper off-screen positioning
+    // FIXED: Enhanced animation with proper edge positioning
     async playQuickAnimation(interaction, animationType = 'combat') {
         const framesCount = 18;
         
-        // FIXED: Ensure ship starts COMPLETELY off-screen to the right
-        const startOffset = this.canvasWidth + 5;  // Start 5 characters past the right edge
-        const endOffset = -this.shipWidth - 5;     // End 5 characters past the left edge
+        // OPTION 1: Ship enters from right edge and exits at left edge
+        const edgeOffset = 1; // 1 character offset from edge
+        const startOffset = this.canvasWidth - edgeOffset;  // Ship just entering from right
+        const endOffset = -this.shipWidth + edgeOffset;    // Ship just exiting on left
+        
+        // OPTION 2: If you want completely off-screen, uncomment these lines:
+        // const startOffset = this.canvasWidth + edgeOffset;  // Completely off-screen right
+        // const endOffset = -this.shipWidth - edgeOffset;    // Completely off-screen left
         
         console.log(`🎬 Starting raid animation: ${animationType}`);
         console.log(`📐 Canvas: ${this.canvasWidth} chars, Ship: ${this.shipWidth} chars`);
         console.log(`🚀 Movement: ${startOffset} → ${endOffset} over ${framesCount} frames`);
         console.log(`📏 Total distance: ${startOffset - endOffset} characters`);
+        console.log(`🎯 Start: Ship ${edgeOffset} char(s) from right edge`);
+        console.log(`🎯 End: Ship ${edgeOffset} char(s) from left edge`);
 
         for (let i = 0; i < framesCount; i++) {
             // Calculate smooth linear movement
@@ -235,17 +242,17 @@ class RaidAnimation {
             animationDuration: '2.7 seconds',
             direction: 'Right to Left',
             frameDelay: '150ms',
-            startPosition: this.canvasWidth + 5,
-            endPosition: -this.shipWidth - 5,
+            startPosition: this.canvasWidth - 1,  // Just entering from right
+            endPosition: -this.shipWidth + 1, // Just exiting on left
             totalDistance: (this.canvasWidth + 5) - (-this.shipWidth - 5),
             
             // Debug positions
             debugPositions: {
-                completelyOffRight: this.canvasWidth + 5,
-                justEnteringRight: this.canvasWidth - 1,
+                justEnteringRight: this.canvasWidth - 1,      // Ship just visible on right
                 centered: Math.floor((this.canvasWidth - this.shipWidth) / 2),
-                justExitingLeft: -1,
-                completelyOffLeft: -this.shipWidth - 5
+                justExitingLeft: -this.shipWidth + 1,         // Ship just visible on left
+                completelyOffRight: this.canvasWidth + 5,     // Completely hidden right
+                completelyOffLeft: -this.shipWidth - 5        // Completely hidden left
             }
         };
     }
