@@ -17,7 +17,7 @@ class RaidAnimation {
             '⠀⠀⠀⠀⠀⠀⠀⠀⠘⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠟⠛⠉⠀⠀⠀⠀',
             '⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠉⠉⠉⠉⠉⠉⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀'
         ];
-        this.canvasWidth = 80; // Increased canvas width for smoother animation
+        this.canvasWidth = 80;
         this.shipWidth = this.shipDesign[0].length;
     }
 
@@ -48,11 +48,11 @@ class RaidAnimation {
         }).join('\n');
     }
 
-    // Enhanced animation with smooth right-to-left movement starting completely off-screen
+    // Enhanced animation with ship starting very far off-screen
     async playQuickAnimation(interaction, animationType = 'combat') {
-        const framesCount = 18; // Reduced frames for better pacing
+        const framesCount = 18;
         
-        // FIXED: Ship starts VERY FAR off-screen to the right 
+        // FIXED: Ship starts VERY FAR off-screen and ends far off-screen
         const startOffset = 200;  // Start at position 200 (VERY far off-screen right)
         const endOffset = -50;    // End at position -50 (far off-screen left)
         
@@ -111,7 +111,7 @@ class RaidAnimation {
 
             // Add delay between frames (except for the last frame)
             if (i < framesCount - 1) {
-                await new Promise(resolve => setTimeout(resolve, 150)); // Balanced timing
+                await new Promise(resolve => setTimeout(resolve, 150));
             }
         }
         
@@ -208,9 +208,9 @@ class RaidAnimation {
             animationDuration: '2.7 seconds',
             direction: 'Right to Left',
             frameDelay: '150ms',
-            startPosition: this.canvasWidth + this.shipWidth + 20,
-            endPosition: -this.shipWidth - 10,
-            totalDistance: (this.canvasWidth + this.shipWidth + 20) + (this.shipWidth + 10)
+            startPosition: 200,
+            endPosition: -50,
+            totalDistance: 250
         };
     }
 }
