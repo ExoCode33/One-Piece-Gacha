@@ -57,13 +57,13 @@ class RaidAnimation {
     async playQuickAnimation(interaction, animationType = 'combat') {
         const framesCount = 18;
         
-        // RIGHT TO LEFT movement
-        const startOffset = this.canvasWidth;  // Start at position 80 (right edge)
-        const endOffset = -this.shipWidth;    // End at position -30 (left side, off-screen)
+        // RIGHT TO LEFT movement - ship starts COMPLETELY off-screen right
+        const startOffset = this.canvasWidth + 10;  // Start at position 90 (completely off-screen right)
+        const endOffset = -this.shipWidth - 10;     // End at position -40 (completely off-screen left)
         
         console.log(`🎬 Starting raid animation: ${animationType}`);
         console.log(`📐 Canvas=${this.canvasWidth}, Ship=${this.shipWidth}`);
-        console.log(`🎯 Movement: ${startOffset} → ${endOffset} (RIGHT to LEFT)`);
+        console.log(`🎯 Movement: ${startOffset} → ${endOffset} (COMPLETELY off-screen RIGHT to LEFT)`);
 
         for (let i = 0; i < framesCount; i++) {
             // Calculate movement from RIGHT to LEFT
@@ -208,9 +208,9 @@ class RaidAnimation {
             animationDuration: '2.7 seconds',
             direction: 'Right to Left',
             frameDelay: '150ms',
-            startPosition: this.canvasWidth,
-            endPosition: -this.shipWidth,
-            totalDistance: this.canvasWidth + this.shipWidth
+            startPosition: this.canvasWidth + 10,
+            endPosition: -this.shipWidth - 10,
+            totalDistance: (this.canvasWidth + 10) + (this.shipWidth + 10)
         };
     }
 
@@ -220,9 +220,10 @@ class RaidAnimation {
         console.log('🔧 Animation Debug Info:');
         console.log(`   Canvas Width: ${info.canvasWidth} characters`);
         console.log(`   Ship Width: ${info.shipWidth} characters`);
-        console.log(`   Start Position: ${info.startPosition} (right edge)`);
-        console.log(`   End Position: ${info.endPosition} (left edge, off-screen)`);
-        console.log(`   Movement Direction: RIGHT → LEFT`);
+        console.log(`   Start Position: ${info.startPosition} (completely off-screen right)`);
+        console.log(`   End Position: ${info.endPosition} (completely off-screen left)`);
+        console.log(`   Movement Direction: RIGHT → LEFT (full off-screen to off-screen)`);
+        console.log(`   Total Travel Distance: ${info.totalDistance} characters`);
     }
 }
 
