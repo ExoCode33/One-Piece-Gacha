@@ -38,6 +38,62 @@ class StrategicCombatSystem {
         }
     }
 
+    // START PvP: Play animation first, then show fruit selection
+    async startPvPCombatWithAnimation(attackerId, defenderId, attackerName, defenderName, interaction) {
+        console.log(`⚔️ Starting strategic PvP: ${attackerName} vs ${defenderName}`);
+        
+        try {
+            // Get attacker's Devil Fruits first to validate
+            const attackerFruits = await this.getUserFruitsWithElements(attackerId);
+            
+            if (attackerFruits.length === 0) {
+                return {
+                    success: false,
+                    message: "❌ You need at least 1 Devil Fruit to challenge others! Use `/pull` to hunt for fruits first."
+                };
+            }
+
+            // Check if defender has fruits
+            const defenderFruits = await this.getUserFruitsWithElements(defenderId);
+            if (defenderFruits.length === 0) {
+                return {
+                    success: false,
+                    message: `❌ ${defenderName} has no Devil Fruits to defend with!`
+                };
+            }
+
+            // PLAY ANIMATION FIRST
+            await this.playPreCombatAnimation(interaction, 'pvp');
+
+            // Store battle data
+            const battleId = `${attackerId}_vs_${defenderId}_${Date.now()}`;
+            this.activeBattles.set(battleId, {
+                attackerId,
+                defenderId,
+                attackerName,
+                defenderName,
+                attackerFruits,
+                defenderFruits,
+                phase: 'attacker_selection',
+                attackerSelection: [],
+                defenderSelection: [],
+                createdAt: Date.now()
+            });
+
+            // THEN show attacker's fruit selection menu
+            await this.showCleanFruitSelectionMenu(interaction, attackerFruits, 'pvp_attacker', attackerName, battleId);
+            
+            return { success: true, message: "PvP fruit selection phase initiated" };
+
+        } catch (error) {
+            console.error('PvP combat initialization error:', error);
+            return {
+                success: false,
+                message: "❌ Failed to initialize PvP combat system."
+            };
+        }
+    }
+
     // CLEAN: Minimal emoji fruit selection
     async showCleanFruitSelectionMenu(interaction, fruits, battleType, playerName, battleId = null) {
         const { ActionRowBuilder, EmbedBuilder, StringSelectMenuBuilder } = require('discord.js');
@@ -443,11 +499,123 @@ class StrategicCombatSystem {
 
                 await this.executeNPCBattle(interaction, selectedFruits, battleData);
                 this.activeBattles.delete(`npc_${interaction.user.id}`);
+
+            } else if (battleType === 'pvp_attacker') {
+                // Handle PvP attacker selection
+                const battle = this.activeBattles.get(battleId);
+                if (!battle) {
+                    return await interaction.reply({ content: 'Battle session expired!', ephemeral: true });
+                }
+
+                const selectedFruits = selectedValues.map(value => {
+                    const index = parseInt(value.replace('fruit_', ''));
+                    return battle.selectableFruits[index];
+                }).filter(fruit => fruit);
+
+                battle.attackerSelection = selectedFruits;
+                battle.phase = 'defender_selection';
+                this.activeBattles.set(battleId, battle);
+
+                // Show defender selection
+                await this.notifyDefenderSelection(interaction, battle);
+
+            } else if (battleType === 'pvp_defender') {
+                // Handle PvP defender selection
+                const battle = this.activeBattles.get(battleId);
+                if (!battle) {
+                    return await interaction.reply({ content: 'Battle session expired!', ephemeral: true });
+                }
+
+                const selectedFruits = selectedValues.map(value => {
+                    const index = parseInt(value.replace('fruit_', ''));
+                    return battle.selectableFruits[index];
+                }).filter(fruit => fruit);
+
+                battle.defenderSelection = selectedFruits;
+                battle.phase = 'combat';
+                this.activeBattles.set(battleId, battle);
+
+                // Execute PvP battle
+                await this.executePvPBattle(interaction, battle);
+                this.activeBattles.delete(battleId);
             }
         } catch (error) {
             console.error('Error processing fruit selection:', error);
             await interaction.reply({ content: 'Error processing selection!', ephemeral: true });
         }
+    }
+
+    // Notify defender to select fruits (PvP)
+    async notifyDefenderSelection(interaction, battle) {
+        const { EmbedBuilder } = require('discord.js');
+        
+        const embed = new EmbedBuilder()
+            .setColor(0xFFA500)
+            .setTitle('PvP Challenge - Awaiting Defender')
+            .setDescription([
+                `**${battle.attackerName}** has selected their fruits!`,
+                ``,
+                `**${battle.defenderName}** needs to select their battle formation.`,
+                ``,
+                `⏰ Waiting for defender fruit selection...`
+            ].join('\n'))
+            .addFields([
+                {
+                    name: 'Attacker Ready',
+                    value: `${battle.attackerName} selected ${battle.attackerSelection.length} fruits`,
+                    inline: true
+                },
+                {
+                    name: 'Defender Status',
+                    value: 'Needs to select fruits',
+                    inline: true
+                }
+            ])
+            .setFooter({ text: 'PvP fruit selection in progress...' })
+            .setTimestamp();
+
+        await interaction.editReply({ embeds: [embed], components: [] });
+
+        // Note: In a full PvP system, you'd notify the defender user here
+        // For now, we'll simulate defender selection
+        setTimeout(async () => {
+            try {
+                // Auto-select defender fruits (simulate)
+                const defenderFruits = battle.defenderFruits.slice(0, 3);
+                battle.defenderSelection = defenderFruits;
+                battle.phase = 'combat';
+                
+                await this.executePvPBattle(interaction, battle);
+                this.activeBattles.delete(battle.battleId);
+            } catch (error) {
+                console.error('Error in auto PvP defender selection:', error);
+            }
+        }, 3000);
+    }
+
+    // Execute PvP battle
+    async executePvPBattle(interaction, battle) {
+        const attackerCP = battle.attackerSelection.reduce((total, fruit) => total + (fruit.totalPower || 500), 0);
+        const defenderCP = battle.defenderSelection.reduce((total, fruit) => total + (fruit.totalPower || 500), 0);
+        
+        const combatResult = await this.executeTurnBasedCombat(
+            interaction,
+            battle.attackerSelection,
+            battle.defenderSelection,
+            battle.attackerName,
+            battle.defenderName,
+            attackerCP,
+            defenderCP
+        );
+
+        // PvP can have berry theft
+        if (combatResult.victory) {
+            const stolenAmount = Math.floor(Math.random() * 2000) + 500; // 500-2500 berries
+            combatResult.stolenBerries = stolenAmount;
+            await this.awardBerries(battle.attackerId, stolenAmount);
+        }
+
+        await this.showBattleResults(interaction, combatResult, 'pvp');
     }
 
     // Execute NPC battle
