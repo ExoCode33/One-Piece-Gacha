@@ -1,4 +1,4 @@
-// Enhanced Raid Animation - Smooth Right to Left Ship Movement
+// Enhanced Raid Animation - Ship enters completely from right side
 class RaidAnimation {
     constructor() {
         this.shipDesign = [
@@ -17,8 +17,12 @@ class RaidAnimation {
             '⠀⠀⠀⠀⠀⠀⠀⠀⠘⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠟⠛⠉⠀⠀⠀⠀',
             '⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠉⠉⠉⠉⠉⠉⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀'
         ];
-        this.canvasWidth = 80; // Increased canvas width for smoother animation
-        this.shipWidth = this.shipDesign[0].length;
+        
+        // Increased canvas width to ensure ship enters completely from right
+        this.canvasWidth = 120; // Increased from 80 to 120 for wider view
+        this.shipWidth = this.shipDesign[0].length; // Should be around 40 characters
+        
+        console.log(`🚢 Ship dimensions: width=${this.shipWidth}, canvas=${this.canvasWidth}`);
     }
 
     // Position ship at specific offset (positive = move right, negative = move left)
@@ -48,23 +52,29 @@ class RaidAnimation {
         }).join('\n');
     }
 
-    // Enhanced animation with smooth right-to-left movement
+    // Enhanced animation with ship starting completely off-screen right
     async playQuickAnimation(interaction, animationType = 'combat') {
-        const framesCount = 18; // Increased frames for smoother animation
+        const framesCount = 20; // Increased frames for smoother animation
         
-        // Start position: Ship completely off-screen to the right
-        const startOffset = this.canvasWidth;
-        // End position: Ship completely off-screen to the left
-        const endOffset = -this.shipWidth;
+        // FIXED: Start position completely off-screen to the right
+        // Ship should start with its leftmost pixel just outside the right edge
+        const startOffset = this.canvasWidth + 5; // Start 5 characters beyond the right edge
+        
+        // FIXED: End position completely off-screen to the left  
+        // Ship should end with its rightmost pixel just outside the left edge
+        const endOffset = -(this.shipWidth + 5); // End 5 characters beyond the left edge
         
         console.log(`🎬 Starting raid animation: ${animationType}`);
         console.log(`📐 Animation setup: Canvas=${this.canvasWidth}, Ship=${this.shipWidth}`);
         console.log(`🎯 Movement: ${startOffset} → ${endOffset} over ${framesCount} frames`);
+        console.log(`🔄 Total distance: ${startOffset - endOffset} characters`);
 
         for (let i = 0; i < framesCount; i++) {
             // Calculate smooth movement across the screen
             const progress = i / (framesCount - 1);
             const currentOffset = Math.round(startOffset + (endOffset - startOffset) * progress);
+            
+            console.log(`📍 Frame ${i + 1}/${framesCount}: offset=${currentOffset}, progress=${(progress * 100).toFixed(1)}%`);
             
             // Position the ship at current offset
             const shipDisplay = this.positionShip(currentOffset);
@@ -74,16 +84,16 @@ class RaidAnimation {
             
             if (i === 0) {
                 title = "🌊 **Ship Spotted on the Horizon!**";
-                description = "A battle ship approaches from the eastern seas...";
-            } else if (i < framesCount / 3) {
-                title = "⚔️ **Battle Ship Approaching!**";
+                description = "A mighty battle ship approaches from the eastern seas...";
+            } else if (i < framesCount / 4) {
+                title = "⚔️ **Battle Ship Approaching Fast!**";
                 description = "The vessel cuts through the waves with determination...";
-            } else if (i < (framesCount * 2) / 3) {
-                title = "🏴‍☠️ **Ship Sailing Past!**";
+            } else if (i < (framesCount * 3) / 4) {
+                title = "🏴‍☠️ **Ship Sailing Past at Full Speed!**";
                 description = "The mighty ship dominates the battlefield...";
             } else if (i === framesCount - 1) {
-                title = "🌅 **Ship Disappears to the West!**";
-                description = "The battle ship vanishes beyond the horizon...";
+                title = "🌅 **Ship Disappears Beyond the Horizon!**";
+                description = "The battle ship vanishes into the western seas...";
             } else {
                 title = "🏴‍☠️ **Combat Ship in Motion!**";
                 description = "The ship continues its powerful journey across the seas...";
@@ -109,11 +119,11 @@ class RaidAnimation {
 
             // Add delay between frames (except for the last frame)
             if (i < framesCount - 1) {
-                await new Promise(resolve => setTimeout(resolve, 150)); // Slightly faster for smoother feel
+                await new Promise(resolve => setTimeout(resolve, 120)); // Slightly faster for smoother movement
             }
         }
         
-        console.log(`✅ Raid animation completed successfully`);
+        console.log(`✅ Raid animation completed successfully - ship traveled from right to left`);
     }
 
     // Full animation (same as quick for now, but can be extended)
@@ -126,7 +136,7 @@ class RaidAnimation {
         await this.playFullSailAnimation(interaction, animationType);
     }
 
-    // Victory animation - ship sailing triumphantly
+    // Victory animation - ship sailing triumphantly in center
     async playVictoryAnimation(interaction) {
         const victoryEmbed = {
             title: '🏆 **VICTORY ACHIEVED!**',
@@ -197,16 +207,31 @@ class RaidAnimation {
         await this.playQuickAnimation(interaction, 'combat');
     }
 
-    // Get animation statistics
+    // Get animation statistics and debug info
     getAnimationInfo() {
         return {
             canvasWidth: this.canvasWidth,
             shipWidth: this.shipWidth,
-            totalFrames: 18,
-            animationDuration: '2.7 seconds',
+            totalFrames: 20,
+            animationDuration: '2.4 seconds',
             direction: 'Right to Left',
-            frameDelay: '150ms'
+            frameDelay: '120ms',
+            startPosition: this.canvasWidth + 5,
+            endPosition: -(this.shipWidth + 5),
+            totalDistance: (this.canvasWidth + 5) + (this.shipWidth + 5)
         };
+    }
+
+    // Debug function to show ship positions
+    debugPositions() {
+        const info = this.getAnimationInfo();
+        console.log('🔧 Animation Debug Info:');
+        console.log(`   Canvas Width: ${info.canvasWidth} characters`);
+        console.log(`   Ship Width: ${info.shipWidth} characters`);
+        console.log(`   Start Position: ${info.startPosition} (completely off-screen right)`);
+        console.log(`   End Position: ${info.endPosition} (completely off-screen left)`);
+        console.log(`   Total Travel Distance: ${info.totalDistance} characters`);
+        console.log(`   Animation ensures ship enters from completely outside the message area`);
     }
 }
 
