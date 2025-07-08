@@ -1,6 +1,7 @@
-// Enhanced Raid Animation - Ship enters completely from right side
+// Enhanced Raid Animation - Clean Right to Left Ship Movement
 class RaidAnimation {
     constructor() {
+        // Single ship design - facing left for right-to-left movement
         this.shipDesign = [
             '⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⠀⠤⠴⠶⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀',
             '⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣶⣾⣿⡟⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀',
@@ -18,26 +19,14 @@ class RaidAnimation {
             '⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠉⠉⠉⠉⠉⠉⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀'
         ];
         
-        // Optimized canvas width for Discord message area
-        this.canvasWidth = 80; // Keep original 80 - Discord limits display width
-        this.shipWidth = this.shipDesign[0].length; // Should be around 30 characters
-        
-        console.log(`🚢 Ship dimensions: width=${this.shipWidth}, canvas=${this.canvasWidth}`);
-    }'⠀⠀⠀⠀⠀⠀⠈⣿⣿⣿⣶⣄⡈⠉⠀⠀⢸⡇⠀⠀⠉⠂⠀⣿⣿⣿⣧⠀⠀⠀',
-            '⠀⠀⠀⠀⠀⠀⠀⠘⣿⣿⣿⣿⣿⣷⣤⣀⣸⣧⣠⣤⣴⣶⣾⣿⣿⣿⡿⠀⠀⠀',
-            '⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠇⠀⠀⠀',
-            '⠀⠀⠀⠀⠀⠀⠀⠀⠘⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠟⠛⠉⠀⠀⠀⠀',
-            '⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠉⠉⠉⠉⠉⠉⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀'
-        ];
-        
-        // Optimized canvas width for Discord message area
-        this.canvasWidth = 80; // Keep original 80 - Discord limits display width
-        this.shipWidth = this.shipDesign[0].length; // Should be around 30 characters
+        // Canvas settings for Discord message area
+        this.canvasWidth = 80;
+        this.shipWidth = this.shipDesign[0].length;
         
         console.log(`🚢 Ship dimensions: width=${this.shipWidth}, canvas=${this.canvasWidth}`);
     }
 
-    // Position ship at specific offset (positive = move right, negative = move left)
+    // Position ship at specific offset
     positionShip(offset) {
         return this.shipDesign.map(line => {
             // Create the canvas line with proper padding
@@ -64,46 +53,30 @@ class RaidAnimation {
         }).join('\n');
     }
 
-    // Enhanced animation with ship starting just off-screen right
+    // Main animation: ship moves from RIGHT to LEFT
     async playQuickAnimation(interaction, animationType = 'combat') {
-        const framesCount = 18; // Reduced frames for better pacing
+        const framesCount = 18;
         
-        // FIXED: Start position off-screen to the RIGHT (higher number)
-        // Ship should start with its left edge just outside the right edge of visible area
-        const startOffset = this.canvasWidth; // Start at position 80 (right side)
-        
-        // FIXED: End position off-screen to the LEFT (lower/negative number)  
-        // Ship should end with its right edge just outside the left edge
-        const endOffset = -this.shipWidth; // End at position -30 (left side)
+        // RIGHT TO LEFT movement
+        const startOffset = this.canvasWidth;  // Start at position 80 (right edge)
+        const endOffset = -this.shipWidth;    // End at position -30 (left side, off-screen)
         
         console.log(`🎬 Starting raid animation: ${animationType}`);
-        console.log(`📐 Animation setup: Canvas=${this.canvasWidth}, Ship=${this.shipWidth}`);
-        console.log(`🎯 Movement: ${startOffset} → ${endOffset} over ${framesCount} frames`);
-        console.log(`🔄 Total distance: ${startOffset - endOffset} characters`);
+        console.log(`📐 Canvas=${this.canvasWidth}, Ship=${this.shipWidth}`);
+        console.log(`🎯 Movement: ${startOffset} → ${endOffset} (RIGHT to LEFT)`);
 
         for (let i = 0; i < framesCount; i++) {
-            // Calculate smooth movement from RIGHT to LEFT
+            // Calculate movement from RIGHT to LEFT
             const progress = i / (framesCount - 1);
-            
-            // RIGHT to LEFT movement: start=80, end=-30
-            // progress=0: position=80 (right side)  
-            // progress=1: position=-30 (left side)
             const currentOffset = Math.round(startOffset + (endOffset - startOffset) * progress);
             
             console.log(`📍 Frame ${i + 1}/${framesCount}: offset=${currentOffset}, progress=${(progress * 100).toFixed(1)}%`);
-            console.log(`   Expected: start=${startOffset} → current=${currentOffset} → end=${endOffset}`);
             
-            // Position the ship at current offset
+            // Position the ship
             const shipDisplay = this.positionShip(currentOffset);
             
-            // Debug: Show first few characters of the first line to see ship position
-            const firstLine = shipDisplay.split('\n')[0];
-            const visiblePart = firstLine.substring(0, 80);
-            console.log(`   Ship line preview: "${visiblePart.substring(0, 20)}...${visiblePart.substring(60)}"`);
-            
-            // Determine animation phase and title
+            // Animation titles based on progress
             let title, description;
-            
             if (i === 0) {
                 title = "🌊 **Ship Spotted on the Horizon!**";
                 description = "A mighty battle ship approaches from the eastern seas...";
@@ -121,7 +94,7 @@ class RaidAnimation {
                 description = "The ship continues its powerful journey across the seas...";
             }
 
-            // Create embed based on animation type
+            // Create embed
             const embed = {
                 title: title,
                 description: description,
@@ -132,33 +105,33 @@ class RaidAnimation {
                 timestamp: new Date().toISOString()
             };
 
-            // Update the interaction with ship animation
+            // Update Discord message
             await interaction.editReply({
                 content: `\`\`\`\n${shipDisplay}\n\`\`\``,
                 embeds: [embed],
-                components: [] // Clear any previous components during animation
+                components: []
             });
 
-            // Add delay between frames (except for the last frame)
+            // Frame delay
             if (i < framesCount - 1) {
-                await new Promise(resolve => setTimeout(resolve, 150)); // Balanced timing
+                await new Promise(resolve => setTimeout(resolve, 150));
             }
         }
         
-        console.log(`✅ Raid animation completed successfully - ship traveled from right to left`);
+        console.log(`✅ Ship animation completed - moved from RIGHT to LEFT`);
     }
 
-    // Full animation (same as quick for now, but can be extended)
+    // Full animation (same as quick)
     async playFullSailAnimation(interaction, animationType = 'combat') {
         await this.playQuickAnimation(interaction, animationType);
     }
 
-    // Main animation entry point
+    // Main entry point
     async playAnimation(interaction, animationType = 'combat') {
         await this.playFullSailAnimation(interaction, animationType);
     }
 
-    // Victory animation - ship sailing triumphantly in center
+    // Victory animation - ship in center
     async playVictoryAnimation(interaction) {
         const victoryEmbed = {
             title: '🏆 **VICTORY ACHIEVED!**',
@@ -168,7 +141,7 @@ class RaidAnimation {
             timestamp: new Date().toISOString()
         };
 
-        // Show centered victory ship
+        // Center the ship
         const centeredOffset = Math.floor((this.canvasWidth - this.shipWidth) / 2);
         const victoryShip = this.positionShip(centeredOffset);
 
@@ -181,7 +154,7 @@ class RaidAnimation {
         await new Promise(resolve => setTimeout(resolve, 3000));
     }
 
-    // Get color based on animation type
+    // Get animation color based on type
     getAnimationColor(type) {
         const colors = {
             combat: 0x1E90FF,    // Dodger Blue
@@ -194,7 +167,7 @@ class RaidAnimation {
         return colors[type] || colors.combat;
     }
 
-    // Get battle-ready ship for static display
+    // Static ship display
     getBattleReadyShip() {
         const centeredOffset = Math.floor((this.canvasWidth - this.shipWidth) / 2);
         return {
@@ -210,26 +183,23 @@ class RaidAnimation {
         };
     }
 
-    // Test animation for debugging
+    // Test animation
     async testAnimation(interaction) {
         console.log('🧪 Testing raid animation...');
         
         const testEmbed = {
             title: '🧪 **Animation Test**',
-            description: 'Testing ship movement from right to left...',
+            description: 'Testing ship movement from RIGHT to LEFT...',
             color: 0xFFFF00,
             footer: { text: '🧪 Test Mode' }
         };
 
-        await interaction.editReply({
-            embeds: [testEmbed]
-        });
-
+        await interaction.editReply({ embeds: [testEmbed] });
         await new Promise(resolve => setTimeout(resolve, 1000));
         await this.playQuickAnimation(interaction, 'combat');
     }
 
-    // Get animation statistics and debug info
+    // Animation info
     getAnimationInfo() {
         return {
             canvasWidth: this.canvasWidth,
@@ -244,16 +214,15 @@ class RaidAnimation {
         };
     }
 
-    // Debug function to show ship positions
+    // Debug info
     debugPositions() {
         const info = this.getAnimationInfo();
         console.log('🔧 Animation Debug Info:');
         console.log(`   Canvas Width: ${info.canvasWidth} characters`);
         console.log(`   Ship Width: ${info.shipWidth} characters`);
-        console.log(`   Start Position: ${info.startPosition} (completely off-screen right)`);
-        console.log(`   End Position: ${info.endPosition} (completely off-screen left)`);
-        console.log(`   Total Travel Distance: ${info.totalDistance} characters`);
-        console.log(`   Animation ensures ship enters from completely outside the message area`);
+        console.log(`   Start Position: ${info.startPosition} (right edge)`);
+        console.log(`   End Position: ${info.endPosition} (left edge, off-screen)`);
+        console.log(`   Movement Direction: RIGHT → LEFT`);
     }
 }
 
