@@ -1,4 +1,4 @@
-// src/commands/bank.js - Enhanced Bank Command with Income Collection
+// src/commands/bank.js - Fixed Bank Command with Income Collection
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
 module.exports = {
@@ -382,4 +382,21 @@ module.exports = {
                             `Total Earned: ${economicStats.totalEarned.toLocaleString()} berries`,
                             `Total Spent: ${economicStats.totalSpent.toLocaleString()} berries`,
                             `Net Worth: ${economicStats.netWorth.toLocaleString()} berries`,
-                            `Account Age: ${economicStats.account
+                            `Account Age: ${economicStats.accountAge} days`
+                        ].join('\n'),
+                        inline: false
+                    }
+                ])
+                .setFooter({ text: 'Use /pull to hunt for Devil Fruits and increase your earnings!' })
+                .setTimestamp();
+
+            await interaction.editReply({ embeds: [historyEmbed] });
+
+        } catch (error) {
+            console.error('Error showing transaction history:', error);
+            await interaction.editReply({ 
+                content: '❌ Failed to load transaction history!' 
+            });
+        }
+    }
+};
