@@ -1,468 +1,359 @@
-// ═══════════════════════════════════════════════════════════════════
-//                    ONE PIECE DEVIL FRUIT COUNTER SYSTEM
-//                         Based on Canon Lore Analysis
-// ═══════════════════════════════════════════════════════════════════
+// COMPLETE DEVIL FRUIT ELEMENT MAPPING - All 150 Fruits
+// Add this to your src/data/counter-system.js
 
+const DEVIL_FRUIT_ELEMENTS = {
+    // COMMON FRUITS (1-50)
+    'fruit_001': 'fire',           // Bomu Bomu no Mi (explosions = fire)
+    'fruit_002': 'metal',          // Bara Bara no Mi (cutting/splitting)
+    'fruit_003': 'rubber',         // Sube Sube no Mi (slippery)
+    'fruit_004': 'gravity',        // Kilo Kilo no Mi (weight)
+    'fruit_005': 'stone',          // Doru Doru no Mi (wax hardens)
+    'fruit_006': 'metal',          // Baku Baku no Mi (eating/incorporating)
+    'fruit_007': 'metal',          // Ori Ori no Mi (iron bonds)
+    'fruit_008': 'rubber',         // Bane Bane no Mi (springs)
+    'fruit_009': 'spatial',        // Noro Noro no Mi (slowing)
+    'fruit_010': 'spatial',        // Doa Doa no Mi (doors)
+    'fruit_011': 'poison',         // Awa Awa no Mi (soap/cleaning)
+    'fruit_012': 'rubber',         // Beri Beri no Mi (orbs)
+    'fruit_013': 'metal',          // Sabi Sabi no Mi (rust)
+    'fruit_014': 'metal',          // Shari Shari no Mi (wheels)
+    'fruit_015': 'soul',           // Yomi Yomi no Mi (soul)
+    'fruit_016': 'darkness',       // Kage Kage no Mi (shadows)
+    'fruit_017': 'soul',           // Horo Horo no Mi (ghosts)
+    'fruit_018': 'light',          // Suke Suke no Mi (invisibility)
+    'fruit_019': 'metal',          // Choki Choki no Mi (scissors)
+    'fruit_020': 'poison',         // Woshu Woshu no Mi (washing)
+    'fruit_021': 'gravity',        // Fuwa Fuwa no Mi (float)
+    'fruit_022': 'spatial',        // Mato Mato no Mi (marking)
+    'fruit_023': 'metal',          // Buki Buki no Mi (weapons)
+    'fruit_024': 'vibration',      // Guru Guru no Mi (spinning)
+    'fruit_025': 'poison',         // Beta Beta no Mi (sticky)
+    'fruit_026': 'rubber',         // Hira Hira no Mi (flags)
+    'fruit_027': 'stone',          // Ishi Ishi no Mi (stone)
+    'fruit_028': 'metal',          // Nui Nui no Mi (stitching)
+    'fruit_029': 'soul',           // Giro Giro no Mi (sight/mind)
+    'fruit_030': 'soul',           // Ato Ato no Mi (art transformation)
+    'fruit_031': 'rubber',         // Jake Jake no Mi (jacket)
+    'fruit_032': 'spatial',        // Mira Mira no Mi (mirrors)
+    'fruit_033': 'stone',          // Bisu Bisu no Mi (hard biscuits)
+    'fruit_034': 'poison',         // Pero Pero no Mi (candy)
+    'fruit_035': 'poison',         // Bata Bata no Mi (butter)
+    'fruit_036': 'poison',         // Shibo Shibo no Mi (moisture)
+    'fruit_037': 'soul',           // Memo Memo no Mi (memory)
+    'fruit_038': 'spatial',        // Buku Buku no Mi (books)
+    'fruit_039': 'poison',         // Kuri Kuri no Mi (cream)
+    'fruit_040': 'zoan_beast',     // Tama Tama no Mi (egg evolution)
+    'fruit_041': 'zoan_beast',     // Kame Kame no Mi (turtle)
+    'fruit_042': 'zoan_beast',     // Mushi Mushi no Mi, Model: Kabutomushi
+    'fruit_043': 'zoan_beast',     // Mushi Mushi no Mi, Model: Suzumebachi
+    'fruit_044': 'spatial',        // Poke Poke no Mi (pockets)
+    'fruit_045': 'poison',         // Kuku Kuku no Mi (cooking)
+    'fruit_046': 'metal',          // Gocha Gocha no Mi (merging)
+    'fruit_047': 'soul',           // Hiso Hiso no Mi (animal communication)
+    'fruit_048': 'gravity',        // Mini Mini no Mi (shrinking)
+    'fruit_049': 'gravity',        // Ton Ton no Mi (weight)
+    'fruit_050': 'soul',           // Mero Mero no Mi (love/stone)
+
+    // UNCOMMON FRUITS (51-75)
+    'fruit_051': 'rubber',         // Gomu Gomu no Mi
+    'fruit_052': 'zoan_beast',     // Hana Hana no Mi (body parts = biological)
+    'fruit_053': 'spatial',        // Bari Bari no Mi (barriers)
+    'fruit_054': 'spatial',        // Nagi Nagi no Mi (sound barriers)
+    'fruit_055': 'soul',           // Hobi Hobi no Mi (toy transformation)
+    'fruit_056': 'spatial',        // Sui Sui no Mi (swimming through solids)
+    'fruit_057': 'zoan_beast',     // Zou Zou no Mi (elephant)
+    'fruit_058': 'zoan_beast',     // Inu Inu no Mi, Model: Wolf
+    'fruit_059': 'zoan_beast',     // Neko Neko no Mi, Model: Leopard
+    'fruit_060': 'zoan_beast',     // Ushi Ushi no Mi, Model: Bison
+    'fruit_061': 'zoan_beast',     // Ushi Ushi no Mi, Model: Giraffe
+    'fruit_062': 'zoan_beast',     // Inu Inu no Mi, Model: Jackal
+    'fruit_063': 'zoan_beast',     // Tori Tori no Mi, Model: Falcon
+    'fruit_064': 'zoan_beast',     // Mogu Mogu no Mi (mole)
+    'fruit_065': 'zoan_beast',     // Inu Inu no Mi, Model: Dachshund
+    'fruit_066': 'zoan_beast',     // Sara Sara no Mi, Model: Axolotl
+    'fruit_067': 'zoan_ancient',   // Ryu Ryu no Mi, Model: Allosaurus
+    'fruit_068': 'zoan_ancient',   // Ryu Ryu no Mi, Model: Spinosaurus
+    'fruit_069': 'zoan_ancient',   // Ryu Ryu no Mi, Model: Pteranodon
+    'fruit_070': 'zoan_ancient',   // Ryu Ryu no Mi, Model: Brachiosaurus
+    'fruit_071': 'zoan_ancient',   // Ryu Ryu no Mi, Model: Mammoth
+    'fruit_072': 'zoan_ancient',   // Ryu Ryu no Mi, Model: Triceratops
+    'fruit_073': 'zoan_ancient',   // Ryu Ryu no Mi, Model: Pachycephalosaurus
+    'fruit_074': 'zoan_ancient',   // Ryu Ryu no Mi, Model: Saber-tooth Tiger
+    'fruit_075': 'zoan_ancient',   // Kumo Kumo no Mi, Model: Rosamygale Grauvogeli
+
+    // RARE FRUITS (76-91) - Logia and strong Paramecia
+    'fruit_076': 'gas',            // Moku Moku no Mi (smoke)
+    'fruit_077': 'fire',           // Mera Mera no Mi
+    'fruit_078': 'sand',           // Suna Suna no Mi
+    'fruit_079': 'lightning',      // Goro Goro no Mi
+    'fruit_080': 'ice',            // Hie Hie no Mi
+    'fruit_081': 'darkness',       // Yami Yami no Mi
+    'fruit_082': 'light',          // Pika Pika no Mi
+    'fruit_083': 'magma',          // Magu Magu no Mi
+    'fruit_084': 'poison',         // Numa Numa no Mi (swamp)
+    'fruit_085': 'gas',            // Gasu Gasu no Mi
+    'fruit_086': 'ice',            // Yuki Yuki no Mi (snow)
+    'fruit_087': 'zoan_beast',     // Mori Mori no Mi (forest/plants)
+    'fruit_088': 'soul',           // Soru Soru no Mi
+    'fruit_089': 'rubber',         // Mochi Mochi no Mi (special paramecia)
+    'fruit_090': 'spatial',        // Ope Ope no Mi
+    'fruit_091': 'vibration',      // Gura Gura no Mi
+
+    // EPIC FRUITS (92-100)
+    'fruit_092': 'zoan_mythical',  // Hito Hito no Mi, Model: Daibutsu
+    'fruit_093': 'gravity',        // Zushi Zushi no Mi
+    'fruit_094': 'spatial',        // Nikyu Nikyu no Mi (repel)
+    'fruit_095': 'poison',         // Doku Doku no Mi
+    'fruit_096': 'soul',           // Horm Horm no Mi (hormones)
+    'fruit_097': 'soul',           // Chyu Chyu no Mi (healing)
+    'fruit_098': 'spatial',        // Toki Toki no Mi (time)
+    'fruit_099': 'soul',           // Kibi Kibi no Mi (animal control)
+    'fruit_100': 'spatial',        // Juku Juku no Mi (aging)
+
+    // LEGENDARY FRUITS (101-109)
+    'fruit_101': 'zoan_mythical',  // Uo Uo no Mi, Model: Seiryu
+    'fruit_102': 'zoan_mythical',  // Inu Inu no Mi, Model: Okuchi no Makami
+    'fruit_103': 'zoan_mythical',  // Hebi Hebi no Mi, Model: Yamata-no-Orochi
+    'fruit_104': 'zoan_mythical',  // Tori Tori no Mi, Model: Phoenix
+    'fruit_105': 'zoan_mythical',  // Hito Hito no Mi, Model: Onyudo
+    'fruit_106': 'zoan_mythical',  // Inu Inu no Mi, Model: Nine-Tailed Fox
+    'fruit_107': 'zoan_mythical',  // Uma Uma no Mi, Model: Pegasus
+    'fruit_108': 'zoan_mythical',  // Batto Batto no Mi, Model: Vampire
+    'fruit_109': 'ice',            // Mizu Mizu no Mi (theoretical water logia)
+
+    // MYTHICAL FRUITS (110-112)
+    'fruit_110': 'zoan_mythical',  // Hito Hito no Mi, Model: Nika
+    'fruit_111': 'zoan_mythical',  // Hito Hito no Mi, Model: Raijin
+    'fruit_112': 'zoan_mythical',  // Hito Hito no Mi, Model: Susanoo
+
+    // OMNIPOTENT FRUITS (113-114)
+    'fruit_113': 'soul',           // Yume Yume no Mi (dreams/reality)
+    'fruit_114': 'zoan_mythical',  // Kami Kami no Mi (deity)
+
+    // THEORETICAL/ADDITIONAL FRUITS (115-150)
+    'fruit_115': 'gas',            // Kaze Kaze no Mi (wind)
+    'fruit_116': 'lightning',      // Denki Denki no Mi (electricity)
+    'fruit_117': 'metal',          // Tetsu Tetsu no Mi (steel)
+    'fruit_118': 'metal',          // Kin Kin no Mi (gold)
+    'fruit_119': 'vibration',      // Basu Basu no Mi (sound/vibration)
+    'fruit_120': 'ice',            // Rei Rei no Mi (temperature)
+    'fruit_121': 'gas',            // Kuki Kuki no Mi (air)
+    'fruit_122': 'stone',          // Tsuchi Tsuchi no Mi (earth)
+    'fruit_123': 'metal',          // Kori Kori no Mi (crystal)
+    'fruit_124': 'soul',           // Shi Shi no Mi (life/death)
+    'fruit_125': 'spatial',        // Jikan Jikan no Mi (time)
+    'fruit_126': 'spatial',        // Kuukan Kuukan no Mi (space)
+    'fruit_127': 'poison',         // Chi Chi no Mi (blood)
+    'fruit_128': 'soul',           // Sei Sei no Mi (life force)
+    'fruit_129': 'soul',           // Kokoro Kokoro no Mi (emotions)
+    'fruit_130': 'soul',           // Gensou Gensou no Mi (illusions)
+    'fruit_131': 'vibration',      // Rasen Rasen no Mi (spirals)
+    'fruit_132': 'spatial',        // Henka Henka no Mi (transformation)
+    'fruit_133': 'metal',          // Bunretsu Bunretsu no Mi (splitting)
+    'fruit_134': 'spatial',        // Yuugou Yuugou no Mi (fusion)
+    'fruit_135': 'vibration',      // Zouryoku Zouryoku no Mi (amplify)
+    'fruit_136': 'fire',           // Nenshou Nenshou no Mi (ignition)
+    'fruit_137': 'spatial',        // Touka Touka no Mi (phase)
+    'fruit_138': 'darkness',       // Kuro Kuro no Mi (void)
+    'fruit_139': 'light',          // Shiro Shiro no Mi (pure light)
+    'fruit_140': 'spatial',        // Mugen Mugen no Mi (infinite)
+    'fruit_141': 'spatial',        // Zero Zero no Mi (zero)
+    'fruit_142': 'zoan_mythical',  // Kami Kami no Mi, Model: Amaterasu
+    'fruit_143': 'zoan_mythical',  // Kami Kami no Mi, Model: Tsukuyomi
+    'fruit_144': 'zoan_mythical',  // Akuma Akuma no Mi (demon)
+    'fruit_145': 'zoan_mythical',  // Tenshi Tenshi no Mi (angel)
+    'fruit_146': 'zoan_mythical',  // Ryuu Ryuu no Mi, Model: Eastern Dragon
+    'fruit_147': 'zoan_mythical',  // Tora Tora no Mi, Model: White Tiger
+    'fruit_148': 'zoan_mythical',  // Kitsune Kitsune no Mi, Model: Kyubi
+    'fruit_149': 'zoan_mythical',  // Shinigami Shinigami no Mi (death god)
+    'fruit_150': 'spatial'         // Sekai Sekai no Mi (world control)
+};
+
+// ENHANCED ELEMENT MAPPING
 const ELEMENT_TYPES = {
-    // PRIMARY ELEMENTS (Logia-based)
+    // Physical Elements
     FIRE: 'fire',
-    ICE: 'ice', 
+    ICE: 'ice',
     LIGHTNING: 'lightning',
     LIGHT: 'light',
     DARKNESS: 'darkness',
     MAGMA: 'magma',
     SAND: 'sand',
     GAS: 'gas',
-    SMOKE: 'smoke',
     
-    // PHYSICAL TYPES
+    // Material Types
     RUBBER: 'rubber',
     METAL: 'metal',
     STONE: 'stone',
     
-    // SPECIAL FORCES
+    // Force Types
     GRAVITY: 'gravity',
     VIBRATION: 'vibration',
     SPATIAL: 'spatial',
+    
+    // Mystical Types
     SOUL: 'soul',
-    
-    // BIOLOGICAL
     POISON: 'poison',
-    HEALING: 'healing',
     
-    // TRANSFORMATION
+    // Biological Types
     ZOAN_BEAST: 'zoan_beast',
-    ZOAN_ANCIENT: 'zoan_ancient', 
+    ZOAN_ANCIENT: 'zoan_ancient',
     ZOAN_MYTHICAL: 'zoan_mythical'
 };
 
-// CANON COUNTER RELATIONSHIPS based on One Piece lore
+// ENHANCED COUNTER MATRIX
 const COUNTER_MATRIX = {
-    // FIRE COUNTERS (Mera Mera no Mi)
     [ELEMENT_TYPES.FIRE]: {
-        strongAgainst: [ELEMENT_TYPES.ICE, ELEMENT_TYPES.GAS, ELEMENT_TYPES.SMOKE],
-        weakAgainst: [ELEMENT_TYPES.MAGMA, ELEMENT_TYPES.SAND], // Magma > Fire (Ace vs Akainu), Sand absorbs fire
+        strongAgainst: [ELEMENT_TYPES.ICE, ELEMENT_TYPES.GAS, ELEMENT_TYPES.ZOAN_BEAST],
+        weakAgainst: [ELEMENT_TYPES.MAGMA, ELEMENT_TYPES.SAND],
         neutralAgainst: [ELEMENT_TYPES.LIGHTNING, ELEMENT_TYPES.LIGHT, ELEMENT_TYPES.RUBBER]
     },
     
-    // ICE COUNTERS (Hie Hie no Mi)
     [ELEMENT_TYPES.ICE]: {
-        strongAgainst: [ELEMENT_TYPES.GAS, ELEMENT_TYPES.POISON],
-        weakAgainst: [ELEMENT_TYPES.FIRE, ELEMENT_TYPES.MAGMA], // Heat melts ice
+        strongAgainst: [ELEMENT_TYPES.GAS, ELEMENT_TYPES.POISON, ELEMENT_TYPES.ZOAN_BEAST],
+        weakAgainst: [ELEMENT_TYPES.FIRE, ELEMENT_TYPES.MAGMA],
         neutralAgainst: [ELEMENT_TYPES.LIGHTNING, ELEMENT_TYPES.LIGHT]
     },
     
-    // LIGHTNING COUNTERS (Goro Goro no Mi)
     [ELEMENT_TYPES.LIGHTNING]: {
         strongAgainst: [ELEMENT_TYPES.METAL, ELEMENT_TYPES.GAS],
-        weakAgainst: [ELEMENT_TYPES.RUBBER], // Rubber insulates (Luffy vs Enel)
+        weakAgainst: [ELEMENT_TYPES.RUBBER],
         neutralAgainst: [ELEMENT_TYPES.FIRE, ELEMENT_TYPES.ICE, ELEMENT_TYPES.LIGHT]
     },
     
-    // LIGHT COUNTERS (Pika Pika no Mi)
     [ELEMENT_TYPES.LIGHT]: {
         strongAgainst: [ELEMENT_TYPES.DARKNESS, ELEMENT_TYPES.ICE],
-        weakAgainst: [ELEMENT_TYPES.RUBBER], // Rubber can reflect light
+        weakAgainst: [ELEMENT_TYPES.RUBBER],
         neutralAgainst: [ELEMENT_TYPES.FIRE, ELEMENT_TYPES.LIGHTNING]
     },
     
-    // DARKNESS COUNTERS (Yami Yami no Mi)
     [ELEMENT_TYPES.DARKNESS]: {
-        strongAgainst: [ELEMENT_TYPES.LIGHT, ELEMENT_TYPES.LIGHTNING, ELEMENT_TYPES.FIRE], // Absorbs energy
-        weakAgainst: [ELEMENT_TYPES.VIBRATION], // Physical attacks bypass darkness
+        strongAgainst: [ELEMENT_TYPES.LIGHT, ELEMENT_TYPES.LIGHTNING, ELEMENT_TYPES.FIRE],
+        weakAgainst: [ELEMENT_TYPES.VIBRATION],
         neutralAgainst: [ELEMENT_TYPES.ICE, ELEMENT_TYPES.MAGMA]
     },
     
-    // MAGMA COUNTERS (Magu Magu no Mi)  
     [ELEMENT_TYPES.MAGMA]: {
-        strongAgainst: [ELEMENT_TYPES.FIRE, ELEMENT_TYPES.ICE, ELEMENT_TYPES.METAL], // Superior heat
-        weakAgainst: [ELEMENT_TYPES.VIBRATION], // Vibrations can disrupt magma
+        strongAgainst: [ELEMENT_TYPES.FIRE, ELEMENT_TYPES.ICE, ELEMENT_TYPES.METAL],
+        weakAgainst: [ELEMENT_TYPES.VIBRATION],
         neutralAgainst: [ELEMENT_TYPES.LIGHTNING, ELEMENT_TYPES.DARKNESS]
     },
     
-    // SAND COUNTERS (Suna Suna no Mi)
     [ELEMENT_TYPES.SAND]: {
-        strongAgainst: [ELEMENT_TYPES.FIRE, ELEMENT_TYPES.POISON], // Absorbs fire, filters poison
-        weakAgainst: [ELEMENT_TYPES.LIGHTNING, ELEMENT_TYPES.VIBRATION], // Glass formation, disruption
+        strongAgainst: [ELEMENT_TYPES.FIRE, ELEMENT_TYPES.POISON],
+        weakAgainst: [ELEMENT_TYPES.LIGHTNING, ELEMENT_TYPES.VIBRATION],
         neutralAgainst: [ELEMENT_TYPES.ICE, ELEMENT_TYPES.GAS]
     },
     
-    // RUBBER COUNTERS (Gomu Gomu no Mi / Nika)
     [ELEMENT_TYPES.RUBBER]: {
-        strongAgainst: [ELEMENT_TYPES.LIGHTNING, ELEMENT_TYPES.LIGHT], // Insulation, reflection
-        weakAgainst: [ELEMENT_TYPES.METAL, ELEMENT_TYPES.POISON], // Sharp objects, toxins
+        strongAgainst: [ELEMENT_TYPES.LIGHTNING, ELEMENT_TYPES.LIGHT],
+        weakAgainst: [ELEMENT_TYPES.METAL, ELEMENT_TYPES.POISON],
         neutralAgainst: [ELEMENT_TYPES.FIRE, ELEMENT_TYPES.ICE]
     },
     
-    // VIBRATION COUNTERS (Gura Gura no Mi)
     [ELEMENT_TYPES.VIBRATION]: {
-        strongAgainst: [ELEMENT_TYPES.STONE, ELEMENT_TYPES.METAL, ELEMENT_TYPES.MAGMA], // Shatters solid matter
-        weakAgainst: [ELEMENT_TYPES.RUBBER, ELEMENT_TYPES.GAS], // Flexible materials absorb vibration
+        strongAgainst: [ELEMENT_TYPES.STONE, ELEMENT_TYPES.METAL, ELEMENT_TYPES.MAGMA],
+        weakAgainst: [ELEMENT_TYPES.RUBBER, ELEMENT_TYPES.GAS],
         neutralAgainst: [ELEMENT_TYPES.FIRE, ELEMENT_TYPES.LIGHTNING]
     },
     
-    // GRAVITY COUNTERS (Zushi Zushi no Mi)
     [ELEMENT_TYPES.GRAVITY]: {
-        strongAgainst: [ELEMENT_TYPES.LIGHT, ELEMENT_TYPES.GAS, ELEMENT_TYPES.SMOKE], // Controls matter
-        weakAgainst: [ELEMENT_TYPES.SPATIAL], // Space manipulation counters gravity
+        strongAgainst: [ELEMENT_TYPES.LIGHT, ELEMENT_TYPES.GAS],
+        weakAgainst: [ELEMENT_TYPES.SPATIAL],
         neutralAgainst: [ELEMENT_TYPES.FIRE, ELEMENT_TYPES.LIGHTNING]
     },
     
-    // SPATIAL COUNTERS (Ope Ope no Mi)
     [ELEMENT_TYPES.SPATIAL]: {
-        strongAgainst: [ELEMENT_TYPES.GRAVITY, ELEMENT_TYPES.METAL, ELEMENT_TYPES.STONE], // Cuts through anything
-        weakAgainst: [ELEMENT_TYPES.SOUL], // Soul manipulation transcends physical space
+        strongAgainst: [ELEMENT_TYPES.GRAVITY, ELEMENT_TYPES.METAL, ELEMENT_TYPES.STONE],
+        weakAgainst: [ELEMENT_TYPES.SOUL],
         neutralAgainst: [ELEMENT_TYPES.FIRE, ELEMENT_TYPES.LIGHTNING, ELEMENT_TYPES.LIGHT]
     },
     
-    // POISON COUNTERS (Doku Doku no Mi)
     [ELEMENT_TYPES.POISON]: {
-        strongAgainst: [ELEMENT_TYPES.HEALING, ELEMENT_TYPES.ZOAN_BEAST], // Toxins overcome healing, affect biology
-        weakAgainst: [ELEMENT_TYPES.FIRE, ELEMENT_TYPES.ICE, ELEMENT_TYPES.SAND], // Heat burns toxins, cold slows, sand filters
+        strongAgainst: [ELEMENT_TYPES.ZOAN_BEAST],
+        weakAgainst: [ELEMENT_TYPES.FIRE, ELEMENT_TYPES.ICE, ELEMENT_TYPES.SAND],
         neutralAgainst: [ELEMENT_TYPES.METAL, ELEMENT_TYPES.STONE]
     },
     
-    // SOUL COUNTERS (Soru Soru no Mi)
     [ELEMENT_TYPES.SOUL]: {
-        strongAgainst: [ELEMENT_TYPES.SPATIAL, ELEMENT_TYPES.ZOAN_BEAST, ELEMENT_TYPES.ZOAN_ANCIENT], // Soul > Matter
-        weakAgainst: [ELEMENT_TYPES.ZOAN_MYTHICAL], // Mythical creatures have spiritual resistance
+        strongAgainst: [ELEMENT_TYPES.SPATIAL, ELEMENT_TYPES.ZOAN_BEAST, ELEMENT_TYPES.ZOAN_ANCIENT],
+        weakAgainst: [ELEMENT_TYPES.ZOAN_MYTHICAL],
         neutralAgainst: [ELEMENT_TYPES.FIRE, ELEMENT_TYPES.LIGHTNING]
     },
     
-    // ZOAN COUNTERS
     [ELEMENT_TYPES.ZOAN_BEAST]: {
-        strongAgainst: [ELEMENT_TYPES.GAS, ELEMENT_TYPES.SMOKE], // Animal instincts, enhanced senses
-        weakAgainst: [ELEMENT_TYPES.POISON, ELEMENT_TYPES.LIGHTNING, ELEMENT_TYPES.FIRE], // Biological vulnerability
+        strongAgainst: [ELEMENT_TYPES.GAS],
+        weakAgainst: [ELEMENT_TYPES.POISON, ELEMENT_TYPES.LIGHTNING, ELEMENT_TYPES.FIRE],
         neutralAgainst: [ELEMENT_TYPES.ICE, ELEMENT_TYPES.METAL]
     },
     
     [ELEMENT_TYPES.ZOAN_ANCIENT]: {
-        strongAgainst: [ELEMENT_TYPES.ZOAN_BEAST, ELEMENT_TYPES.STONE], // Superior physicality
-        weakAgainst: [ELEMENT_TYPES.LIGHTNING, ELEMENT_TYPES.SPATIAL], // Modern powers vs ancient
+        strongAgainst: [ELEMENT_TYPES.ZOAN_BEAST, ELEMENT_TYPES.STONE],
+        weakAgainst: [ELEMENT_TYPES.LIGHTNING, ELEMENT_TYPES.SPATIAL],
         neutralAgainst: [ELEMENT_TYPES.FIRE, ELEMENT_TYPES.ICE]
     },
     
     [ELEMENT_TYPES.ZOAN_MYTHICAL]: {
-        strongAgainst: [ELEMENT_TYPES.SOUL, ELEMENT_TYPES.DARKNESS, ELEMENT_TYPES.POISON], // Divine/legendary resistance
-        weakAgainst: [ELEMENT_TYPES.VIBRATION], // Physical force affects even legends
+        strongAgainst: [ELEMENT_TYPES.SOUL, ELEMENT_TYPES.DARKNESS, ELEMENT_TYPES.POISON],
+        weakAgainst: [ELEMENT_TYPES.VIBRATION],
         neutralAgainst: [ELEMENT_TYPES.FIRE, ELEMENT_TYPES.LIGHTNING, ELEMENT_TYPES.LIGHT]
+    },
+    
+    [ELEMENT_TYPES.METAL]: {
+        strongAgainst: [ELEMENT_TYPES.STONE],
+        weakAgainst: [ELEMENT_TYPES.LIGHTNING, ELEMENT_TYPES.MAGMA, ELEMENT_TYPES.VIBRATION],
+        neutralAgainst: [ELEMENT_TYPES.FIRE, ELEMENT_TYPES.ICE]
+    },
+    
+    [ELEMENT_TYPES.STONE]: {
+        strongAgainst: [ELEMENT_TYPES.GAS],
+        weakAgainst: [ELEMENT_TYPES.VIBRATION, ELEMENT_TYPES.SPATIAL, ELEMENT_TYPES.METAL],
+        neutralAgainst: [ELEMENT_TYPES.FIRE, ELEMENT_TYPES.ICE]
+    },
+    
+    [ELEMENT_TYPES.GAS]: {
+        strongAgainst: [],
+        weakAgainst: [ELEMENT_TYPES.FIRE, ELEMENT_TYPES.ICE, ELEMENT_TYPES.LIGHTNING, ELEMENT_TYPES.ZOAN_BEAST, ELEMENT_TYPES.STONE],
+        neutralAgainst: [ELEMENT_TYPES.RUBBER, ELEMENT_TYPES.POISON]
     }
 };
-
-// DEVIL FRUIT ELEMENT MAPPING - Updated for your 150-fruit database
-const DEVIL_FRUIT_ELEMENTS = {
-    // LOGIA FRUITS
-    'fruit_002': ELEMENT_TYPES.FIRE,           // Mera Mera no Mi
-    'fruit_021': ELEMENT_TYPES.ICE,            // Hie Hie no Mi  
-    'fruit_004': ELEMENT_TYPES.LIGHT,          // Pika Pika no Mi
-    'fruit_020': ELEMENT_TYPES.LIGHTNING,      // Goro Goro no Mi
-    'fruit_003': ELEMENT_TYPES.MAGMA,          // Magu Magu no Mi
-    'fruit_005': ELEMENT_TYPES.DARKNESS,       // Yami Yami no Mi
-    'fruit_019': ELEMENT_TYPES.SAND,           // Suna Suna no Mi
-    'fruit_057': ELEMENT_TYPES.GAS,            // Gasu Gasu no Mi
-    'fruit_058': ELEMENT_TYPES.GAS,            // Numa Numa no Mi (swamp)
-    'fruit_059': ELEMENT_TYPES.ICE,            // Yuki Yuki no Mi (snow)
-    
-    // SPECIAL PARAMECIA
-    'fruit_006': ELEMENT_TYPES.VIBRATION,      // Gura Gura no Mi
-    'fruit_007': ELEMENT_TYPES.SPATIAL,        // Ope Ope no Mi
-    'fruit_027': ELEMENT_TYPES.SOUL,           // Soru Soru no Mi
-    'fruit_010': ELEMENT_TYPES.POISON,         // Doku Doku no Mi
-    'fruit_076': ELEMENT_TYPES.SPATIAL,        // Nikyu Nikyu no Mi (paw)
-    
-    // RUBBER/NIKA
-    'fruit_001': ELEMENT_TYPES.RUBBER,         // Gomu Gomu no Mi
-    'fruit_026': ELEMENT_TYPES.RUBBER,         // Hito Hito no Mi Model: Nika
-    
-    // ZOAN CATEGORIES
-    'fruit_054': ELEMENT_TYPES.ZOAN_BEAST,     // Hito Hito no Mi (Chopper)
-    'fruit_045': ELEMENT_TYPES.ZOAN_BEAST,     // Neko Neko no Mi, Model: Leopard
-    'fruit_044': ELEMENT_TYPES.ZOAN_BEAST,     // Inu Inu no Mi, Model: Wolf
-    'fruit_047': ELEMENT_TYPES.ZOAN_BEAST,     // Tori Tori no Mi, Model: Falcon
-    'fruit_046': ELEMENT_TYPES.ZOAN_BEAST,     // Ushi Ushi no Mi, Model: Bison
-    'fruit_050': ELEMENT_TYPES.ZOAN_BEAST,     // Zou Zou no Mi
-    'fruit_051': ELEMENT_TYPES.ZOAN_BEAST,     // Uma Uma no Mi
-    'fruit_055': ELEMENT_TYPES.ZOAN_BEAST,     // Inu Inu no Mi, Model: Dachshund
-    'fruit_056': ELEMENT_TYPES.ZOAN_BEAST,     // Ushi Ushi no Mi, Model: Giraffe
-    'fruit_048': ELEMENT_TYPES.ZOAN_BEAST,     // Hebi Hebi no Mi, Model: Anaconda
-    'fruit_049': ELEMENT_TYPES.ZOAN_BEAST,     // Hebi Hebi no Mi, Model: King Cobra
-    'fruit_052': ELEMENT_TYPES.ZOAN_BEAST,     // Sara Sara no Mi, Model: Axolotl
-    'fruit_053': ELEMENT_TYPES.ZOAN_BEAST,     // Kumo Kumo no Mi
-    
-    // MYTHICAL ZOANS
-    'fruit_025': ELEMENT_TYPES.ZOAN_MYTHICAL,  // Uo Uo no Mi, Model: Seiryu (Kaido)
-    'fruit_024': ELEMENT_TYPES.ZOAN_MYTHICAL,  // Tori Tori no Mi, Model: Phoenix
-    'fruit_061': ELEMENT_TYPES.ZOAN_MYTHICAL,  // Inu Inu no Mi, Model: Okuchi no Makami
-    'fruit_062': ELEMENT_TYPES.ZOAN_MYTHICAL,  // Hebi Hebi no Mi, Model: Yamata no Orochi
-    'fruit_060': ELEMENT_TYPES.ZOAN_MYTHICAL,  // Hito Hito no Mi, Model: Daibutsu
-    
-    // PARAMECIA FRUITS - MAJOR ONES
-    'fruit_015': ELEMENT_TYPES.GRAVITY,        // Kilo Kilo no Mi (weight)
-    'fruit_014': ELEMENT_TYPES.RUBBER,         // Sube Sube no Mi (slip)
-    'fruit_012': ELEMENT_TYPES.FIRE,           // Bomu Bomu no Mi (explosions)
-    'fruit_016': ELEMENT_TYPES.ZOAN_BEAST,     // Hana Hana no Mi (biological)
-    'fruit_013': ELEMENT_TYPES.METAL,          // Bara Bara no Mi (splitting)
-    'fruit_017': ELEMENT_TYPES.STONE,          // Doru Doru no Mi (wax)
-    'fruit_075': ELEMENT_TYPES.SOUL,           // Mero Mero no Mi (love)
-    'fruit_008': ELEMENT_TYPES.METAL,          // Ito Ito no Mi (string)
-    'fruit_009': ELEMENT_TYPES.SOUL,           // Yomi Yomi no Mi (soul)
-    'fruit_011': ELEMENT_TYPES.SPATIAL,        // Bari Bari no Mi (barriers)
-    'fruit_022': ELEMENT_TYPES.POISON,         // Horu Horu no Mi (hormones)
-    'fruit_023': ELEMENT_TYPES.RUBBER,         // Mochi Mochi no Mi (flexible)
-    'fruit_028': ELEMENT_TYPES.POISON,         // Awa Awa no Mi (soap)
-    'fruit_030': ELEMENT_TYPES.SOUL,           // Memo Memo no Mi (memory)
-    'fruit_031': ELEMENT_TYPES.SOUL,           // Hobi Hobi no Mi (toy transformation)
-    'fruit_032': ELEMENT_TYPES.SOUL,           // Wara Wara no Mi (voodoo)
-    'fruit_034': ELEMENT_TYPES.GRAVITY,        // Ton Ton no Mi (weight)
-    'fruit_035': ELEMENT_TYPES.STONE,          // Ishi Ishi no Mi (stone)
-    'fruit_063': ELEMENT_TYPES.SPATIAL,        // Nagi Nagi no Mi (sound/silence)
-    'fruit_064': ELEMENT_TYPES.SPATIAL,        // Mato Mato no Mi (target)
-    'fruit_067': ELEMENT_TYPES.SPATIAL,        // Shiro Shiro no Mi (castle)
-    'fruit_068': ELEMENT_TYPES.METAL,          // Ori Ori no Mi (cage)
-    'fruit_072': ELEMENT_TYPES.GRAVITY,        // Fuwa Fuwa no Mi (float)
-    'fruit_074': ELEMENT_TYPES.LIGHT,          // Suke Suke no Mi (invisibility)
-    'fruit_078': ELEMENT_TYPES.DARKNESS,       // Kage Kage no Mi (shadows)
-    'fruit_080': ELEMENT_TYPES.METAL,          // Buki Buki no Mi (weapons)
-    'fruit_018': ELEMENT_TYPES.METAL,          // Baku Baku no Mi (eating/metal)
-    'fruit_029': ELEMENT_TYPES.POISON,         // Beta Beta no Mi (sticky)
-    'fruit_033': ELEMENT_TYPES.VIBRATION,      // Goe Goe no Mi (voice/sound waves)
-    'fruit_036': ELEMENT_TYPES.SPATIAL,        // Sui Sui no Mi (swimming through solids)
-    'fruit_037': ELEMENT_TYPES.GRAVITY,        // Guru Guru no Mi (spinning)
-    'fruit_038': ELEMENT_TYPES.SOUL,           // Ato Ato no Mi (art/transformation)
-    'fruit_039': ELEMENT_TYPES.SPATIAL,        // Buku Buku no Mi (book world)
-    'fruit_040': ELEMENT_TYPES.POISON,         // Kuku Kuku no Mi (cooking/food)
-    'fruit_041': ELEMENT_TYPES.METAL,          // Nui Nui no Mi (sewing/binding)
-    'fruit_042': ELEMENT_TYPES.RUBBER,         // Jake Jake no Mi (jacket/flexibility)
-    'fruit_043': ELEMENT_TYPES.METAL,          // Kama Kama no Mi (sickle/cutting)
-    'fruit_065': ELEMENT_TYPES.RUBBER,         // Beri Beri no Mi (sphere/round)
-    'fruit_066': ELEMENT_TYPES.GRAVITY,        // Mini Mini no Mi (size manipulation)
-    'fruit_069': ELEMENT_TYPES.SPATIAL,        // Ami Ami no Mi (net/capture)
-    'fruit_070': ELEMENT_TYPES.SOUL,           // Yomi Yomi no Mi (soul revival)
-    'fruit_071': ELEMENT_TYPES.METAL,          // Gasha Gasha no Mi (combining/mechanical)
-    'fruit_073': ELEMENT_TYPES.METAL,          // Kama Kama no Mi (duplicate - cutting)
-    'fruit_077': ELEMENT_TYPES.SOUL,           // Hiso Hiso no Mi (whisper/communication)
-    'fruit_079': ELEMENT_TYPES.SOUL,           // Yomi Yomi no Mi (duplicate - soul)
-    'fruit_081': ELEMENT_TYPES.POISON,         // Iro Iro no Mi (color/paint)
-    'fruit_082': ELEMENT_TYPES.SPATIAL,        // Nuke Nuke no Mi (passing through)
-    'fruit_083': ELEMENT_TYPES.RUBBER,         // Lika Lika no Mi (licking/flexible)
-    'fruit_084': ELEMENT_TYPES.POISON,         // Woshu Woshu no Mi (washing/cleaning)
-    'fruit_085': ELEMENT_TYPES.VIBRATION,      // Goe Goe no Mi (duplicate - voice)
-    'fruit_086': ELEMENT_TYPES.SOUL,           // Horo Horo no Mi (ghosts/negative spirits)
-    'fruit_087': ELEMENT_TYPES.SOUL,           // Tama Tama no Mi (egg/rebirth)
-    
-    // SMILE FRUITS (all as basic zoan)
-    'fruit_088': ELEMENT_TYPES.ZOAN_BEAST,     // Sheep SMILE
-    'fruit_089': ELEMENT_TYPES.ZOAN_BEAST,     // Horse SMILE
-    'fruit_090': ELEMENT_TYPES.ZOAN_BEAST,     // Lion SMILE
-    'fruit_091': ELEMENT_TYPES.ZOAN_BEAST,     // Bat SMILE
-    'fruit_092': ELEMENT_TYPES.ZOAN_BEAST,     // Gazelle SMILE
-    'fruit_093': ELEMENT_TYPES.ZOAN_BEAST,     // Elephant SMILE
-    'fruit_094': ELEMENT_TYPES.ZOAN_BEAST,     // Scorpion SMILE
-    'fruit_095': ELEMENT_TYPES.ZOAN_BEAST,     // Giraffe SMILE
-    'fruit_096': ELEMENT_TYPES.ZOAN_BEAST,     // Alpaca SMILE
-    'fruit_097': ELEMENT_TYPES.ZOAN_BEAST,     // Hedgehog SMILE
-    'fruit_098': ELEMENT_TYPES.ZOAN_BEAST,     // Hippo SMILE
-    'fruit_099': ELEMENT_TYPES.ZOAN_BEAST,     // Snake SMILE
-    'fruit_100': ELEMENT_TYPES.ZOAN_BEAST,     // Gorilla SMILE
-    'fruit_101': ELEMENT_TYPES.ZOAN_BEAST,     // Mouse SMILE
-    'fruit_102': ELEMENT_TYPES.ZOAN_BEAST,     // Elephant Trunk SMILE
-    
-    // Generic SMILE fruits (103-137) - all ZOAN_BEAST
-    'fruit_103': ELEMENT_TYPES.ZOAN_BEAST,
-    'fruit_104': ELEMENT_TYPES.ZOAN_BEAST,
-    'fruit_105': ELEMENT_TYPES.ZOAN_BEAST,
-    'fruit_106': ELEMENT_TYPES.ZOAN_BEAST,
-    'fruit_107': ELEMENT_TYPES.ZOAN_BEAST,
-    'fruit_108': ELEMENT_TYPES.ZOAN_BEAST,
-    'fruit_109': ELEMENT_TYPES.ZOAN_BEAST,
-    'fruit_110': ELEMENT_TYPES.ZOAN_BEAST,
-    'fruit_111': ELEMENT_TYPES.ZOAN_BEAST,
-    'fruit_112': ELEMENT_TYPES.ZOAN_BEAST,
-    'fruit_113': ELEMENT_TYPES.ZOAN_BEAST,
-    'fruit_114': ELEMENT_TYPES.ZOAN_BEAST,
-    'fruit_115': ELEMENT_TYPES.ZOAN_BEAST,
-    'fruit_116': ELEMENT_TYPES.ZOAN_BEAST,
-    'fruit_117': ELEMENT_TYPES.ZOAN_BEAST,
-    'fruit_118': ELEMENT_TYPES.ZOAN_BEAST,
-    'fruit_119': ELEMENT_TYPES.ZOAN_BEAST,
-    'fruit_120': ELEMENT_TYPES.ZOAN_BEAST,
-    'fruit_121': ELEMENT_TYPES.ZOAN_BEAST,
-    'fruit_122': ELEMENT_TYPES.ZOAN_BEAST,
-    'fruit_123': ELEMENT_TYPES.ZOAN_BEAST,
-    'fruit_124': ELEMENT_TYPES.ZOAN_BEAST,
-    'fruit_125': ELEMENT_TYPES.ZOAN_BEAST,
-    'fruit_126': ELEMENT_TYPES.ZOAN_BEAST,
-    'fruit_127': ELEMENT_TYPES.ZOAN_BEAST,
-    'fruit_128': ELEMENT_TYPES.ZOAN_BEAST,
-    'fruit_129': ELEMENT_TYPES.ZOAN_BEAST,
-    'fruit_130': ELEMENT_TYPES.ZOAN_BEAST,
-    'fruit_131': ELEMENT_TYPES.ZOAN_BEAST,
-    'fruit_132': ELEMENT_TYPES.ZOAN_BEAST,
-    'fruit_133': ELEMENT_TYPES.ZOAN_BEAST,
-    'fruit_134': ELEMENT_TYPES.ZOAN_BEAST,
-    'fruit_135': ELEMENT_TYPES.ZOAN_BEAST,
-    'fruit_136': ELEMENT_TYPES.ZOAN_BEAST,
-    'fruit_137': ELEMENT_TYPES.ZOAN_BEAST,
-    
-    // Special anime/movie fruits
-    'fruit_138': ELEMENT_TYPES.FIRE,           // Atsu Atsu no Mi (heat)
-    'fruit_139': ELEMENT_TYPES.SPATIAL,        // Ami Ami no Mi (net)
-    'fruit_140': ELEMENT_TYPES.STONE,          // Kachi Kachi no Mi (hardness)
-    'fruit_141': ELEMENT_TYPES.VIBRATION,      // Goe Goe no Mi (voice)
-    'fruit_142': ELEMENT_TYPES.SOUL,           // Hiso Hiso no Mi (whisper)
-    'fruit_143': ELEMENT_TYPES.POISON,         // Mitsu Mitsu no Mi (honey)
-    'fruit_144': ELEMENT_TYPES.SOUL,           // Nemu Nemu no Mi (sleep)
-    'fruit_145': ELEMENT_TYPES.SPATIAL,        // Sui Sui no Mi (swim)
-    'fruit_146': ELEMENT_TYPES.GRAVITY,        // Fuwa Fuwa no Mi (float)
-    'fruit_147': ELEMENT_TYPES.METAL,          // Gasha Gasha no Mi (combine)
-    'fruit_148': ELEMENT_TYPES.RUBBER,         // Mochi Mochi no Mi (special)
-    'fruit_149': ELEMENT_TYPES.SPATIAL,        // Kama Kama no Mi (sickle)
-    'fruit_150': ELEMENT_TYPES.RUBBER,         // Toro Toro no Mi (liquid)
-};
-
-// COMBAT EFFECTIVENESS CALCULATOR
-class CombatSystem {
-    static calculateEffectiveness(attackerFruitId, defenderFruitId) {
-        const attackerElement = DEVIL_FRUIT_ELEMENTS[attackerFruitId];
-        const defenderElement = DEVIL_FRUIT_ELEMENTS[defenderFruitId];
-        
-        if (!attackerElement || !defenderElement) {
-            return { effectiveness: 1.0, description: 'Neutral matchup' };
-        }
-        
-        const attackerCounters = COUNTER_MATRIX[attackerElement];
-        if (!attackerCounters) {
-            return { effectiveness: 1.0, description: 'Neutral matchup' };
-        }
-        
-        // Strong advantage
-        if (attackerCounters.strongAgainst.includes(defenderElement)) {
-            return { 
-                effectiveness: 1.5, 
-                description: `${this.getElementName(attackerElement)} dominates ${this.getElementName(defenderElement)}!` 
-            };
-        }
-        
-        // Weak disadvantage  
-        if (attackerCounters.weakAgainst.includes(defenderElement)) {
-            return { 
-                effectiveness: 0.6, 
-                description: `${this.getElementName(defenderElement)} resists ${this.getElementName(attackerElement)}!` 
-            };
-        }
-        
-        // Neutral
-        return { 
-            effectiveness: 1.0, 
-            description: 'Evenly matched powers' 
-        };
-    }
-    
-    static getElementName(element) {
-        const names = {
-            [ELEMENT_TYPES.FIRE]: 'Fire',
-            [ELEMENT_TYPES.ICE]: 'Ice',
-            [ELEMENT_TYPES.LIGHTNING]: 'Lightning',
-            [ELEMENT_TYPES.LIGHT]: 'Light',
-            [ELEMENT_TYPES.DARKNESS]: 'Darkness',
-            [ELEMENT_TYPES.MAGMA]: 'Magma',
-            [ELEMENT_TYPES.SAND]: 'Sand',
-            [ELEMENT_TYPES.GAS]: 'Gas',
-            [ELEMENT_TYPES.SMOKE]: 'Smoke',
-            [ELEMENT_TYPES.RUBBER]: 'Rubber',
-            [ELEMENT_TYPES.VIBRATION]: 'Vibration',
-            [ELEMENT_TYPES.SPATIAL]: 'Space',
-            [ELEMENT_TYPES.GRAVITY]: 'Gravity',
-            [ELEMENT_TYPES.SOUL]: 'Soul',
-            [ELEMENT_TYPES.POISON]: 'Poison',
-            [ELEMENT_TYPES.HEALING]: 'Healing',
-            [ELEMENT_TYPES.ZOAN_BEAST]: 'Beast',
-            [ELEMENT_TYPES.ZOAN_ANCIENT]: 'Ancient Beast',
-            [ELEMENT_TYPES.ZOAN_MYTHICAL]: 'Mythical Creature',
-            [ELEMENT_TYPES.METAL]: 'Metal',
-            [ELEMENT_TYPES.STONE]: 'Stone'
-        };
-        return names[element] || 'Unknown';
-    }
-
-    // Calculate base combat power from rarity
-    static calculateBasePower(rarity) {
-        const basePowers = {
-            'common': 100,
-            'uncommon': 250,
-            'rare': 500,
-            'epic': 1000,
-            'legendary': 2500,
-            'mythical': 5000,
-            'omnipotent': 10000
-        };
-        return basePowers[rarity] || 100;
-    }
-
-    // Get level multiplier for combat power
-    static getLevelMultiplier(level) {
-        if (level <= 0) return 1.0;
-        return 1.0 + (level * 0.1); // 10% increase per level
-    }
-
-    // Get level rank description
-    static getLevelRank(level) {
-        if (level >= 50) return 'Yonko';
-        if (level >= 40) return 'Admiral';
-        if (level >= 30) return 'Vice Admiral';
-        if (level >= 20) return 'Rear Admiral';
-        if (level >= 15) return 'Commodore';
-        if (level >= 10) return 'Captain';
-        if (level >= 5) return 'Lieutenant';
-        if (level >= 1) return 'Ensign';
-        return 'Recruit';
-    }
-
-    // Get power rank based on total combat power
-    static getPowerRank(totalPower) {
-        if (totalPower >= 100000) return 'World Destroyer';
-        if (totalPower >= 50000) return 'Yonko Level';
-        if (totalPower >= 25000) return 'Admiral Level';
-        if (totalPower >= 10000) return 'Vice Admiral Level';
-        if (totalPower >= 5000) return 'Elite Captain';
-        if (totalPower >= 2500) return 'Captain Level';
-        if (totalPower >= 1000) return 'Officer Level';
-        if (totalPower >= 500) return 'Soldier Level';
-        if (totalPower >= 100) return 'Rookie Level';
-        return 'Beginner';
-    }
-
-    // Calculate combat advantage in battles
-    static calculateBattleAdvantage(attackerFruitId, defenderFruitId) {
-        const result = this.calculateEffectiveness(attackerFruitId, defenderFruitId);
-        return {
-            multiplier: result.effectiveness,
-            description: result.description,
-            advantage: result.effectiveness > 1.2 ? 'strong' : 
-                      result.effectiveness < 0.8 ? 'weak' : 'neutral'
-        };
-    }
-
-    // Get element weaknesses for strategy
-    static getElementWeaknesses(element) {
-        const counters = COUNTER_MATRIX[element];
-        if (!counters) return [];
-        
-        return counters.weakAgainst.map(weakness => this.getElementName(weakness));
-    }
-
-    // Get element strengths for strategy
-    static getElementStrengths(element) {
-        const counters = COUNTER_MATRIX[element];
-        if (!counters) return [];
-        
-        return counters.strongAgainst.map(strength => this.getElementName(strength));
-    }
-}
 
 module.exports = {
     ELEMENT_TYPES,
     COUNTER_MATRIX,
     DEVIL_FRUIT_ELEMENTS,
-    CombatSystem
+    CombatSystem: {
+        calculateEffectiveness: (attackerFruitId, defenderFruitId) => {
+            const attackerElement = DEVIL_FRUIT_ELEMENTS[attackerFruitId];
+            const defenderElement = DEVIL_FRUIT_ELEMENTS[defenderFruitId];
+            
+            if (!attackerElement || !defenderElement) {
+                return { effectiveness: 1.0, description: 'Normal effectiveness' };
+            }
+            
+            const attackerCounters = COUNTER_MATRIX[attackerElement];
+            if (!attackerCounters) {
+                return { effectiveness: 1.0, description: 'Normal effectiveness' };
+            }
+            
+            if (attackerCounters.strongAgainst.includes(defenderElement)) {
+                return { 
+                    effectiveness: 1.5, 
+                    description: 'SUPER EFFECTIVE!'
+                };
+            }
+            
+            if (attackerCounters.weakAgainst.includes(defenderElement)) {
+                return { 
+                    effectiveness: 0.6, 
+                    description: 'NOT VERY EFFECTIVE'
+                };
+            }
+            
+            return { 
+                effectiveness: 1.0, 
+                description: 'Normal effectiveness'
+            };
+        }
+    }
 };
