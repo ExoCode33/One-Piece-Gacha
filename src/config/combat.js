@@ -136,8 +136,7 @@ class StrategicCombatSystem {
             .setDescription([
                 `Select up to 3 Devil Fruits for ${battleType === 'npc' ? 'NPC combat' : 'PvP battle'}`,
                 ``,
-                `Collection: ${totalFruits} fruits | Average: ${avgPower} CP`,
-                `Showing top 25 by Combat Power`
+                `Collection: ${totalFruits} fruits | Average: ${avgPower} CP`
             ].join('\n'))
             .addFields([
                 {
@@ -181,20 +180,27 @@ class StrategicCombatSystem {
         }
     }
 
-    // CLEAN: Type advantages without excessive emojis
+    // CLEAN: Type advantages without excessive emojis (one per line)
     getCleanTypeAdvantages() {
         return [
-            'FIRE > Ice, Gas, Plant | ICE > Gas, Poison, Plant',
-            'LIGHTNING > Metal, Water, Gas | LIGHT > Darkness, Ice',
-            'DARKNESS > Light, Energy | MAGMA > Fire, Ice, Metal',
-            'SAND > Fire, Poison | RUBBER > Lightning, Light',
-            'VIBRATION > Stone, Metal, Magma | SPACE > Gravity, Matter',
-            'GRAVITY > Light, Gas, Matter | SOUL > Space, Biology',
-            'POISON > Healing, Biology | ZOAN > Gas, Basic Types'
+            'FIRE > Ice, Gas, Plant',
+            'ICE > Gas, Poison, Plant',
+            'LIGHTNING > Metal, Water, Gas',
+            'LIGHT > Darkness, Ice',
+            'DARKNESS > Light, Energy',
+            'MAGMA > Fire, Ice, Metal',
+            'SAND > Fire, Poison',
+            'RUBBER > Lightning, Light',
+            'VIBRATION > Stone, Metal, Magma',
+            'SPACE > Gravity, Matter',
+            'GRAVITY > Light, Gas, Matter',
+            'SOUL > Space, Biology',
+            'POISON > Healing, Biology',
+            'ZOAN > Gas, Basic Types'
         ].join('\n');
     }
 
-    // FIXED: Ship animation without sailing messages
+    // FIXED: Ship animation without sailing messages and properly clears after
     async playPreCombatAnimation(interaction, animationType) {
         console.log(`Playing pre-combat animation: ${animationType}`);
         
@@ -216,11 +222,40 @@ class StrategicCombatSystem {
             const RaidAnimation = require('../animations/raid');
             await RaidAnimation.playQuickAnimation(interaction, animationType);
             
-            // Brief pause after animation
-            await new Promise(resolve => setTimeout(resolve, 500));
+            // IMPORTANT: Clear the animation message completely
+            const clearEmbed = {
+                title: 'Battle System Ready',
+                description: 'Initializing fruit selection...',
+                color: 0x2ECC71,
+                footer: { text: 'Combat system loaded' }
+            };
+            
+            await interaction.editReply({ 
+                embeds: [clearEmbed], 
+                components: [],
+                content: null // Clear any remaining content
+            });
+            
+            // Brief pause before showing fruit selection
+            await new Promise(resolve => setTimeout(resolve, 1000));
             
         } catch (error) {
             console.error('Pre-combat animation error:', error);
+            
+            // Fallback: ensure we clear any animation remnants
+            try {
+                await interaction.editReply({ 
+                    embeds: [{
+                        title: 'Battle System Ready',
+                        description: 'Animation complete, proceeding to combat...',
+                        color: 0x2ECC71
+                    }], 
+                    components: [],
+                    content: null
+                });
+            } catch (fallbackError) {
+                console.error('Fallback clear error:', fallbackError);
+            }
         }
     }
 
