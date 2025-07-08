@@ -18,9 +18,21 @@ class RaidAnimation {
             '⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠉⠉⠉⠉⠉⠉⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀'
         ];
         
-        // Increased canvas width to ensure ship enters completely from right
-        this.canvasWidth = 120; // Increased from 80 to 120 for wider view
-        this.shipWidth = this.shipDesign[0].length; // Should be around 40 characters
+        // Optimized canvas width for Discord message area
+        this.canvasWidth = 80; // Keep original 80 - Discord limits display width
+        this.shipWidth = this.shipDesign[0].length; // Should be around 30 characters
+        
+        console.log(`🚢 Ship dimensions: width=${this.shipWidth}, canvas=${this.canvasWidth}`);
+    }'⠀⠀⠀⠀⠀⠀⠈⣿⣿⣿⣶⣄⡈⠉⠀⠀⢸⡇⠀⠀⠉⠂⠀⣿⣿⣿⣧⠀⠀⠀',
+            '⠀⠀⠀⠀⠀⠀⠀⠘⣿⣿⣿⣿⣿⣷⣤⣀⣸⣧⣠⣤⣴⣶⣾⣿⣿⣿⡿⠀⠀⠀',
+            '⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠇⠀⠀⠀',
+            '⠀⠀⠀⠀⠀⠀⠀⠀⠘⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠟⠛⠉⠀⠀⠀⠀',
+            '⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠉⠉⠉⠉⠉⠉⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀'
+        ];
+        
+        // Optimized canvas width for Discord message area
+        this.canvasWidth = 80; // Keep original 80 - Discord limits display width
+        this.shipWidth = this.shipDesign[0].length; // Should be around 30 characters
         
         console.log(`🚢 Ship dimensions: width=${this.shipWidth}, canvas=${this.canvasWidth}`);
     }
@@ -52,17 +64,17 @@ class RaidAnimation {
         }).join('\n');
     }
 
-    // Enhanced animation with ship starting completely off-screen right
+    // Enhanced animation with ship starting just off-screen right
     async playQuickAnimation(interaction, animationType = 'combat') {
-        const framesCount = 20; // Increased frames for smoother animation
+        const framesCount = 18; // Reduced frames for better pacing
         
-        // FIXED: Start position completely off-screen to the right
-        // Ship should start with its leftmost pixel just outside the right edge
-        const startOffset = this.canvasWidth + 5; // Start 5 characters beyond the right edge
+        // FIXED: Start position off-screen to the RIGHT (higher number)
+        // Ship should start with its left edge just outside the right edge of visible area
+        const startOffset = this.canvasWidth; // Start at position 80 (right side)
         
-        // FIXED: End position completely off-screen to the left  
-        // Ship should end with its rightmost pixel just outside the left edge
-        const endOffset = -(this.shipWidth + 5); // End 5 characters beyond the left edge
+        // FIXED: End position off-screen to the LEFT (lower/negative number)  
+        // Ship should end with its right edge just outside the left edge
+        const endOffset = -this.shipWidth; // End at position -30 (left side)
         
         console.log(`🎬 Starting raid animation: ${animationType}`);
         console.log(`📐 Animation setup: Canvas=${this.canvasWidth}, Ship=${this.shipWidth}`);
@@ -70,14 +82,24 @@ class RaidAnimation {
         console.log(`🔄 Total distance: ${startOffset - endOffset} characters`);
 
         for (let i = 0; i < framesCount; i++) {
-            // Calculate smooth movement across the screen
+            // Calculate smooth movement from RIGHT to LEFT
             const progress = i / (framesCount - 1);
+            
+            // RIGHT to LEFT movement: start=80, end=-30
+            // progress=0: position=80 (right side)  
+            // progress=1: position=-30 (left side)
             const currentOffset = Math.round(startOffset + (endOffset - startOffset) * progress);
             
             console.log(`📍 Frame ${i + 1}/${framesCount}: offset=${currentOffset}, progress=${(progress * 100).toFixed(1)}%`);
+            console.log(`   Expected: start=${startOffset} → current=${currentOffset} → end=${endOffset}`);
             
             // Position the ship at current offset
             const shipDisplay = this.positionShip(currentOffset);
+            
+            // Debug: Show first few characters of the first line to see ship position
+            const firstLine = shipDisplay.split('\n')[0];
+            const visiblePart = firstLine.substring(0, 80);
+            console.log(`   Ship line preview: "${visiblePart.substring(0, 20)}...${visiblePart.substring(60)}"`);
             
             // Determine animation phase and title
             let title, description;
@@ -119,7 +141,7 @@ class RaidAnimation {
 
             // Add delay between frames (except for the last frame)
             if (i < framesCount - 1) {
-                await new Promise(resolve => setTimeout(resolve, 120)); // Slightly faster for smoother movement
+                await new Promise(resolve => setTimeout(resolve, 150)); // Balanced timing
             }
         }
         
@@ -212,13 +234,13 @@ class RaidAnimation {
         return {
             canvasWidth: this.canvasWidth,
             shipWidth: this.shipWidth,
-            totalFrames: 20,
-            animationDuration: '2.4 seconds',
+            totalFrames: 18,
+            animationDuration: '2.7 seconds',
             direction: 'Right to Left',
-            frameDelay: '120ms',
-            startPosition: this.canvasWidth + 5,
-            endPosition: -(this.shipWidth + 5),
-            totalDistance: (this.canvasWidth + 5) + (this.shipWidth + 5)
+            frameDelay: '150ms',
+            startPosition: this.canvasWidth,
+            endPosition: -this.shipWidth,
+            totalDistance: this.canvasWidth + this.shipWidth
         };
     }
 
