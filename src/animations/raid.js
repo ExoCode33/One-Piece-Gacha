@@ -52,9 +52,9 @@ class RaidAnimation {
     async playQuickAnimation(interaction, animationType = 'combat') {
         const framesCount = 18; // Reduced frames for better pacing
         
-        // FIXED: Ship starts completely off-screen to the right and ends completely off-screen to the left
-        const startOffset = this.canvasWidth + this.shipWidth + 20;  // Start at position 130 (completely off-screen right)
-        const endOffset = -this.shipWidth - 10;                      // End at position -40 (completely off-screen left)
+        // FIXED: Ship starts VERY FAR off-screen to the right 
+        const startOffset = 200;  // Start at position 200 (VERY far off-screen right)
+        const endOffset = -50;    // End at position -50 (far off-screen left)
         
         console.log(`🎬 Starting raid animation: ${animationType}`);
         console.log(`📐 Animation setup: Canvas=${this.canvasWidth}, Ship=${this.shipWidth}`);
