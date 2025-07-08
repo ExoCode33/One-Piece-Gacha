@@ -53,8 +53,8 @@ class RaidAnimation {
         const framesCount = 18; // Reduced frames for better pacing
         
         // FIXED: Ship starts completely off-screen to the right and ends completely off-screen to the left
-        const startOffset = this.canvasWidth + 10;  // Start at position 90 (completely off-screen right)
-        const endOffset = -this.shipWidth - 10;     // End at position -40 (completely off-screen left)
+        const startOffset = this.canvasWidth + this.shipWidth;  // Start at position 110 (completely off-screen right)
+        const endOffset = -this.shipWidth - 10;                 // End at position -40 (completely off-screen left)
         
         console.log(`🎬 Starting raid animation: ${animationType}`);
         console.log(`📐 Animation setup: Canvas=${this.canvasWidth}, Ship=${this.shipWidth}`);
@@ -208,9 +208,9 @@ class RaidAnimation {
             animationDuration: '2.7 seconds',
             direction: 'Right to Left',
             frameDelay: '150ms',
-            startPosition: this.canvasWidth + 10,
+            startPosition: this.canvasWidth + this.shipWidth,
             endPosition: -this.shipWidth - 10,
-            totalDistance: (this.canvasWidth + 10) + (this.shipWidth + 10)
+            totalDistance: (this.canvasWidth + this.shipWidth) + (this.shipWidth + 10)
         };
     }
 }
