@@ -1,4 +1,4 @@
-// Enhanced Raid Animation - Smooth Right to Left Ship Movement
+// Enhanced Raid Animation - Fixed Ship Movement from Right to Left
 class RaidAnimation {
     constructor() {
         this.shipDesign = [
@@ -18,21 +18,24 @@ class RaidAnimation {
             '⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠉⠉⠉⠉⠉⠉⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀'
         ];
         this.canvasWidth = 80;
-        this.shipWidth = this.shipDesign[0].length;
+        this.shipWidth = this.shipDesign[0].length; // Should be 30 characters
+        
+        console.log(`🔧 Raid Animation initialized: Canvas=${this.canvasWidth}, Ship=${this.shipWidth}`);
     }
 
-    // Position ship at specific offset (positive = move right, negative = move left)
+    // FIXED: Position ship at specific offset with proper boundary checking
     positionShip(offset) {
         return this.shipDesign.map(line => {
-            // Create the canvas line with proper padding
+            // Create empty canvas line
             let canvasLine = ' '.repeat(this.canvasWidth);
             
-            // Calculate ship position
+            // Calculate visible portion of ship
             const shipStartPos = Math.max(0, offset);
             const shipEndPos = Math.min(this.canvasWidth, offset + this.shipWidth);
             
-            // Only draw visible part of the ship
-            if (shipStartPos < this.canvasWidth && shipEndPos > 0) {
+            // Only draw if ship intersects with canvas
+            if (offset < this.canvasWidth && offset + this.shipWidth > 0) {
+                // Calculate which part of the ship to show
                 const shipStartChar = Math.max(0, -offset);
                 const shipEndChar = Math.min(this.shipWidth, this.canvasWidth - offset);
                 
@@ -48,21 +51,21 @@ class RaidAnimation {
         }).join('\n');
     }
 
-    // Enhanced animation with ship starting very far off-screen
+    // FIXED: Enhanced animation with proper off-screen positioning
     async playQuickAnimation(interaction, animationType = 'combat') {
         const framesCount = 18;
         
-        // FIXED: Ship starts just off the right edge and ends just off the left edge
-        const startOffset = this.canvasWidth + this.shipWidth;  // Start at position 110 (just off-screen right)
-        const endOffset = -this.shipWidth;                      // End at position -30 (just off-screen left)
+        // FIXED: Ensure ship starts COMPLETELY off-screen to the right
+        const startOffset = this.canvasWidth + 5;  // Start 5 characters past the right edge
+        const endOffset = -this.shipWidth - 5;     // End 5 characters past the left edge
         
         console.log(`🎬 Starting raid animation: ${animationType}`);
-        console.log(`📐 Animation setup: Canvas=${this.canvasWidth}, Ship=${this.shipWidth}`);
-        console.log(`🎯 Movement: ${startOffset} → ${endOffset} over ${framesCount} frames`);
-        console.log(`🔄 Total distance: ${startOffset - endOffset} characters`);
+        console.log(`📐 Canvas: ${this.canvasWidth} chars, Ship: ${this.shipWidth} chars`);
+        console.log(`🚀 Movement: ${startOffset} → ${endOffset} over ${framesCount} frames`);
+        console.log(`📏 Total distance: ${startOffset - endOffset} characters`);
 
         for (let i = 0; i < framesCount; i++) {
-            // Calculate smooth movement across the screen
+            // Calculate smooth linear movement
             const progress = i / (framesCount - 1);
             const currentOffset = Math.round(startOffset + (endOffset - startOffset) * progress);
             
@@ -71,7 +74,7 @@ class RaidAnimation {
             // Position the ship at current offset
             const shipDisplay = this.positionShip(currentOffset);
             
-            // Determine animation phase and title
+            // Determine animation phase and content
             let title, description;
             
             if (i === 0) {
@@ -115,7 +118,7 @@ class RaidAnimation {
             }
         }
         
-        console.log(`✅ Raid animation completed successfully - ship traveled from right to left`);
+        console.log(`✅ Raid animation completed - ship traveled from position ${startOffset} to ${endOffset}`);
     }
 
     // Full animation (same as quick for now, but can be extended)
@@ -182,7 +185,7 @@ class RaidAnimation {
 
     // Test animation for debugging
     async testAnimation(interaction) {
-        console.log('🧪 Testing raid animation...');
+        console.log('🧪 Testing raid animation positioning...');
         
         const testEmbed = {
             title: '🧪 **Animation Test**',
@@ -196,10 +199,34 @@ class RaidAnimation {
         });
 
         await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Test specific positions
+        console.log('🔍 Testing key positions:');
+        
+        // Test 1: Ship completely off-screen right
+        const offScreenRight = this.canvasWidth + 10;
+        console.log(`Position ${offScreenRight} (off-screen right):`, this.positionShip(offScreenRight).split('\n')[0]);
+        
+        // Test 2: Ship just entering from right
+        const enteringRight = this.canvasWidth - 5;
+        console.log(`Position ${enteringRight} (entering right):`, this.positionShip(enteringRight).split('\n')[0]);
+        
+        // Test 3: Ship centered
+        const centered = Math.floor((this.canvasWidth - this.shipWidth) / 2);
+        console.log(`Position ${centered} (centered):`, this.positionShip(centered).split('\n')[0]);
+        
+        // Test 4: Ship exiting left
+        const exitingLeft = -5;
+        console.log(`Position ${exitingLeft} (exiting left):`, this.positionShip(exitingLeft).split('\n')[0]);
+        
+        // Test 5: Ship completely off-screen left
+        const offScreenLeft = -this.shipWidth - 10;
+        console.log(`Position ${offScreenLeft} (off-screen left):`, this.positionShip(offScreenLeft).split('\n')[0]);
+        
         await this.playQuickAnimation(interaction, 'combat');
     }
 
-    // Get animation statistics
+    // Get animation statistics and debug info
     getAnimationInfo() {
         return {
             canvasWidth: this.canvasWidth,
@@ -208,10 +235,41 @@ class RaidAnimation {
             animationDuration: '2.7 seconds',
             direction: 'Right to Left',
             frameDelay: '150ms',
-            startPosition: this.canvasWidth + this.shipWidth,
-            endPosition: -this.shipWidth,
-            totalDistance: (this.canvasWidth + this.shipWidth) + this.shipWidth
+            startPosition: this.canvasWidth + 5,
+            endPosition: -this.shipWidth - 5,
+            totalDistance: (this.canvasWidth + 5) - (-this.shipWidth - 5),
+            
+            // Debug positions
+            debugPositions: {
+                completelyOffRight: this.canvasWidth + 5,
+                justEnteringRight: this.canvasWidth - 1,
+                centered: Math.floor((this.canvasWidth - this.shipWidth) / 2),
+                justExitingLeft: -1,
+                completelyOffLeft: -this.shipWidth - 5
+            }
         };
+    }
+
+    // Enhanced debugging method
+    debugPositioning() {
+        console.log('🔧 DEBUG: Raid Animation Positioning');
+        console.log('=====================================');
+        
+        const info = this.getAnimationInfo();
+        console.log(`Canvas Width: ${info.canvasWidth}`);
+        console.log(`Ship Width: ${info.shipWidth}`);
+        console.log(`Start Position: ${info.startPosition}`);
+        console.log(`End Position: ${info.endPosition}`);
+        console.log(`Total Distance: ${info.totalDistance}`);
+        
+        console.log('\n🎯 Key Positions:');
+        Object.entries(info.debugPositions).forEach(([name, pos]) => {
+            const line = this.positionShip(pos).split('\n')[0];
+            const shipVisible = line.trim().length > 0;
+            console.log(`${name}: ${pos} (${shipVisible ? 'VISIBLE' : 'HIDDEN'})`);
+        });
+        
+        return info;
     }
 }
 
