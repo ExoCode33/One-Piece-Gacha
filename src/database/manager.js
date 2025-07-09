@@ -1,20 +1,72 @@
+// src/database/manager.js - FIXED WITH PROPER CONNECTION HANDLING
 const { Pool } = require('pg');
 
 class DatabaseManager {
     constructor() {
         this.pool = new Pool({
             connectionString: process.env.DATABASE_URL,
-            ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+            ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+            max: 20, // Maximum number of connections in the pool
+            idleTimeoutMillis: 30000, // How long a client is allowed to remain idle
+            connectionTimeoutMillis: 2000, // How long to wait for a connection
+            acquireTimeoutMillis: 60000, // How long to wait for a connection from the pool
+            maxUses: 7500, // Close connections after this many uses
+        });
+        
+        // Add error handling for the pool
+        this.pool.on('error', (err) => {
+            console.error('❌ Unexpected error on idle PostgreSQL client:', err);
+        });
+        
+        this.pool.on('connect', () => {
+            console.log('✅ New PostgreSQL client connected');
+        });
+        
+        this.pool.on('remove', () => {
+            console.log('🔄 PostgreSQL client removed from pool');
         });
     }
 
     async query(text, params) {
-        const client = await this.pool.connect();
+        const start = Date.now();
+        let client;
+        
         try {
+            client = await this.pool.connect();
             const result = await client.query(text, params);
+            const duration = Date.now() - start;
+            
+            // Log slow queries (over 1 second)
+            if (duration > 1000) {
+                console.warn(`⚠️ Slow query detected (${duration}ms):`, text.substring(0, 100));
+            }
+            
             return result;
+        } catch (error) {
+            console.error('❌ Database query error:', error);
+            console.error('Query:', text);
+            console.error('Params:', params);
+            throw error;
         } finally {
-            client.release();
+            if (client) {
+                client.release();
+            }
+        }
+    }
+
+    // Test database connection
+    async testConnection() {
+        try {
+            const result = await this.query('SELECT NOW() as current_time, version() as version');
+            console.log('✅ Database connection test successful');
+            console.log('📊 Database info:', {
+                time: result.rows[0].current_time,
+                version: result.rows[0].version.split(' ')[0]
+            });
+            return true;
+        } catch (error) {
+            console.error('❌ Database connection test failed:', error);
+            return false;
         }
     }
 
@@ -23,9 +75,11 @@ class DatabaseManager {
         try {
             console.log('🗄️ Initializing PostgreSQL database...');
             
-            // Test connection
-            await this.query('SELECT NOW()');
-            console.log('✅ Connected to PostgreSQL database');
+            // Test connection first
+            const connectionTest = await this.testConnection();
+            if (!connectionTest) {
+                throw new Error('Database connection failed');
+            }
             
             // Create tables ONLY if they don't exist (preserves data)
             console.log('📋 Ensuring database tables exist...');
@@ -33,7 +87,7 @@ class DatabaseManager {
             // Users table
             await this.query(`
                 CREATE TABLE IF NOT EXISTS users (
-                    user_id BIGINT PRIMARY KEY,
+                    user_id TEXT PRIMARY KEY,
                     username VARCHAR(255) NOT NULL,
                     total_hunts INTEGER DEFAULT 0,
                     discovery_rate INTEGER DEFAULT 0,
@@ -47,7 +101,7 @@ class DatabaseManager {
             await this.query(`
                 CREATE TABLE IF NOT EXISTS user_devil_fruits (
                     id SERIAL PRIMARY KEY,
-                    user_id BIGINT REFERENCES users(user_id) ON DELETE CASCADE,
+                    user_id TEXT REFERENCES users(user_id) ON DELETE CASCADE,
                     fruit_id VARCHAR(50) NOT NULL,
                     name VARCHAR(255) NOT NULL,
                     type VARCHAR(50) NOT NULL,
@@ -63,100 +117,142 @@ class DatabaseManager {
                 )
             `);
             
+            // User Berries table (economy system)
+            await this.query(`
+                CREATE TABLE IF NOT EXISTS user_berries (
+                    user_id TEXT PRIMARY KEY,
+                    berries BIGINT DEFAULT 0,
+                    total_earned BIGINT DEFAULT 0,
+                    total_spent BIGINT DEFAULT 0,
+                    last_income_collection TIMESTAMP DEFAULT NOW(),
+                    created_at TIMESTAMP DEFAULT NOW(),
+                    updated_at TIMESTAMP DEFAULT NOW()
+                )
+            `);
+            
+            // User Purchases table (transaction history)
+            await this.query(`
+                CREATE TABLE IF NOT EXISTS user_purchases (
+                    id SERIAL PRIMARY KEY,
+                    user_id TEXT NOT NULL,
+                    amount BIGINT NOT NULL,
+                    item_name TEXT NOT NULL,
+                    item_data JSONB DEFAULT '{}',
+                    purchase_time TIMESTAMP DEFAULT NOW()
+                )
+            `);
+            
             // User Duplicate Stats table
             await this.query(`
                 CREATE TABLE IF NOT EXISTS user_duplicate_stats (
-                    user_id BIGINT,
+                    user_id TEXT,
                     fruit_id VARCHAR(50),
                     duplicate_count INTEGER DEFAULT 1,
                     updated_at TIMESTAMP DEFAULT NOW(),
-                    PRIMARY KEY (user_id, fruit_id),
-                    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+                    PRIMARY KEY (user_id, fruit_id)
                 )
             `);
             
             // User Rarity Stats table
             await this.query(`
                 CREATE TABLE IF NOT EXISTS user_rarity_stats (
-                    user_id BIGINT,
+                    user_id TEXT,
                     rarity VARCHAR(50),
                     count INTEGER DEFAULT 0,
-                    PRIMARY KEY (user_id, rarity),
-                    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+                    PRIMARY KEY (user_id, rarity)
                 )
             `);
             
             // User Type Stats table
             await this.query(`
                 CREATE TABLE IF NOT EXISTS user_type_stats (
-                    user_id BIGINT,
+                    user_id TEXT,
                     type VARCHAR(50),
                     count INTEGER DEFAULT 0,
-                    PRIMARY KEY (user_id, type),
-                    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+                    PRIMARY KEY (user_id, type)
                 )
             `);
             
             // User Levels table
             await this.query(`
                 CREATE TABLE IF NOT EXISTS user_levels (
-                    user_id BIGINT PRIMARY KEY,
+                    user_id TEXT PRIMARY KEY,
                     level INTEGER DEFAULT 0,
-                    updated_at TIMESTAMP DEFAULT NOW(),
-                    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+                    updated_at TIMESTAMP DEFAULT NOW()
                 )
             `);
             
             // User Cooldowns table
             await this.query(`
                 CREATE TABLE IF NOT EXISTS user_cooldowns (
-                    user_id BIGINT,
+                    user_id TEXT,
                     cooldown_type VARCHAR(50),
                     end_time TIMESTAMP NOT NULL,
-                    PRIMARY KEY (user_id, cooldown_type),
-                    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+                    PRIMARY KEY (user_id, cooldown_type)
                 )
             `);
             
-            // Battle History table (for future PvP)
+            // Battle History table
             await this.query(`
                 CREATE TABLE IF NOT EXISTS battle_history (
                     id SERIAL PRIMARY KEY,
-                    attacker_id BIGINT REFERENCES users(user_id) ON DELETE CASCADE,
-                    defender_id BIGINT REFERENCES users(user_id) ON DELETE CASCADE,
+                    attacker_id TEXT,
+                    defender_id TEXT,
                     result VARCHAR(50) NOT NULL,
                     stolen_fruits JSONB,
                     battle_time TIMESTAMP DEFAULT NOW()
                 )
             `);
             
+            // Raid History table
+            await this.query(`
+                CREATE TABLE IF NOT EXISTS raid_history (
+                    id SERIAL PRIMARY KEY,
+                    attacker_id TEXT,
+                    defender_id TEXT,
+                    victory BOOLEAN NOT NULL,
+                    stolen_berries BIGINT DEFAULT 0,
+                    stolen_fruits JSONB,
+                    attacker_cp BIGINT DEFAULT 0,
+                    defender_cp BIGINT DEFAULT 0,
+                    raid_time TIMESTAMP DEFAULT NOW()
+                )
+            `);
+            
+            // User Raid Cooldowns table
+            await this.query(`
+                CREATE TABLE IF NOT EXISTS user_raid_cooldowns (
+                    user_id TEXT PRIMARY KEY,
+                    cooldown_end TIMESTAMP NOT NULL,
+                    updated_at TIMESTAMP DEFAULT NOW()
+                )
+            `);
+            
+            // User Raid Protection table
+            await this.query(`
+                CREATE TABLE IF NOT EXISTS user_raid_protection (
+                    user_id TEXT PRIMARY KEY,
+                    protection_end TIMESTAMP NOT NULL,
+                    updated_at TIMESTAMP DEFAULT NOW()
+                )
+            `);
+            
             // Create indexes for better performance
             console.log('🔧 Creating database indexes for optimal performance...');
             
-            await this.query(`
-                CREATE INDEX IF NOT EXISTS idx_user_devil_fruits_user_id 
-                ON user_devil_fruits(user_id)
-            `);
-            
-            await this.query(`
-                CREATE INDEX IF NOT EXISTS idx_user_devil_fruits_fruit_id 
-                ON user_devil_fruits(fruit_id)
-            `);
-            
-            await this.query(`
-                CREATE INDEX IF NOT EXISTS idx_user_devil_fruits_rarity 
-                ON user_devil_fruits(rarity)
-            `);
-            
-            await this.query(`
-                CREATE INDEX IF NOT EXISTS idx_user_devil_fruits_obtained_at 
-                ON user_devil_fruits(obtained_at)
-            `);
-            
-            await this.query(`
-                CREATE INDEX IF NOT EXISTS idx_user_cooldowns_end_time 
-                ON user_cooldowns(end_time)
-            `);
+            await this.query(`CREATE INDEX IF NOT EXISTS idx_user_devil_fruits_user_id ON user_devil_fruits(user_id)`);
+            await this.query(`CREATE INDEX IF NOT EXISTS idx_user_devil_fruits_fruit_id ON user_devil_fruits(fruit_id)`);
+            await this.query(`CREATE INDEX IF NOT EXISTS idx_user_devil_fruits_rarity ON user_devil_fruits(rarity)`);
+            await this.query(`CREATE INDEX IF NOT EXISTS idx_user_devil_fruits_obtained_at ON user_devil_fruits(obtained_at)`);
+            await this.query(`CREATE INDEX IF NOT EXISTS idx_user_berries_user_id ON user_berries(user_id)`);
+            await this.query(`CREATE INDEX IF NOT EXISTS idx_user_berries_last_income ON user_berries(last_income_collection)`);
+            await this.query(`CREATE INDEX IF NOT EXISTS idx_user_purchases_user_id ON user_purchases(user_id)`);
+            await this.query(`CREATE INDEX IF NOT EXISTS idx_user_purchases_time ON user_purchases(purchase_time)`);
+            await this.query(`CREATE INDEX IF NOT EXISTS idx_user_cooldowns_end_time ON user_cooldowns(end_time)`);
+            await this.query(`CREATE INDEX IF NOT EXISTS idx_battle_history_attacker ON battle_history(attacker_id)`);
+            await this.query(`CREATE INDEX IF NOT EXISTS idx_battle_history_defender ON battle_history(defender_id)`);
+            await this.query(`CREATE INDEX IF NOT EXISTS idx_raid_history_attacker ON raid_history(attacker_id)`);
+            await this.query(`CREATE INDEX IF NOT EXISTS idx_raid_history_defender ON raid_history(defender_id)`);
             
             console.log('✅ All database tables ready');
             console.log('✅ Database indexes created for optimal performance');
@@ -171,7 +267,7 @@ class DatabaseManager {
         }
     }
 
-    // User management
+    // User management with better error handling
     async ensureUser(userId, username) {
         try {
             const result = await this.query(
@@ -250,10 +346,12 @@ class DatabaseManager {
             
             // Save the new fruit instance
             const result = await this.query(
-                `INSERT INTO user_devil_fruits (user_id, fruit_id, name, type, rarity, power, previous_user, description, awakening, weakness, duplicate_count, obtained_at)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
+                `INSERT INTO user_devil_fruits (user_id, fruit_id, name, type, rarity, power, previous_user, description, awakening, weakness, combat_power, duplicate_count, obtained_at)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW())
                  RETURNING *`,
-                [userId, fruit.id, fruit.name, fruit.type, fruit.rarity, fruit.power, fruit.previousUser, fruit.description, fruit.awakening, fruit.weakness, duplicateCount]
+                [userId, fruit.id, fruit.name, fruit.type, fruit.rarity, fruit.power, 
+                 fruit.previousUser, fruit.description, fruit.awakening, fruit.weakness, 
+                 fruit.combatPower, duplicateCount]
             );
             
             // Update rarity and type stats
@@ -473,7 +571,7 @@ class DatabaseManager {
         }
     }
 
-    // Battle system (for future PvP)
+    // Battle system
     async saveBattleResult(attackerId, defenderId, result, stolenFruits = []) {
         try {
             const battleResult = await this.query(
@@ -528,7 +626,6 @@ class DatabaseManager {
 
     async getTopByPower(limit = 10) {
         try {
-            // This would calculate total combat power for leaderboards
             const result = await this.query(
                 `SELECT u.username, u.level, u.total_hunts,
                         COUNT(udf.id) as total_fruits
@@ -569,16 +666,53 @@ class DatabaseManager {
             // Clean up expired cooldowns
             await this.clearExpiredCooldowns();
             
-            // Could add more cleanup tasks here
+            // Clean up old battle history (keep last 30 days)
+            await this.query(`
+                DELETE FROM battle_history 
+                WHERE battle_time < NOW() - INTERVAL '30 days'
+            `);
+            
+            // Clean up old raid history (keep last 30 days)
+            await this.query(`
+                DELETE FROM raid_history 
+                WHERE raid_time < NOW() - INTERVAL '30 days'
+            `);
+            
             console.log('✅ Database cleanup completed');
         } catch (error) {
             console.error('❌ Database cleanup error:', error);
         }
     }
 
-    // Close database connection
+    // Graceful shutdown
     async close() {
-        await this.pool.end();
+        try {
+            await this.pool.end();
+            console.log('🔒 Database connection pool closed');
+        } catch (error) {
+            console.error('❌ Error closing database pool:', error);
+        }
+    }
+
+    // Health check
+    async healthCheck() {
+        try {
+            const start = Date.now();
+            await this.query('SELECT 1');
+            const duration = Date.now() - start;
+            
+            return {
+                healthy: true,
+                responseTime: duration,
+                timestamp: new Date().toISOString()
+            };
+        } catch (error) {
+            return {
+                healthy: false,
+                error: error.message,
+                timestamp: new Date().toISOString()
+            };
+        }
     }
 }
 
