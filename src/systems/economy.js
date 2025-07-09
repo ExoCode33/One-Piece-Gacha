@@ -660,4 +660,61 @@ class BerryEconomySystem {
                 return { generated: 0, reason: 'No Combat Power' };
             }
 
-            // Calculate 10-
+            // Calculate 10-minute income (1/6 of hourly)
+            const hourlyIncome = await this.calculateHourlyIncome(userId);
+            const tenMinuteIncome = Math.floor(hourlyIncome / 6);
+
+            if (tenMinuteIncome <= 0) {
+                return { generated: 0, reason: 'No income calculated' };
+            }
+
+            // Award the berries
+            const newBalance = await this.addBerries(
+                userId, 
+                tenMinuteIncome, 
+                'Automatic Income (10min)'
+            );
+
+            return { 
+                generated: tenMinuteIncome, 
+                newBalance: newBalance,
+                totalCP: totalCP,
+                reason: 'Success' 
+            };
+
+        } catch (error) {
+            console.error(`Error processing auto income for user ${userId}:`, error);
+            return { generated: 0, reason: 'Error: ' + error.message };
+        }
+    }
+
+    // Daily economic reset (maintenance)
+    async performDailyEconomicReset() {
+        try {
+            console.log('🔄 Performing daily economic maintenance...');
+            
+            // Clean up old purchase records (keep last 30 days)
+            await DatabaseManager.query(`
+                DELETE FROM user_purchases 
+                WHERE purchase_time < NOW() - INTERVAL '30 days'
+            `);
+            
+            // Update economic statistics
+            const stats = await this.getEconomicStatistics();
+            console.log('📊 Daily Economic Stats:', {
+                totalUsers: stats.totalUsers,
+                totalBerries: stats.totalBerriesInCirculation,
+                economicHealth: stats.economicHealth
+            });
+            
+            console.log('✅ Daily economic maintenance completed');
+            return stats;
+            
+        } catch (error) {
+            console.error('❌ Error during daily economic reset:', error);
+            return null;
+        }
+    }
+}
+
+module.exports = new BerryEconomySystem();
