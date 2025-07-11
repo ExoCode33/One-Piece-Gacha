@@ -1,10 +1,76 @@
-// index.js - COMPLETE FILE with Enhanced Economy System
+// index.js - COMPLETE FILE with Enhanced Economy System and Database Fix
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
 const fs = require('node:fs');
 const path = require('node:path');
+const { Pool } = require('pg');
 
 // Load environment variables
 require('dotenv').config();
+
+// Database schema fix function
+async function fixDatabaseSchema() {
+    const pool = new Pool({
+        connectionString: process.env.DATABASE_URL,
+        ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+    });
+
+    const client = await pool.connect();
+    
+    try {
+        console.log('🔧 Applying database schema fix...');
+        
+        // Ensure user_berries table has correct structure
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS user_berries (
+                user_id TEXT PRIMARY KEY,
+                berries BIGINT DEFAULT 0,
+                total_earned BIGINT DEFAULT 0,
+                total_spent BIGINT DEFAULT 0,
+                last_income_collection TIMESTAMP DEFAULT NOW(),
+                created_at TIMESTAMP DEFAULT NOW(),
+                updated_at TIMESTAMP DEFAULT NOW()
+            )
+        `);
+        
+        // Add missing columns if table already exists but is missing columns
+        const columns = [
+            { name: 'berries', type: 'BIGINT DEFAULT 0' },
+            { name: 'total_earned', type: 'BIGINT DEFAULT 0' },
+            { name: 'total_spent', type: 'BIGINT DEFAULT 0' },
+            { name: 'last_income_collection', type: 'TIMESTAMP DEFAULT NOW()' },
+            { name: 'created_at', type: 'TIMESTAMP DEFAULT NOW()' },
+            { name: 'updated_at', type: 'TIMESTAMP DEFAULT NOW()' }
+        ];
+        
+        for (const column of columns) {
+            try {
+                await client.query(`
+                    ALTER TABLE user_berries 
+                    ADD COLUMN IF NOT EXISTS ${column.name} ${column.type}
+                `);
+            } catch (error) {
+                // Column might already exist, ignore error
+            }
+        }
+        
+        // Drop potentially corrupted indexes
+        try {
+            await client.query('DROP INDEX IF EXISTS idx_user_berries_last_income');
+            await client.query('DROP INDEX IF EXISTS idx_user_berries_user_id');
+        } catch (error) {
+            // Indexes might not exist, ignore
+        }
+        
+        console.log('✅ Database schema fix completed successfully!');
+        
+    } catch (error) {
+        console.error('❌ Database schema fix failed:', error);
+        throw error;
+    } finally {
+        client.release();
+        await pool.end();
+    }
+}
 
 // Create Discord client
 const client = new Client({
@@ -51,15 +117,19 @@ for (const file of eventFiles) {
     console.log(`✅ Loaded event: ${event.name}`);
 }
 
-// Bot ready event - ENHANCED WITH ECONOMY SYSTEM
+// Bot ready event - ENHANCED WITH ECONOMY SYSTEM AND SCHEMA FIX
 client.once('ready', async () => {
     console.log(`🏴‍☠️ ${client.user.tag} is ready to sail!`);
     console.log(`📊 Serving ${client.guilds.cache.size} server(s)`);
     console.log(`👥 Connected to ${client.users.cache.size} user(s)`);
     
-    // Initialize database
-    const DatabaseManager = require('./src/database/manager');
     try {
+        // FIRST: Fix database schema issues
+        console.log('🔧 Checking and fixing database schema...');
+        await fixDatabaseSchema();
+        
+        // THEN: Initialize database with corrected schema
+        const DatabaseManager = require('./src/database/manager');
         await DatabaseManager.initializeDatabase();
         console.log('🗄️ PostgreSQL database ready for Devil Fruit data!');
         
@@ -133,6 +203,7 @@ client.once('ready', async () => {
     console.log('🍈 Devil Fruits: 150 available');
     console.log('⚔️ Combat System: Strategic battles');
     console.log('📊 Database: PostgreSQL ready');
+    console.log('🔧 Schema Fix: Applied automatically');
     console.log('===============================\n');
 });
 
