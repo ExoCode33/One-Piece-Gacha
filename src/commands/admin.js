@@ -105,7 +105,6 @@ module.exports = {
             }
 
             await interaction.deferReply();
-
             const subcommand = interaction.options.getSubcommand();
 
             switch (subcommand) {
